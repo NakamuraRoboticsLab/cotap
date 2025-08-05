@@ -52,7 +52,7 @@ rewards:
       # penalty_waist_dofs: -0.5
       # penalty_upper_body_dofs_freeze: -0.4 
       penalty_stand_still: -0.15
-      penalty_stance_symmetry: -0.5
+      penalty_stance_symmetry: 0
       # penalty_stance_contact_no_ang_vel: -0.1
       penalty_ankle_roll: -2.0
       # penalty_stance_feet_vel: -1.0e-2

@@ -111,6 +111,25 @@ rewards.reward_initial_penalty_scale=0.1 \
 rewards.reward_penalty_degree=0.0001
 ```
 
+```bash
+python humanoidverse/train_agent.py \
++exp=decoupled_locomotion_stand_height_waist_wbc_diff_force_ma_ppo_ma_env \
++simulator=isaacgym \
++domain_rand=domain_rand_rl_gym \
++rewards=dec_loco/reward_dec_loco_stand_height_ma_diff_force \
++robot=g1/g1_29dof_waist_fakehand \
++terrain=terrain_locomotion_plane \
++obs=dec_loco/g1_29dof_obs_diff_force_history_wolinvel_ma \
+num_envs=4096 \
+project_name=g1_29dof_falcon \
+experiment_name=g1_29dof_falcon \
+obs.add_noise=True \
+env.config.fix_upper_body_prob=0.3 \
+robot.dof_effort_limit_scale=0.9 \
+rewards.reward_initial_penalty_scale=0.1 \
+rewards.reward_penalty_degree=0.0001
+```
+
 </details>
 
 <details>
@@ -160,6 +179,32 @@ rewards.desired_feet_max_height_for_this_air=0.08 \
 rewards.desired_base_height=0.62 \
 rewards.reward_scales.penalty_lower_body_action_rate=-0.5 \
 rewards.reward_scales.penalty_upper_body_action_rate=-0.5 \
+env.config.apply_force_pos_ratio_range=[0.5,2.0]
+```
+
+</details>
+
+## Unitree H1_19DoF
+<details>
+<summary>Training Command</summary>
+
+```bash
+python humanoidverse/train_agent.py \
++exp=decoupled_locomotion_stand_height_waist_wbc_diff_force_ma_ppo_ma_env \
++simulator=isaacgym \
++domain_rand=domain_rand_rl_gym \
++rewards=dec_loco/reward_dec_loco_stand_height_ma_diff_force \
++robot=h1/h1 \
++terrain=terrain_locomotion_plane \
++obs=dec_loco/h1_19dof_obs_diff_force_history_wolinvel_ma \
+num_envs=4096 \
+project_name=h1_19dof_falcon \
+experiment_name=h1_19dof_falcon \
+obs.add_noise=True \
+rewards.feet_height_target=0.2 \
+rewards.feet_height_stand=0.03 \
+rewards.desired_base_height=0.9 \
+env.config.fix_upper_body_prob=0.3 \
 env.config.apply_force_pos_ratio_range=[0.5,2.0]
 ```
 
