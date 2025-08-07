@@ -14,13 +14,13 @@ rewards:
       tracking_walk_base_height: 1.0
       tracking_stance_base_height: 4.0 # 1.0
       # tracking_waist_dofs: 0.5
-      tracking_waist_dofs_tapping: 0.5
-      tracking_waist_dofs_stance: 1.0
+      tracking_waist_dofs_tapping: 1.5 # 0.5
+      tracking_waist_dofs_stance: 2.0 # 1.0
       # tracking_arm_dofs: 0.5
       penalty_lin_vel_z: -2.0
       penalty_ang_vel_xy: -0.05 # -0.5
       penalty_orientation: -1.5 # -1.0
-      penalty_torso_orientation: -1.0 # -1.0
+      penalty_torso_orientation: -2.0 # -1.0
       penalty_lower_body_torques: -1e-5 #-0.00001
       penalty_lower_body_dof_vel: -1.0e-3
       penalty_lower_body_dof_acc: -2.5e-7
