@@ -50,7 +50,7 @@ rewards:
       # contact: 0.18 # 0.18
       # alive: 1.0 # 0.15
       # penalty_waist_dofs: -0.5
-      # penalty_upper_body_dofs_freeze: -0.4 
+      penalty_upper_body_dofs_freeze: -2.0 # only for freeze upper body
       penalty_stand_still: -0.15
       penalty_stance_symmetry: 0
       # penalty_stance_contact_no_ang_vel: -0.1
@@ -66,7 +66,7 @@ rewards:
       # penalty_root_acc_lower_body: -1e-4
 
       # tracking_arm_dofs: 0.5
-      tracking_upper_body_dofs: 4.0
+      tracking_upper_body_dofs: 0 # 4.0
       penalty_upper_body_torques: -1e-5 #-0.00001
       penalty_upper_body_dof_vel: -1.0e-3
       penalty_upper_body_dof_acc: -2.5e-7
@@ -127,7 +127,8 @@ rewards:
       # "penalty_stance_contact_no_ang_vel"
       ]
     upper_body: [
-      "tracking_upper_body_dofs",
+      # "tracking_upper_body_dofs",
+      "penalty_upper_body_dofs_freeze",
       "penalty_upper_body_torques",
       "penalty_upper_body_dof_vel",
       "penalty_upper_body_dof_acc",
@@ -147,7 +148,7 @@ rewards:
   # fix upper body
   fix_upper_body: False
   # gait period
-  gait_period: 1.2
+  gait_period: 1.5
 
   reward_tracking_sigma:
     lin_vel: 0.25
@@ -166,15 +167,20 @@ rewards:
   locomotion_max_contact_force: 300.0
 
   # Unitree G1
-  feet_height_target: 0.12
-  feet_height_stand: 0.025
-  desired_feet_max_height_for_this_air: 0.12
-  desired_base_height: 0.75 # 0.728
+  # feet_height_target: 0.12
+  # feet_height_stand: 0.025
+  # desired_feet_max_height_for_this_air: 0.12
+  # desired_base_height: 0.75 # 0.728
   # Booster T1
   # feet_height_target: 0.08
   # feet_height_stand: 0.020
   # desired_feet_max_height_for_this_air: 0.08
   # desired_base_height: 0.62 # 0.728
+  # Unitree H1
+  feet_height_target: 0.18
+  feet_height_stand: 0.07
+  desired_feet_max_height_for_this_air: 0.2
+  desired_base_height: 0.9 # 0.728
 
   stance_base_height_penalty_scale: 5.0
 
