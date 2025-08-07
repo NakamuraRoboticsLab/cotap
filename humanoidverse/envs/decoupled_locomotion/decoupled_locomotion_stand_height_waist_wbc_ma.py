@@ -71,6 +71,9 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         self.fix_upper_body_prob = self.config.get("fix_upper_body_prob", 0.0)
         self.fix_upper_body = (torch.rand(self.num_envs, device=self.device) < self.fix_upper_body_prob).float()
         self.fix_upper_body_motion_times = torch.zeros(self.num_envs, device=self.device, dtype=torch.float32)
+        
+        # Waist link RPY angles buffer - initialize once for efficiency
+        self.waist_rpy = torch.zeros(self.num_envs, 3, dtype=torch.float32, device=self.device, requires_grad=False)
     
     def step(self, actor_state):
         """ Apply actions, simulate, call self.post_physics_step()
@@ -122,6 +125,8 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         # prepare quantities
         self.base_quat[:] = self.simulator.base_quat[:]
         self.rpy[:] = get_euler_xyz_in_tensor(self.base_quat[:])
+        # Compute waist RPY angles for reward functions (reuse in all reward functions)
+        self.waist_rpy[:] = self.rpy[:, :]  # Use base RPY as waist RPY
         self.base_lin_vel[:] = quat_rotate_inverse(self.base_quat, self.simulator.robot_root_states[:, 7:10])
         # print("self.base_lin_vel", self.base_lin_vel)
         self.base_ang_vel[:] = quat_rotate_inverse(self.base_quat, self.simulator.robot_root_states[:, 10:13])
@@ -540,36 +545,50 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
     
     def _reward_tracking_waist_dofs(self):
         # Penalize the difference between the waist dof pos and the reference
-        waist_dofs_error = torch.zeros(self.num_envs, dtype=torch.float32, device=self.device)
-        if self.waist_yaw_dof_indice:
-            waist_dofs_error += torch.square(self.simulator.dof_pos[:, self.waist_yaw_dof_indice] - self.commands[:, 5])
-        if self.waist_roll_dof_indice:
-            waist_dofs_error += torch.square(self.simulator.dof_pos[:, self.waist_roll_dof_indice] - self.commands[:, 6])
-        if self.waist_pitch_dof_indice:
-            waist_dofs_error += torch.square(self.simulator.dof_pos[:, self.waist_pitch_dof_indice] - self.commands[:, 7])
+        waist_dofs_error = torch.zeros(self.num_envs, dtype=torch.float32, 
+                                     device=self.device)
+        
+        # Waist RPY already computed in _pre_compute_observations_callback
+        
+        # Compute tracking errors for each DOF
+        # Note: RPY order is [roll, pitch, yaw], commands order is [yaw, roll, pitch]
+        waist_dofs_error += torch.square(self.waist_rpy[:, 2] - self.commands[:, 5])  # yaw tracking
+        waist_dofs_error += torch.square(self.waist_rpy[:, 0] - self.commands[:, 6])  # roll tracking
+        waist_dofs_error += torch.square(self.waist_rpy[:, 1] - self.commands[:, 7])  # pitch tracking
+        
         return torch.exp(-waist_dofs_error/self.config.rewards.reward_tracking_sigma.waist_dofs)
     
     def _reward_tracking_waist_dofs_stance(self):
-        # Penalize the difference between the waist dof pos and the reference
-        waist_dofs_error = torch.zeros(self.num_envs, dtype=torch.float32, device=self.device)
-        if self.waist_yaw_dof_indice:
-            waist_dofs_error += torch.square(self.simulator.dof_pos[:, self.waist_yaw_dof_indice] - self.commands[:, 5])
-        if self.waist_roll_dof_indice:
-            waist_dofs_error += torch.square(self.simulator.dof_pos[:, self.waist_roll_dof_indice] - self.commands[:, 6])
-        if self.waist_pitch_dof_indice:
-            waist_dofs_error += torch.square(self.simulator.dof_pos[:, self.waist_pitch_dof_indice] - self.commands[:, 7])
-        return torch.exp(-waist_dofs_error/self.config.rewards.reward_tracking_sigma.waist_dofs) * (1 - self.commands[:, 4])
+        # Penalize waist dof pos difference in stance mode only
+        waist_dofs_error = torch.zeros(self.num_envs, dtype=torch.float32, 
+                                     device=self.device)
+        
+        # Waist RPY already computed in _pre_compute_observations_callback
+        
+        # Compute tracking errors for each DOF
+        waist_dofs_error += torch.square(self.waist_rpy[:, 2] - self.commands[:, 5])  # yaw
+        waist_dofs_error += torch.square(self.waist_rpy[:, 0] - self.commands[:, 6])  # roll
+        waist_dofs_error += torch.square(self.waist_rpy[:, 1] - self.commands[:, 7])  # pitch
+
+        # Apply only during stance mode (when commands[:, 4] == 0)
+        reward = torch.exp(-waist_dofs_error / self.config.rewards.reward_tracking_sigma.waist_dofs)
+        return reward * (1 - self.commands[:, 4])
     
     def _reward_tracking_waist_dofs_tapping(self):
-        # Penalize the difference between the waist dof pos and the reference
-        waist_dofs_error = torch.zeros(self.num_envs, dtype=torch.float32, device=self.device)
-        if self.waist_yaw_dof_indice:
-            waist_dofs_error += torch.square(self.simulator.dof_pos[:, self.waist_yaw_dof_indice] - self.commands[:, 5])
-        if self.waist_roll_dof_indice:
-            waist_dofs_error += torch.square(self.simulator.dof_pos[:, self.waist_roll_dof_indice] - self.commands[:, 6])
-        if self.waist_pitch_dof_indice:
-            waist_dofs_error += torch.square(self.simulator.dof_pos[:, self.waist_pitch_dof_indice] - self.commands[:, 7])
-        return torch.exp(-waist_dofs_error/self.config.rewards.reward_tracking_sigma.waist_dofs) * self.commands[:, 4]
+        # Penalize waist dof pos difference in tapping mode only
+        waist_dofs_error = torch.zeros(self.num_envs, dtype=torch.float32, 
+                                     device=self.device)
+        
+        # Waist RPY already computed in _pre_compute_observations_callback
+        
+        # Compute tracking errors for each DOF
+        waist_dofs_error += torch.square(self.waist_rpy[:, 2] - self.commands[:, 5])  # yaw
+        waist_dofs_error += torch.square(self.waist_rpy[:, 0] - self.commands[:, 6])  # roll
+        waist_dofs_error += torch.square(self.waist_rpy[:, 1] - self.commands[:, 7])  # pitch
+
+        # Apply only during tapping mode (when commands[:, 4] == 1)
+        reward = torch.exp(-waist_dofs_error / self.config.rewards.reward_tracking_sigma.waist_dofs)
+        return reward * self.commands[:, 4]
 
     ######################### Observations #########################
     def _get_obs_command_waist_dofs(self):
