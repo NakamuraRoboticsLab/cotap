@@ -286,7 +286,7 @@ robot:
         rot: [1.0, 0.0, 0.0, 0.0] # w x y z
       - joint_name: "head_link"
         parent_name: "torso_link"
-        pos: [0.0, 0.0, 0.35] # need check
+        pos: [0.0, 0.0, 0.65] # need check
         rot: [1.0, 0.0, 0.0, 0.0] # w x y z
 
 

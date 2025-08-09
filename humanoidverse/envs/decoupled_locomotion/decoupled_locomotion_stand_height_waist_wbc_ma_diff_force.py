@@ -14,6 +14,7 @@ from isaac_utils.rotations import (
 from humanoidverse.envs.env_utils.visualization import Point
 
 from loguru import logger
+from isaacgym import gymtorch, gymapi, gymutil
 
 DEBUG = False
 class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLocomotionStanceHeightWBC):
@@ -535,6 +536,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
     def _draw_debug_vis(self):
         self.simulator.clear_lines()
         self._refresh_sim_tensors()
+        # print("Debug visualization enabled")
 
         for env_id in range(self.num_envs):
             # for pos_id, pos_joint in enumerate(self.marker_coords[env_id]): # idx 0 torso (duplicate with 11)
@@ -568,6 +570,66 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
                                         Point(end_point + torch.rand(3, device=self.device) * line_width),
                                         Point(color),
                                         env_id)
+            
+            # draw the marker spheres 
+            for pos_id, pos_joint in enumerate(self.marker_coords[env_id]): # idx 0 torso (duplicate with 11)
+                # # Draw the tracking markers for the whole body
+                # if self.config.robot.motion.visualization.customize_color:
+                #     color_inner = self.config.robot.motion.visualization.marker_joint_colors[pos_id % len(self.config.robot.motion.visualization.marker_joint_colors)]
+                # else:
+                #     color_inner = (0.3, 0.3, 0.3)
+                # color_inner = tuple(color_inner)
+                # sphere_geom_marker = gymutil.WireframeSphereGeometry(0.04, 20, 20, None, color=color_inner)
+                # sphere_pose = gymapi.Transform(gymapi.Vec3(pos_joint[0], pos_joint[1], pos_joint[2]), r=None)
+                # gymutil.draw_lines(sphere_geom_marker, self.simulator.gym, self.viewer, self.simulator.envs[env_id], sphere_pose)
+
+                # Draw the tracking lines for the extended body only
+                if pos_id in self.motion_tracking_id:
+                    color_schems = (0.0, 0.8, 0.0)
+                    start_point = self._rigid_body_pos_extend[env_id, pos_id]
+                    end_point = pos_joint
+                    line_width = 0.03
+                    for _ in range(50):
+                        gymutil.draw_line(Point(start_point +torch.rand(3, device=self.device) * line_width),
+                                            Point(end_point + torch.rand(3, device=self.device) * line_width),
+                                            Point(color_schems),
+                                            self.simulator.gym, self.viewer, self.simulator.envs[env_id])
+
+            # Draw reference motion key markers as solid spheres
+            if (hasattr(self, 'ref_body_pos_extend') and
+                    self.ref_body_pos_extend is not None):
+                # Use upper body indices for visualization if available
+                key_marker_indices = [0, 5, 10, 15, 20]  # Default fallback
+                # if hasattr(self, 'upper_body_id') and self.upper_body_id is not None:
+                #     # Use upper body tracking points for better visualization
+                #     key_marker_indices = self.upper_body_id
+                #     # print("Using upper_body_id for sphere drawing:", key_marker_indices)
+                if hasattr(self, 'motion_tracking_id'):
+                    # Use configured tracking points
+                    key_marker_indices = self.motion_tracking_id
+                    # print("Using motion_tracking_id for sphere drawing:", key_marker_indices)
+
+                # print("count the spheres, ref_body_pos_extend shape:", self.ref_body_pos_extend.shape)
+                for marker_idx in key_marker_indices:
+                    if marker_idx < self.ref_body_pos_extend.shape[1]:
+                        # print(f"Drawing sphere for body index {marker_idx}")
+                        ref_pos = self.ref_body_pos_extend[env_id, marker_idx]
+                        # print("Reference position for marker index", 22, ":", ref_pos)
+                        # Draw reference motion marker as blue sphere
+                        ref_sphere_color = (0.0, 0.0, 1.0)
+                        ref_sphere_geom = gymutil.WireframeSphereGeometry(
+                            0.06, 12, 12, None, color=ref_sphere_color)
+                        ref_sphere_pose = gymapi.Transform(
+                            gymapi.Vec3(ref_pos[0], ref_pos[1], ref_pos[2]),
+                            r=None)
+                        gymutil.draw_lines(
+                            ref_sphere_geom,
+                            self.simulator.gym,
+                            self.viewer,
+                            self.simulator.envs[env_id],
+                            ref_sphere_pose)
+
+
 
     ############################ Curriculum #############################
     def _update_upper_body_tracking_sigma_curriculum(self, env_ids):

@@ -144,17 +144,63 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
                             self.fix_upper_body_motion_times * self.fix_upper_body
         motion_res = self._motion_lib.get_motion_state(self.motion_ids, self.motion_times, offset=offset)
         
-        # Update the upper body joint positions from motion library
-        ref_joint_pos = motion_res["dof_pos"] # [num_envs, num_dofs]
+        # Get motion data
+        ref_joint_pos = motion_res["dof_pos"]  # [num_envs, num_dofs]
+        ref_body_pos_world = motion_res["rg_pos_t"]  # [num_envs, bodies, 3]
+        ref_root_pos = motion_res["root_pos"]  # [num_envs, 3] - original base pos
+        ref_root_rot = motion_res["root_rot"]  # [num_envs, 4] - original base quat
         self.ref_body_pos_extend[:, :motion_res["rg_pos_t"].shape[1], :] = motion_res["rg_pos_t"] # [num_envs, 3]
 
+        # # Debug prints for sphere visualization
+        # print("Motion data shape - rg_pos_t:", motion_res["rg_pos_t"].shape)
+        # print("ref_body_pos_extend shape:", self.ref_body_pos_extend.shape)
+        # if hasattr(self, 'motion_tracking_id'):
+        #     print("motion_tracking_id:", self.motion_tracking_id)
+        # if hasattr(self, 'upper_body_id'):
+        #     print("upper_body_id:", self.upper_body_id)
+        # print("Available upper body indices:", getattr(self, 'upper_body_id', 'Not defined'))
+        # print("Reference Body Position World:", ref_body_pos_world)
+        # print("Reference Body Positions (Extended):", self.ref_body_pos_extend)
+
+        # Get current robot state
+        current_base_pos = self.simulator.robot_root_states[:, :3]  # [num_envs, 3]
+        current_base_quat = self.simulator.base_quat  # [num_envs, 4]
+        
+        # Transform ref_upper_dof_pos to world frame considering base link relationship
+        # Method: Apply relative transformation from original base to current base
+        
+        # Step 1: Calculate relative position of extended body in original base frame
+        ref_body_pos_translated = ref_body_pos_world - ref_root_pos.unsqueeze(1)
+        num_bodies = ref_body_pos_translated.shape[1]
+        ref_body_pos_flat = ref_body_pos_translated.reshape(-1, 3)
+        ref_root_quat_expanded = ref_root_rot.unsqueeze(1).expand(
+            -1, num_bodies, -1).reshape(-1, 4)
+        
+        # Get relative positions in original motion's base frame
+        ref_body_pos_relative_flat = quat_rotate_inverse(
+            ref_root_quat_expanded, ref_body_pos_flat)
+        ref_body_pos_relative = ref_body_pos_relative_flat.reshape(
+            self.num_envs, num_bodies, 3)
+        
+        # Step 2: Transform to current world frame via current base
+        current_base_quat_expanded = current_base_quat.unsqueeze(1).expand(
+            -1, num_bodies, -1).reshape(-1, 4)
+        
+        # Apply current robot's base rotation and translation to get world positions
+        ref_body_pos_world_current_flat = quat_rotate(
+            current_base_quat_expanded, ref_body_pos_relative_flat)
+        ref_body_pos_world_current = ref_body_pos_world_current_flat.reshape(
+            self.num_envs, num_bodies, 3) + current_base_pos.unsqueeze(1)
+        
+        # Update the reference body positions in current world frame
+        self.ref_body_pos_extend[:, :ref_body_pos_world_current.shape[1], :] = \
+            ref_body_pos_world_current
+        
+        # # Update the upper body joint positions from motion library
+        # ref_joint_pos = motion_res["dof_pos"] # [num_envs, num_dofs]
+        # self.ref_body_pos_extend[:, :motion_res["rg_pos_t"].shape[1], :] = motion_res["rg_pos_t"] # [num_envs, 3]
+
         self.ref_upper_dof_pos = ref_joint_pos[:, self.upper_dof_indices] # [num_envs, upper_body_actions_dim]
-        # Yuanhang: only test for evaluation
-        # if self.is_evaluating:
-        #     self.ref_upper_dof_pos[:, :] *= 0.0
-        # print("waist yaw: ", self.ref_upper_dof_pos[:, 0])
-        # print("waist roll: ", self.ref_upper_dof_pos[:, 1])
-        # print("waist pitch: ", self.ref_upper_dof_pos[:, 2])
         # Apply upper body action scale
         self.ref_upper_dof_pos *= self.action_scale_upper_body
 
