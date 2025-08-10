@@ -208,7 +208,7 @@ robot:
     bias_offset: False
     has_self_collision: True
     has_mesh: False
-    has_jt_limit: False
+    has_jt_limit: True
     has_dof_subset: True
     has_upright_start: True
     has_smpl_pd_offset: False
