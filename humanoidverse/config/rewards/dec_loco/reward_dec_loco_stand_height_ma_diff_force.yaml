@@ -19,7 +19,7 @@ rewards:
       # tracking_arm_dofs: 0.5
       penalty_lin_vel_z: -2.0
       penalty_ang_vel_xy: -0.05 # -0.5
-      penalty_orientation: -1.5 # -1.0
+      penalty_orientation: -3.0 # -1.0
       penalty_torso_orientation: -2.0 # -1.0
       penalty_lower_body_torques: -1e-5 #-0.00001
       penalty_lower_body_dof_vel: -1.0e-3
@@ -28,7 +28,7 @@ rewards:
       # penalty_feet_contact_forces: -0.01
       # penalty_stumble: -10.0
       # penalty_slippage: -1.0
-      penalty_contact_no_vel: -0.2 # -0.2
+      penalty_contact_no_vel: -0.5 # -0.2
       penalty_feet_ori: -2.0
       limits_lower_body_dof_pos: -5.0
       # limits_lower_body_dof_vel: -5.0
@@ -38,10 +38,10 @@ rewards:
       termination: -250.0 # -500.0
       penalty_feet_height: -5.0
       penalty_feet_swing_height: -20.0
-      feet_heading_alignment: -1.0 # -0.25
+      feet_heading_alignment: -1.5 # -0.25
       penalty_close_feet_xy: -10.
       # penalty_close_knees_xy: -2.
-      penalty_hip_pos: -2.5 # -5.0
+      penalty_hip_pos: -1.5 # -5.0
       penalty_ang_vel_xy_torso: -1.0 # -0.75
       penalty_stance_dof: -1.0e-3 # -1.0e-3
       # penalty_stance_feet: -2.5
@@ -66,7 +66,7 @@ rewards:
       # penalty_root_acc_lower_body: -1e-4
 
       # tracking_arm_dofs: 0.5
-      tracking_upper_body_dofs: 4.0 # 4.0
+      tracking_upper_body_dofs: 2.0 # 4.0
       penalty_upper_body_torques: -1e-5 #-0.00001
       penalty_upper_body_dof_vel: -1.0e-3
       penalty_upper_body_dof_acc: -2.5e-7
@@ -164,6 +164,7 @@ rewards:
   
   close_knees_threshold: 0.16
   close_feet_threshold: 0.17
+  # far_feet_threshold: 0.18
   locomotion_max_contact_force: 300.0
 
   # Unitree G1

@@ -225,7 +225,7 @@ robot:
     motion_fps_scale: 1.0
 
     standardize_motion_length: True
-    standardize_motion_length_value: 10 # 10s
+    standardize_motion_length_value: 20 # 10s
 
     reverse_motion: False
 

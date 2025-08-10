@@ -56,9 +56,9 @@ env:
     zero_tapping_xy_force: False
     zero_force_prob: [0.25, 0.25, 0.25] # 0.2
     random_force_prob: 0.0
-    apply_force_x_range: [-40.0, 40.0]
-    apply_force_y_range: [-40.0, 40.0]
-    apply_force_z_range: [-50.0, 5.0]
+    apply_force_x_range: [-100.0, 100.0] # [-40.0, 40.0]
+    apply_force_y_range: [-100.0, 100.0] # [-40.0, 40.0]
+    apply_force_z_range: [-100.0, 10.0] # [-50.0, 5.0]
     apply_force_pos_ratio_range: [0.0, 1.0]
     lower_body_force_compensation: False
     apply_force_in_physics_step: True
