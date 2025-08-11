@@ -1,0 +1,7 @@
+# @package _global_
+
+defaults:
+  - /algo: ppo_decoupled_wbc_ma
+  - /env: decoupled_with_facet
+
+experiment_name: TEST_DecoupledLocomotion_withFacet
