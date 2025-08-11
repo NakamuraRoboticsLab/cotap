@@ -77,6 +77,13 @@ rewards:
       # penalty_root_acc_upper_body: -1e-4
       limits_upper_body_dof_vel: -5.0
       limits_upper_body_torque: -0.1
+
+      impedance_pos_tracking: 1.0
+      impedance_vel_tracking: 1.0
+      force_resistance: 1.0
+      impedance_mode_stability: 1.0
+      impedance_energy_efficiency: 1.0
+
   reward_groups:
     lower_body: [
       "tracking_lin_vel_x",
@@ -125,6 +132,11 @@ rewards:
       "penalty_ang_shift_in_zero_command",
       # "penalty_root_acc_lower_body",
       # "penalty_stance_contact_no_ang_vel"
+      "impedance_pos_tracking",
+      "impedance_vel_tracking",
+      "force_resistance",
+      "impedance_mode_stability",
+      "impedance_energy_efficiency"
       ]
     upper_body: [
       "tracking_upper_body_dofs",

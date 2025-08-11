@@ -709,97 +709,104 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
     ########################### FEET REWARDS ###########################
 
-    # def _reward_impedance_pos_tracking(self):
-    #     """
-    #     阻抗位置跟踪奖励 (Impedance position tracking reward)
+    def _reward_impedance_pos_tracking(self):
+        """
+        阻抗位置跟踪奖励 (Impedance position tracking reward)
         
-    #     基于位置误差计算奖励，误差越小奖励越大
-    #     Calculate reward based on position error, smaller error gives higher reward
+        基于位置误差计算奖励，误差越小奖励越大
+        Calculate reward based on position error, smaller error gives higher reward
         
-    #     Returns:
-    #         位置跟踪奖励 (Position tracking reward)
-    #     """
-    #     if not hasattr(self, 'command_setpos_w') or not hasattr(self, 'root_states'):
-    #         return torch.zeros(self.num_envs, device=self.device)
+        Returns:
+            位置跟踪奖励 (Position tracking reward)
+        """
+        if (not hasattr(self, 'command_setpos_w') or
+                not hasattr(self, 'simulator') or
+                not hasattr(self.simulator, 'robot_root_states')):
+            return torch.zeros(self.num_envs, device=self.device)
 
-    #     # 计算位置误差 (Calculate position error)
-    #     pos_error = (self.root_states[:, :3] - self.command_setpos_w).norm(
-    #         dim=-1)
-    #     return torch.exp(-pos_error / 0.5)
+        # 计算位置误差 (Calculate position error)
+        # 使用模拟器的正确根状态 (Use correct root states from simulator)
+        current_pos = self.simulator.robot_root_states[:, :3]
+        pos_error = (current_pos - self.command_setpos_w).norm(dim=-1)
+        return torch.exp(-pos_error / 0.5)
 
-    # def _reward_impedance_vel_tracking(self):
-    #     """
-    #     阻抗速度跟踪奖励 (Impedance velocity tracking reward)
+    def _reward_impedance_vel_tracking(self):
+        """
+        阻抗速度跟踪奖励 (Impedance velocity tracking reward)
         
-    #     基于速度误差计算奖励
-    #     Calculate reward based on velocity error
+        基于速度误差计算奖励
+        Calculate reward based on velocity error
         
-    #     Returns:
-    #         速度跟踪奖励 (Velocity tracking reward)
-    #     """
-    #     if not hasattr(self, 'set_linvel') or not hasattr(self, 'root_states'):
-    #         return torch.zeros(self.num_envs, device=self.device)
+        Returns:
+            速度跟踪奖励 (Velocity tracking reward)
+        """
+        if (not hasattr(self, 'set_linvel') or
+                not hasattr(self, 'simulator') or
+                not hasattr(self.simulator, 'robot_root_states')):
+            return torch.zeros(self.num_envs, device=self.device)
 
-    #     # 计算速度误差 (Calculate velocity error)
-    #     vel_error = (self.root_states[:, 7:10] - self.set_linvel).norm(dim=-1)
-    #     return torch.exp(-vel_error / 1.0)
+        # 计算速度误差 (Calculate velocity error)
+        # 使用模拟器的正确根状态速度 (Use correct root state velocities from simulator)
+        current_vel = self.simulator.robot_root_states[:, 7:10]
+        vel_error = (current_vel - self.set_linvel).norm(dim=-1)
+        return torch.exp(-vel_error / 1.0)
 
-    # def _reward_force_resistance(self):
-    #     """
-    #     力干扰抵抗奖励 (Force disturbance resistance reward)
+    def _reward_force_resistance(self):
+        """
+        力干扰抵抗奖励 (Force disturbance resistance reward)
         
-    #     基于外力大小给予奖励，鼓励机器人抵抗外力干扰
-    #     Reward based on external force magnitude, encouraging force resistance
+        基于外力大小给予奖励，鼓励机器人抵抗外力干扰
+        Reward based on external force magnitude, encouraging force resistance
         
-    #     Returns:
-    #         力抵抗奖励 (Force resistance reward)
-    #     """
-    #     if not hasattr(self, 'force_ext_w'):
-    #         return torch.zeros(self.num_envs, device=self.device)
+        Returns:
+            力抵抗奖励 (Force resistance reward)
+        """
+        if not hasattr(self, 'force_ext_w'):
+            return torch.zeros(self.num_envs, device=self.device)
 
-    #     force_magnitude = self.force_ext_w.norm(dim=-1)
-    #     return torch.exp(-force_magnitude / 100.0)
+        force_magnitude = self.force_ext_w.norm(dim=-1)
+        return torch.exp(-force_magnitude / 100.0)
 
-    # def _reward_impedance_mode_stability(self):
-    #     """
-    #     阻抗模式稳定性奖励 (Impedance mode stability reward)
+    def _reward_impedance_mode_stability(self):
+        """
+        阻抗模式稳定性奖励 (Impedance mode stability reward)
         
-    #     基于当前控制模式给予不同的稳定性奖励
-    #     Give different stability rewards based on current control mode
+        基于当前控制模式给予不同的稳定性奖励
+        Give different stability rewards based on current control mode
         
-    #     Returns:
-    #         模式稳定性奖励 (Mode stability reward)
-    #     """
-    #     stability = torch.ones(self.num_envs, device=self.device)
+        Returns:
+            模式稳定性奖励 (Mode stability reward)
+        """
+        stability = torch.ones(self.num_envs, device=self.device)
 
-    #     # 柔顺模式稳定性调整 (Compliant mode stability adjustment)
-    #     compliant_mask = (self.impedance_command_mode ==
-    #                       self.CMD_COMPLIANT).squeeze(-1)
-    #     stability[compliant_mask] *= 0.8
+        # 柔顺模式稳定性调整 (Compliant mode stability adjustment)
+        compliant_mask = (self.impedance_command_mode ==
+                          self.CMD_COMPLIANT).squeeze(-1)
+        stability[compliant_mask] *= 0.8
 
-    #     # 大力模式稳定性调整 (Large force mode stability adjustment)
-    #     large_force_mask = (self.impedance_command_mode ==
-    #                         self.CMD_LARGE_FORCE).squeeze(-1)
-    #     stability[large_force_mask] *= 1.2
+        # 大力模式稳定性调整 (Large force mode stability adjustment)
+        large_force_mask = (self.impedance_command_mode ==
+                            self.CMD_LARGE_FORCE).squeeze(-1)
+        stability[large_force_mask] *= 1.2
 
-    #     return stability
+        return stability
 
-    # def _reward_impedance_energy_efficiency(self):
-    #     """
-    #     阻抗控制能效奖励 (Impedance control energy efficiency reward)
+    def _reward_impedance_energy_efficiency(self):
+        """
+        阻抗控制能效奖励 (Impedance control energy efficiency reward)
         
-    #     鼓励能效的控制策略
-    #     Encourage energy-efficient control strategies
+        鼓励能效的控制策略
+        Encourage energy-efficient control strategies
         
-    #     Returns:
-    #         能效奖励 (Energy efficiency reward)
-    #     """
-    #     if not hasattr(self, 'lin_kp') or not hasattr(self, 'force_ext_w'):
-    #         return torch.zeros(self.num_envs, device=self.device)
+        Returns:
+            能效奖励 (Energy efficiency reward)
+        """
+        if not hasattr(self, 'lin_kp') or not hasattr(self, 'force_ext_w'):
+            return torch.zeros(self.num_envs, device=self.device)
 
-    #     # 基于刚度和外力的能效计算 (Energy efficiency based on stiffness and external force)
-    #     energy_cost = self.lin_kp.squeeze(-1) * self.force_ext_w.norm(dim=-1)
-    #     return torch.exp(-energy_cost / 500.0)
+        # 基于刚度和外力的能效计算 (Energy efficiency based on stiffness and external force)
+        energy_cost = self.lin_kp.squeeze(-1) * self.force_ext_w.norm(dim=-1)
+        return torch.exp(-energy_cost / 500.0)
     
     ######################### Observations #########################
 
