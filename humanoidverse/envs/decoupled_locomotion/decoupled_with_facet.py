@@ -16,8 +16,6 @@ from isaac_utils.rotations import (
 from humanoidverse.envs.env_utils.visualization import Point
 
 from loguru import logger
-from isaacgym.torch_utils import quat_rotate_inverse, torch_rand_float
-from isaacgym import gymtorch, gymapi, gymutil
 
 DEBUG = False
 
@@ -54,35 +52,36 @@ def saturate(x: torch.Tensor, a: float) -> torch.Tensor:
     """
     norm = x.norm(dim=-1, keepdim=True)
     return (x / norm.clamp_min(1e-6)) * torch.log1p(norm / a) * a
-
-
+    
 class EMA:
     """
-    指数移动平均滤波器 (Exponential Moving Average Filter)
+    Exponential Moving Average.
     
-    用于状态平滑和噪声抑制
-    Used for state smoothing and noise suppression
+    Args:
+        x: The tensor to compute the EMA of.
+        gammas: The decay rates. Can be a single float or a list of floats.
+    
+    Example:
+        >>> ema = EMA(x, gammas=[0.9, 0.99])
+        >>> ema.update(x)
+        >>> ema.ema
     """
-    
-    def __init__(self, data: torch.Tensor, alphas: List[float]):
-        """
-        初始化EMA滤波器
+    def __init__(self, x: torch.Tensor, gammas):
+        self.gammas = torch.tensor(gammas, device=x.device)
+        shape = (x.shape[0], len(self.gammas), *x.shape[1:])
+        self.sum = torch.zeros(shape, device=x.device)
+        shape = (x.shape[0], len(self.gammas), 1)
+        self.cnt = torch.zeros(shape, device=x.device)
+
+    def reset(self, env_ids: torch.Tensor):
+        self.sum[env_ids] = 0.0
+        self.cnt[env_ids] = 0.0
         
-        Args:
-            data: 初始数据 (Initial data)
-            alphas: 平滑系数列表 (List of smoothing factors)
-        """
-        self.ema = data.unsqueeze(1).repeat(1, len(alphas), 1)
-        self.alphas = torch.tensor(alphas, device=data.device)
-
-    def update(self, data: torch.Tensor):
-        """更新EMA值 (Update EMA values)"""
-        self.ema = (self.alphas.view(1, -1, 1) * data.unsqueeze(1) +
-                    (1 - self.alphas.view(1, -1, 1)) * self.ema)
-
-    def get_smoothed(self, alpha_idx: int = 1) -> torch.Tensor:
-        """获取平滑后的值 (Get smoothed values)"""
-        return self.ema[:, alpha_idx, :]
+    def update(self, x: torch.Tensor):
+        self.sum.mul_(self.gammas.unsqueeze(-1)).add_(x.unsqueeze(1))
+        self.cnt.mul_(self.gammas.unsqueeze(-1)).add_(1.0)
+        self.ema = self.sum / self.cnt
+        return self.ema
     
 class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStanceHeightWBCForce):
     # 阻抗控制指令模式常量 (Impedance control command mode constants)
@@ -105,6 +104,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 代理目标时间步 (Surrogate target time steps)
         self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
+        # self.surr_steps = [8, 16, 24, 32]
         
         # 确保temporal_smoothing足够大以支持surr_steps (Ensure large enough)
         max_surr_step = max(self.surr_steps) if self.surr_steps else 32
@@ -114,11 +114,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 初始化FACET阻抗控制系统 (Initialize FACET impedance control system)
         self._init_impedance_control()
 
-        # 初始化外力应用系统 (Initialize external force application system)
-        self._init_force_application()
-
         # logger.info(f"FACET阻抗控制环境初始化完成 (FACET impedance control "
         #             f"environment initialized) - {self.num_envs} envs")
+
+        self.pos_err_r = torch.zeros(self.num_envs, 1, device=self.device)
 
     def _init_impedance_control(self):
         """初始化FACET阻抗控制系统 (Initialize FACET impedance system)"""
@@ -159,14 +158,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.surrogate_pos_target = torch.zeros(
             self.num_envs, len(self.surr_steps), 3, device=self.device)
 
-        # # 力干扰对象 (Force disturbance objects)
-        # self.constant_force = ForceDisturbance(
-        #     self.num_envs, self.device, "constant")
-        # self.impulse_force = ForceDisturbance(
-        #     self.num_envs, self.device, "impulse")
-        # self.spring_force = ForceDisturbance(
-        #     self.num_envs, self.device, "spring")
-
         # EMA滤波器 (EMA filters)
         # 使用模拟器的正确根速度项 (Use correct root velocity terms from simulator)
         if hasattr(self, 'base_lin_vel') and hasattr(self, 'base_ang_vel'):
@@ -180,14 +171,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             dummy_data = torch.zeros(self.num_envs, 3, device=self.device)
             self.lin_vel_ema = EMA(dummy_data, [0.0, 0.5, 0.8])
             self.ang_vel_ema = EMA(dummy_data, [0.0, 0.5, 0.8])
-
-    def _init_force_application(self):
-        """初始化外力应用系统 (Initialize external force application system)"""
-        # 创建力应用张量 (Create force application tensors)
-        self.external_force_tensor = torch.zeros(
-            self.num_envs, self.num_bodies, 3, device=self.device)
-        self.external_torque_tensor = torch.zeros(
-            self.num_envs, self.num_bodies, 3, device=self.device)
         
     def step(self, actor_state):
         """环境步进 (Environment step)"""
@@ -195,12 +178,11 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 更新阻抗控制 (Update impedance control)
         self.update_impedance_control()
 
-        # # 更新力干扰 (Update force disturbances)
-        # self.update_force_disturbances()
-
         # 执行父类步进 (Execute parent class step)
         result = super().step(actor_state)
-        
+
+        # print("self.pos_err_r:", self.pos_err_r)
+
         # # 调试可视化 (Debug visualization)
         # if hasattr(self, 'simulator'):
         #     self.debug_visualization()
@@ -248,6 +230,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # 更新EMA滤波器 (Update EMA filters)
         # 使用机器人本体坐标系的速度 (Use velocities in robot body frame)
+        # should be used in reward function for tracking
         if hasattr(self, 'base_lin_vel') and hasattr(self, 'base_ang_vel'):
             self.lin_vel_ema.update(self.base_lin_vel)
             self.ang_vel_ema.update(self.base_ang_vel)
@@ -282,7 +265,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
     def _integrate_reference_trajectory(self):
         """积分参考轨迹 (Integrate reference trajectory)"""
-        dt = self.dt
+        dt = self.dt # 0.02s
 
         # 计算期望位置 (Calculate desired position)
         setpos_w = torch.where(
@@ -313,6 +296,12 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         self.ref_lin_vel_w = ref_vel_w
         self.ref_pos_w.add_(self.ref_lin_vel_w * dt)
+        
+        # 保持Z位置稳定 - 使用当前机器人Z位置 (Keep Z position stable)
+        if (hasattr(self, 'simulator') and
+                hasattr(self.simulator, 'robot_root_states')):
+            current_z = self.simulator.robot_root_states[:, 2:3]
+            self.ref_pos_w[..., 2:3] = current_z.unsqueeze(1)
 
     # ================================================================
     # 指令采样方法 (Command Sampling Methods)
@@ -616,17 +605,20 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 方法2: 可选的多时间步加权奖励 (Method 2: Optional multi-step weighted reward)
         # 对多个时间步进行加权平均 (Weighted average across multiple time steps)
-        weights = torch.tensor([0.6, 0.3, 0.1], device=self.device)  # 权重递减
+        weights = torch.tensor([0.5, 0.3, 0.2], device=self.device)
         multi_step_errors = []
         for i in range(len(self.surr_steps)):
             diff = current_pos[:, :2] - self.surrogate_pos_target[:, i, :2]
             step_error = diff.square().sum(dim=-1)
-            multi_step_errors.append(step_error * weights[i])
+            # Ensure we don't go out of bounds for weights
+            weight = weights[i] if i < len(weights) else 0.01
+            multi_step_errors.append(step_error * weight)
         pos_error_l2 = torch.stack(multi_step_errors, dim=1).sum(dim=1)
         
         # 使用指数衰减奖励函数 (Use exponential decay reward function)
         # 误差标准差设为0.5米，与原始impedance.py一致 (Error std = 0.5m)
         reward = torch.exp(-pos_error_l2 / 0.25)  # 0.25 = 0.5^2
+        self.pos_err_r = reward.unsqueeze(1)  # Store actual error, not reward
         
         return reward
 
@@ -825,9 +817,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 if hasattr(self, 'surrogate_pos_target'):
                     # 为每个代理时间步绘制不同颜色的球体 (Draw different colored spheres)
                     surrogate_colors = [
-                        (1.0, 0.5, 0.0),  # 橙色 - 第一个时间步 (Orange - first)
-                        (0.0, 0.5, 1.0),  # 蓝色 - 第二个时间步 (Blue - second)
-                        (1.0, 0.0, 0.5),  # 粉色 - 第三个时间步 (Pink - third)
+                        (0.8, 0.0, 0.0),  # 深红色 - 第一个时间步 (Dark red - first)
+                        (1.0, 0.4, 0.4),  # 中红色 - 第二个时间步 (Medium red - second)
+                        (1.0, 0.7, 0.7),  # 浅红色 - 第三个时间步 (Light red - third)
+                        # (1.0, 0.9, 0.9),  # 浅红色 - 第四个时间步 (Light red - fourth)
                     ]
                     surrogate_radius = 0.08  # 稍小的半径 (Slightly smaller radius)
                     
