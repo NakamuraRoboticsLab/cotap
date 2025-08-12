@@ -8,9 +8,9 @@ rewards:
   set_reward_date: 20250405
   only_positive_rewards: False
   reward_scales:
-      tracking_lin_vel_x: 2.0
-      tracking_lin_vel_y: 1.5
-      tracking_ang_vel: 4.0
+      tracking_lin_vel_x: 0.0 # 2.0
+      tracking_lin_vel_y: 0.0 #1.5
+      tracking_ang_vel: 0.0 # 4.0
       tracking_walk_base_height: 2.0 # 1.0
       tracking_stance_base_height: 4.0 # 1.0
       # tracking_waist_dofs: 0.5
@@ -50,7 +50,7 @@ rewards:
       # contact: 0.18 # 0.18
       # alive: 1.0 # 0.15
       # penalty_waist_dofs: -0.5
-      penalty_upper_body_dofs_freeze: 0 # only for freeze upper body # -2.0
+      penalty_upper_body_dofs_freeze: -2.0 # only for freeze upper body # -2.0
       penalty_stand_still: -0.15
       penalty_stance_symmetry: 0
       # penalty_stance_contact_no_ang_vel: -0.1
@@ -66,7 +66,7 @@ rewards:
       # penalty_root_acc_lower_body: -1e-4
 
       # tracking_arm_dofs: 0.5
-      tracking_upper_body_dofs: 2.0 # 4.0
+      tracking_upper_body_dofs: 0 # 4.0 2.0
       penalty_upper_body_torques: -1e-5 #-0.00001
       penalty_upper_body_dof_vel: -1.0e-3
       penalty_upper_body_dof_acc: -2.5e-7
@@ -78,11 +78,11 @@ rewards:
       limits_upper_body_dof_vel: -5.0
       limits_upper_body_torque: -0.1
 
-      impedance_pos_tracking: 1.0
-      impedance_vel_tracking: 1.0
-      force_resistance: 1.0
-      impedance_mode_stability: 1.0
-      impedance_energy_efficiency: 1.0
+      impedance_pos_tracking: 20.0
+      impedance_vel_tracking: 0.0
+      force_resistance: 0.0
+      impedance_mode_stability: 0.0
+      impedance_energy_efficiency: 0.0
 
   reward_groups:
     lower_body: [
@@ -140,7 +140,7 @@ rewards:
       ]
     upper_body: [
       "tracking_upper_body_dofs",
-      # "penalty_upper_body_dofs_freeze",
+      "penalty_upper_body_dofs_freeze",
       "penalty_upper_body_torques",
       "penalty_upper_body_dof_vel",
       "penalty_upper_body_dof_acc",

@@ -102,6 +102,14 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.force_saturate = self.config.facet_params.force_saturate
         self.temporal_smoothing = self.config.facet_params.temporal_smoothing
         self.virtual_mass = self.config.facet_params.virtual_mass
+        
+        # 代理目标时间步 (Surrogate target time steps)
+        self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
+        
+        # 确保temporal_smoothing足够大以支持surr_steps (Ensure large enough)
+        max_surr_step = max(self.surr_steps) if self.surr_steps else 32
+        if self.temporal_smoothing < max_surr_step:
+            self.temporal_smoothing = max_surr_step
 
         # 初始化FACET阻抗控制系统 (Initialize FACET impedance control system)
         self._init_impedance_control()
@@ -146,6 +154,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.ref_lin_vel_w = torch.zeros(*bshape, 3, device=self.device)
         self.ref_pos_w = torch.zeros(*bshape, 3, device=self.device)
         self.ref_yaw_w = torch.zeros(*bshape, 1, device=self.device)
+        
+        # 代理位置目标 (Surrogate position target)
+        self.surrogate_pos_target = torch.zeros(
+            self.num_envs, len(self.surr_steps), 3, device=self.device)
 
         # # 力干扰对象 (Force disturbance objects)
         # self.constant_force = ForceDisturbance(
@@ -189,9 +201,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 执行父类步进 (Execute parent class step)
         result = super().step(actor_state)
         
-        # 调试可视化 (Debug visualization)
-        if hasattr(self, 'simulator'):
-            self.debug_visualization()
+        # # 调试可视化 (Debug visualization)
+        # if hasattr(self, 'simulator'):
+        #     self.debug_visualization()
         
         return result
 
@@ -201,8 +213,38 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 更新控制指令 (Update control commands)
         self.update_impedance_command()
 
+        # 滚动更新参考轨迹缓冲区 (Rolling update of reference trajectory buffer)
+        # 将历史数据向前滚动，为新数据腾出空间 (Roll historical data forward)
+        self.ref_lin_vel_w[:, :-1] = self.ref_lin_vel_w[:, :-1].roll(1, dims=1)
+        self.ref_pos_w[:, :-1] = self.ref_pos_w[:, :-1].roll(1, dims=1)
+        self.ref_yaw_w[:, :-1] = self.ref_yaw_w[:, :-1].roll(1, dims=1)
+
+        # 更新当前状态到缓冲区首位 (Update current state to buffer front)
+        if (hasattr(self, 'simulator') and
+                hasattr(self.simulator, 'robot_root_states')):
+            # 使用模拟器的当前状态 (Use current state from simulator)
+            current_pos = self.simulator.robot_root_states[:, :3]
+            current_vel = self.simulator.robot_root_states[:, 7:10]
+            current_quat = self.simulator.robot_root_states[:, 3:7]
+            
+            # 计算当前偏航角 (Calculate current yaw angle)
+            qw, qx, qy, qz = (current_quat[:, 0], current_quat[:, 1],
+                              current_quat[:, 2], current_quat[:, 3])
+            current_yaw = torch.atan2(2.0 * (qz * qy + qw * qx),
+                                      1.0 - 2.0 * (qx**2 + qy**2))
+            
+            # 更新当前状态到缓冲区第一个位置 (Update current state to first position)
+            self.ref_pos_w[:, 0] = current_pos
+            self.ref_lin_vel_w[:, 0] = current_vel
+            self.ref_yaw_w[:, 0] = current_yaw.unsqueeze(1)
+
         # 积分参考轨迹 (Integrate reference trajectory)
         self._integrate_reference_trajectory()
+
+        # 更新代理位置目标 (Update surrogate position target)
+        # 使用多个时间步的参考轨迹位置作为代理目标 (Use multi-time step reference positions)
+        # 从参考轨迹中提取指定时间步的位置 (Extract positions at specified time steps)
+        self.surrogate_pos_target = self.ref_pos_w[:, self.surr_steps]
 
         # 更新EMA滤波器 (Update EMA filters)
         # 使用机器人本体坐标系的速度 (Use velocities in robot body frame)
@@ -546,28 +588,47 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
     # def set_is_evaluating(self, command=None):
     #     super().set_is_evaluating()
 
-    ########################### FEET REWARDS ###########################
+    ########################### FACET REWARDS ###########################
 
     def _reward_impedance_pos_tracking(self):
         """
         阻抗位置跟踪奖励 (Impedance position tracking reward)
         
-        基于位置误差计算奖励，误差越小奖励越大
-        Calculate reward based on position error, smaller error gives higher reward
+        使用代理位置目标而非直接指令位置，基于参考轨迹的积分结果
+        Use surrogate position targets instead of direct command positions,
+        based on integrated reference trajectory results
         
         Returns:
             位置跟踪奖励 (Position tracking reward)
         """
-        if (not hasattr(self, 'command_setpos_w') or
+        if (not hasattr(self, 'surrogate_pos_target') or
                 not hasattr(self, 'simulator') or
                 not hasattr(self.simulator, 'robot_root_states')):
             return torch.zeros(self.num_envs, device=self.device)
 
-        # 计算位置误差 (Calculate position error)
-        # 使用模拟器的正确根状态 (Use correct root states from simulator)
+        # 获取当前机器人位置 (Get current robot position)
         current_pos = self.simulator.robot_root_states[:, :3]
-        pos_error = (current_pos - self.command_setpos_w).norm(dim=-1)
-        return torch.exp(-pos_error / 0.5)
+        
+        # 方法1: 使用第一个代理时间步作为主要目标 (Method 1: Use first surrogate step)
+        # 只考虑XY平面的误差，忽略Z方向 (Only consider XY plane error, ignore Z)
+        # pos_diff = current_pos[:, :2] - self.surrogate_pos_target[:, 0, :2]
+        # pos_error_l2 = pos_diff.square().sum(dim=-1)
+        
+        # 方法2: 可选的多时间步加权奖励 (Method 2: Optional multi-step weighted reward)
+        # 对多个时间步进行加权平均 (Weighted average across multiple time steps)
+        weights = torch.tensor([0.6, 0.3, 0.1], device=self.device)  # 权重递减
+        multi_step_errors = []
+        for i in range(len(self.surr_steps)):
+            diff = current_pos[:, :2] - self.surrogate_pos_target[:, i, :2]
+            step_error = diff.square().sum(dim=-1)
+            multi_step_errors.append(step_error * weights[i])
+        pos_error_l2 = torch.stack(multi_step_errors, dim=1).sum(dim=1)
+        
+        # 使用指数衰减奖励函数 (Use exponential decay reward function)
+        # 误差标准差设为0.5米，与原始impedance.py一致 (Error std = 0.5m)
+        reward = torch.exp(-pos_error_l2 / 0.25)  # 0.25 = 0.5^2
+        
+        return reward
 
     def _reward_impedance_vel_tracking(self):
         """
@@ -649,7 +710,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
     ######################### Debug Visualization #########################
 
-    def debug_visualization(self):
+    def _draw_debug_vis(self):
+
+        super()._draw_debug_vis()
         """
         调试可视化函数 (Debug visualization function)
         
