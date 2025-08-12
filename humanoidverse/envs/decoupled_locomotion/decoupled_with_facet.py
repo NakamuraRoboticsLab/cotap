@@ -189,9 +189,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 执行父类步进 (Execute parent class step)
         result = super().step(actor_state)
         
-        # # 调试可视化 (Debug visualization)
-        # if hasattr(self, 'simulator'):
-        #     self.debug_visualization()
+        # 调试可视化 (Debug visualization)
+        if hasattr(self, 'simulator'):
+            self.debug_visualization()
         
         return result
 
@@ -222,8 +222,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             sample_ids = sample_command.nonzero().squeeze(-1)
 
             # 随机选择控制模式 (Randomly select control mode)
-            # 概率分布：柔顺40%，速度50%，位置10%，大力0%
-            probs = torch.tensor([0.4, 0.5, 0.1, 0.0], device=self.device)
+            # prob. distribution: pos., vel., comp., large force
+            # hardcode now, should move in .yaml
+            probs = torch.tensor([1.0, 0.0, 0.0, 0.0], device=self.device) # [0.4, 0.5, 0.1, 0.0]
             mode = torch.multinomial(
                 probs, num_samples=len(sample_ids), replacement=True)
 
@@ -232,6 +233,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             self.sample_command_setvel(sample_ids[mode == 1])
             self.sample_command_compliant(sample_ids[mode == 2])
             self.sample_command_large(sample_ids[mode == 3])
+
+            # print("sample_ids:", sample_ids)
 
         self.impedance_command_time += 1
 
@@ -303,6 +306,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 hasattr(self.simulator, 'robot_root_states')):
             current_pos = self.simulator.robot_root_states[env_ids, :3]
             self.command_setpos_w[env_ids] = current_pos + offset
+
+        print(f"采样位置指令: {self.command_setpos_w[env_ids]}")  # 调试输出 (Debug output)
 
         # 采样目标偏航角 (Sample target yaw angle)
         target_yaw = torch.empty(len(env_ids), 1, device=self.device).uniform_(
@@ -467,172 +472,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
     #     rewards['energy_efficiency'] = self.impedance_energy_efficiency()
         
     #     return rewards
-
-    # def debug_visualization(self):
-    #     """
-    #     调试可视化 (Debug visualization)
-        
-    #     在仿真环境中绘制调试信息
-    #     Draw debug information in simulation environment
-    #     """
-    #     if (not hasattr(self, 'simulator') or
-    #             not hasattr(self.simulator, 'viewer')):
-    #         return
-        
-    #     if (not hasattr(self.simulator, 'gym') or
-    #             self.simulator.viewer is None):
-    #         return
-
-    #     # 清除之前的绘制 (Clear previous drawings)
-    #     self.simulator.clear_lines()
-
-    #     # 绘制目标位置 (Draw target positions)
-    #     if hasattr(self, 'command_setpos_w'):
-    #         for i in range(min(self.num_envs, 10)):  # 只绘制前10个环境
-    #             target_pos = self.command_setpos_w[i].cpu().numpy()
-                
-    #             # 获取当前末端执行器位置 (Get current end-effector positions)
-    #             left_hand_pos = self.simulator._rigid_body_pos[
-    #                 i, self.left_hand_link_index].cpu().numpy()
-    #             right_hand_pos = self.simulator._rigid_body_pos[
-    #                 i, self.right_hand_link_index].cpu().numpy()
-                
-    #             # 绘制目标位置球体 (Draw target position spheres)
-    #             # 左手目标位置 - 绿色 (Left hand target - Green)
-    #             if self.impedance_command_mode[i, 0] == self.CMD_POSITION:
-    #                 left_target = target_pos + np.array([-0.3, 0.0, 0.0])
-    #                 self.simulator.draw_sphere(
-    #                     pos=left_target,
-    #                     radius=0.05,
-    #                     color=gymapi.Vec3(0.0, 1.0, 0.0),  # 绿色
-    #                     env_id=i,
-    #                     pos_id=i*2
-    #                 )
-                
-    #             # 右手目标位置 - 蓝色 (Right hand target - Blue)
-    #             if self.impedance_command_mode[i, 0] == self.CMD_POSITION:
-    #                 right_target = target_pos + np.array([0.3, 0.0, 0.0])
-    #                 self.simulator.draw_sphere(
-    #                     pos=right_target,
-    #                     radius=0.05,
-    #                     color=gymapi.Vec3(0.0, 0.0, 1.0),  # 蓝色
-    #                     env_id=i,
-    #                     pos_id=i*2+1
-    #                 )
-                
-    #             # 绘制当前位置到目标位置的连线 (Draw lines from current to target)
-    #             if self.impedance_command_mode[i, 0] == self.CMD_POSITION:
-    #                 # 左手连线 (Left hand line)
-    #                 left_target = target_pos + np.array([-0.3, 0.0, 0.0])
-    #                 self.simulator.draw_line(
-    #                     start_point=gymapi.Vec3(left_hand_pos[0],
-    #                                             left_hand_pos[1],
-    #                                             left_hand_pos[2]),
-    #                     end_point=gymapi.Vec3(left_target[0],
-    #                                           left_target[1],
-    #                                           left_target[2]),
-    #                     color=gymapi.Vec3(0.0, 1.0, 0.0),  # 绿色线条
-    #                     env_id=i
-    #                 )
-                    
-    #                 # 右手连线 (Right hand line)
-    #                 right_target = target_pos + np.array([0.3, 0.0, 0.0])
-    #                 self.simulator.draw_line(
-    #                     start_point=gymapi.Vec3(right_hand_pos[0],
-    #                                             right_hand_pos[1],
-    #                                             right_hand_pos[2]),
-    #                     end_point=gymapi.Vec3(right_target[0],
-    #                                           right_target[1],
-    #                                           right_target[2]),
-    #                     color=gymapi.Vec3(0.0, 0.0, 1.0),  # 蓝色线条
-    #                     env_id=i
-    #                 )
-                
-    #             # 绘制速度模式的速度向量 (Draw velocity vectors for velocity mode)
-    #             if self.impedance_command_mode[i, 0] == self.CMD_LINVEL:
-    #                 vel_scale = 0.5  # 速度向量缩放因子
-    #                 vel_vec = self.set_linvel[i].cpu().numpy() * vel_scale
-                    
-    #                 # 左手速度向量 - 黄色 (Left hand velocity vector - Yellow)
-    #                 left_vel_end = left_hand_pos + vel_vec
-    #                 self.simulator.draw_line(
-    #                     start_point=gymapi.Vec3(left_hand_pos[0],
-    #                                             left_hand_pos[1],
-    #                                             left_hand_pos[2]),
-    #                     end_point=gymapi.Vec3(left_vel_end[0],
-    #                                           left_vel_end[1],
-    #                                           left_vel_end[2]),
-    #                     color=gymapi.Vec3(1.0, 1.0, 0.0),  # 黄色
-    #                     env_id=i
-    #                 )
-                    
-    #                 # 右手速度向量 - 橙色 (Right hand velocity vector - Orange)
-    #                 right_vel_end = right_hand_pos + vel_vec
-    #                 self.simulator.draw_line(
-    #                     start_point=gymapi.Vec3(right_hand_pos[0],
-    #                                             right_hand_pos[1],
-    #                                             right_hand_pos[2]),
-    #                     end_point=gymapi.Vec3(right_vel_end[0],
-    #                                           right_vel_end[1],
-    #                                           right_vel_end[2]),
-    #                     color=gymapi.Vec3(1.0, 0.5, 0.0),  # 橙色
-    #                     env_id=i
-    #                 )
-                
-    #             # 绘制外力向量 (Draw external force vectors)
-    #             if torch.norm(self.force_ext_w[i]) > 0.1:
-    #                 force_scale = 0.1  # 力向量缩放因子
-    #                 force_vec = self.force_ext_w[i].cpu().numpy() * force_scale
-                    
-    #                 # 在机器人基座位置绘制力向量 - 红色 (Draw force at robot base)
-    #                 base_pos = self.simulator.robot_root_states[i, :3].cpu().numpy()
-    #                 force_end = base_pos + force_vec
-    #                 self.simulator.draw_line(
-    #                     start_point=gymapi.Vec3(base_pos[0],
-    #                                             base_pos[1],
-    #                                             base_pos[2] + 0.5),
-    #                     end_point=gymapi.Vec3(force_end[0],
-    #                                           force_end[1],
-    #                                           force_end[2] + 0.5),
-    #                     color=gymapi.Vec3(1.0, 0.0, 0.0),  # 红色
-    #                     env_id=i
-    #                 )
-                    
-    #                 # 在力向量端点绘制球体表示力的大小 (Draw sphere at force end)
-    #                 force_magnitude = torch.norm(
-    #                     self.force_ext_w[i]).cpu().numpy()
-    #                 sphere_radius = min(0.02 + force_magnitude * 0.01, 0.1)
-    #                 self.simulator.draw_sphere(
-    #                     pos=force_end + np.array([0, 0, 0.5]),
-    #                     radius=sphere_radius,
-    #                     color=gymapi.Vec3(1.0, 0.0, 0.0),  # 红色
-    #                     env_id=i,
-    #                     pos_id=i*4+2
-    #                 )
-                
-    #             # 绘制阻抗控制模式指示器 (Draw impedance mode indicators)
-    #             mode_pos = (self.simulator.robot_root_states[i, :3].cpu().numpy() +
-    #                         np.array([0, 0, 1.0]))
-    #             mode_color = gymapi.Vec3(1.0, 1.0, 1.0)  # 默认白色
-                
-    #             # 根据模式设置不同颜色 (Set different colors based on mode)
-    #             if self.impedance_command_mode[i, 0] == self.CMD_COMPLIANT:
-    #                 mode_color = gymapi.Vec3(0.8, 0.8, 0.8)  # 灰色-柔顺模式
-    #             elif self.impedance_command_mode[i, 0] == self.CMD_LINVEL:
-    #                 mode_color = gymapi.Vec3(1.0, 1.0, 0.0)  # 黄色-速度模式
-    #             elif self.impedance_command_mode[i, 0] == self.CMD_POSITION:
-    #                 mode_color = gymapi.Vec3(0.0, 1.0, 0.0)  # 绿色-位置模式
-    #             elif self.impedance_command_mode[i, 0] == self.CMD_LARGE_FORCE:
-    #                 mode_color = gymapi.Vec3(1.0, 0.0, 1.0)  # 紫红色-大力模式
-                
-    #             # 绘制模式指示器球体 (Draw mode indicator sphere)
-    #             self.simulator.draw_sphere(
-    #                 pos=mode_pos,
-    #                 radius=0.03,
-    #                 color=mode_color,
-    #                 env_id=i,
-    #                 pos_id=i*4+3
-    #             )
 
     # def set_impedance_mode(self, env_ids: torch.Tensor, mode: int):
     #     """
@@ -807,7 +646,162 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 基于刚度和外力的能效计算 (Energy efficiency based on stiffness and external force)
         energy_cost = self.lin_kp.squeeze(-1) * self.force_ext_w.norm(dim=-1)
         return torch.exp(-energy_cost / 500.0)
-    
-    ######################### Observations #########################
+
+    ######################### Debug Visualization #########################
+
+    def debug_visualization(self):
+        """
+        调试可视化函数 (Debug visualization function)
+        
+        在位置指令模式下绘制目标位置球体
+        Draw target position spheres in position command mode
+        """
+        if (not hasattr(self, 'simulator') or
+                not hasattr(self.simulator, 'clear_lines')):
+            return
+            
+        # 清除之前的可视化 (Clear previous visualization)
+        # self.simulator.clear_lines()
+        
+        # 刷新仿真张量 (Refresh simulation tensors)
+        if hasattr(self, '_refresh_sim_tensors'):
+            self._refresh_sim_tensors()
+        
+        # 遍历所有环境 (Iterate through all environments)
+        for env_id in range(self.num_envs):
+            # 检查是否为位置指令模式 (Check if in position command mode)
+            if self.impedance_command_mode[env_id, 0] == self.CMD_POSITION:
+                # 获取目标位置 (Get target position)
+                target_pos = self.command_setpos_w[env_id]
+                
+                # 绘制目标位置球体 (Draw target position sphere)
+                # 使用绿色表示位置指令目标 (Use green color for position target)
+                sphere_color = (0.0, 1.0, 0.0)  # 绿色 (Green)
+                sphere_radius = 0.1  # 球体半径 (Sphere radius)
+
+                # print("debug visualization")
+
+                # 绘制球体 (Draw sphere)
+                if hasattr(self.simulator, 'draw_sphere'):
+                    self.simulator.draw_sphere(target_pos, sphere_radius,
+                                               sphere_color, env_id)
+                
+                # 绘制目标偏航角箭头 (Draw target yaw arrow)
+                if hasattr(self.simulator, 'draw_line'):
+                    target_yaw = self.command_setrpy_w[env_id, 2]  # 获取偏航角
+                    arrow_length = 0.5  # 箭头长度
+                    
+                    # 计算箭头终点位置 (Calculate arrow end position)
+                    arrow_end = target_pos.clone()
+                    arrow_end[0] += arrow_length * torch.cos(target_yaw)
+                    arrow_end[1] += arrow_length * torch.sin(target_yaw)
+                    # 保持与目标球体相同的高度 (Keep same height as target sphere)
+                    
+                    # 绘制主箭头线 (Draw main arrow line)
+                    arrow_color = (1.0, 0.0, 1.0)  # 紫色 (Magenta)
+                    arrow_start = target_pos.clone()  # 与球体相同高度
+                    self.simulator.draw_line(
+                        Point(arrow_start),
+                        Point(arrow_end),
+                        Point(arrow_color),
+                        env_id
+                    )
+                    
+                    # 绘制箭头头部 (Draw arrow head)
+                    head_length = 0.1
+                    head_angle = torch.pi / 6  # 30度
+                    
+                    # 左侧箭头线 (Left arrow head line)
+                    left_head_end = arrow_end.clone()
+                    left_head_end[0] -= (head_length *
+                                         torch.cos(target_yaw - head_angle))
+                    left_head_end[1] -= (head_length *
+                                         torch.sin(target_yaw - head_angle))
+                    self.simulator.draw_line(
+                        Point(arrow_end),
+                        Point(left_head_end),
+                        Point(arrow_color),
+                        env_id
+                    )
+                    
+                    # 右侧箭头线 (Right arrow head line)
+                    right_head_end = arrow_end.clone()
+                    right_head_end[0] -= (head_length *
+                                          torch.cos(target_yaw + head_angle))
+                    right_head_end[1] -= (head_length *
+                                          torch.sin(target_yaw + head_angle))
+                    self.simulator.draw_line(
+                        Point(arrow_end),
+                        Point(right_head_end),
+                        Point(arrow_color),
+                        env_id
+                    )
+                
+                # 绘制从当前位置到目标位置的连线 (Draw line from current to target)
+                if (hasattr(self, 'simulator') and
+                        hasattr(self.simulator, 'robot_root_states') and
+                        hasattr(self.simulator, 'draw_line')):
+                    
+                    current_pos = self.simulator.robot_root_states[env_id, :3]
+                    
+                    # 绘制连接线 (Draw connection line)
+                    line_color = (1.0, 1.0, 0.0)  # 黄色 (Yellow)
+                    
+                    # 绘制多条细线形成更明显的线条 (Draw multiple thin lines)
+                    for _ in range(5):
+                        # 小随机偏移 (Small random offset)
+                        line_offset = torch.rand(3, device=self.device) * 0.01
+                        self.simulator.draw_line(
+                            Point(current_pos + line_offset),
+                            Point(target_pos + line_offset),
+                            Point(line_color),
+                            env_id
+                        )
+            
+            # # 为其他模式绘制不同颜色的指示器 (Draw colored indicators for other modes)
+            # elif self.impedance_command_mode[env_id, 0] == self.CMD_LINVEL:
+            #     # 速度模式 - 蓝色小球 (Velocity mode - blue small sphere)
+            #     if (hasattr(self, 'simulator') and
+            #             hasattr(self.simulator, 'robot_root_states') and
+            #             hasattr(self.simulator, 'draw_sphere')):
+                    
+            #         current_pos = self.simulator.robot_root_states[env_id, :3]
+            #         sphere_color = (0.0, 0.0, 1.0)  # 蓝色 (Blue)
+            #         sphere_radius = 0.05
+            #         offset_pos = current_pos + torch.tensor([0, 0, 0.3],
+            #                                                 device=self.device)
+            #         self.simulator.draw_sphere(offset_pos, sphere_radius,
+            #                                    sphere_color, env_id)
+                                               
+            # elif self.impedance_command_mode[env_id, 0] == self.CMD_COMPLIANT:
+            #     # 柔顺模式 - 紫色小球 (Compliant mode - purple small sphere)
+            #     if (hasattr(self, 'simulator') and
+            #             hasattr(self.simulator, 'robot_root_states') and
+            #             hasattr(self.simulator, 'draw_sphere')):
+                    
+            #         current_pos = self.simulator.robot_root_states[env_id, :3]
+            #         sphere_color = (1.0, 0.0, 1.0)  # 紫色 (Purple)
+            #         sphere_radius = 0.05
+            #         offset_pos = current_pos + torch.tensor([0, 0, 0.3],
+            #                                                 device=self.device)
+            #         self.simulator.draw_sphere(offset_pos, sphere_radius,
+            #                                    sphere_color, env_id)
+
+            # elif (self.impedance_command_mode[env_id, 0] ==
+            #       self.CMD_LARGE_FORCE):
+            #     # 大力模式 - 红色小球 (Large force mode - red small sphere)
+            #     if (hasattr(self, 'simulator') and
+            #             hasattr(self.simulator, 'robot_root_states') and
+            #             hasattr(self.simulator, 'draw_sphere')):
+
+            #         current_pos = self.simulator.robot_root_states[env_id, :3]
+            #         sphere_color = (1.0, 0.0, 0.0)  # 红色 (Red)
+            #         sphere_radius = 0.05
+            #         offset_pos = current_pos + torch.tensor([0, 0, 0.3],
+            #                                                 device=self.device)
+            #         self.simulator.draw_sphere(offset_pos, sphere_radius,
+            #                                    sphere_color, env_id)
+
+    # ============= Observations =============
 
     
