@@ -820,6 +820,39 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                             Point(line_color),
                             env_id
                         )
+                
+                # 绘制代理位置目标球体 (Draw surrogate position target spheres)
+                if hasattr(self, 'surrogate_pos_target'):
+                    # 为每个代理时间步绘制不同颜色的球体 (Draw different colored spheres)
+                    surrogate_colors = [
+                        (1.0, 0.5, 0.0),  # 橙色 - 第一个时间步 (Orange - first)
+                        (0.0, 0.5, 1.0),  # 蓝色 - 第二个时间步 (Blue - second)
+                        (1.0, 0.0, 0.5),  # 粉色 - 第三个时间步 (Pink - third)
+                    ]
+                    surrogate_radius = 0.08  # 稍小的半径 (Slightly smaller radius)
+                    
+                    for i, surr_step in enumerate(self.surr_steps):
+                        if i < len(surrogate_colors):
+                            surr_pos = self.surrogate_pos_target[env_id, i]
+                            surr_color = surrogate_colors[i]
+                            
+                            # 绘制代理位置球体 (Draw surrogate position sphere)
+                            if hasattr(self.simulator, 'draw_sphere'):
+                                self.simulator.draw_sphere(surr_pos, surrogate_radius,
+                                                          surr_color, env_id)
+                            
+                            # 绘制从当前位置到代理位置的细线 (Draw thin line)
+                            if hasattr(self.simulator, 'draw_line'):
+                                # 使用半透明效果 (Use semi-transparent effect)
+                                color_factor = 0.6
+                                surr_line_color = tuple(c * color_factor
+                                                        for c in surr_color)
+                                self.simulator.draw_line(
+                                    Point(current_pos),
+                                    Point(surr_pos),
+                                    Point(surr_line_color),
+                                    env_id
+                                )
             
             # # 为其他模式绘制不同颜色的指示器 (Draw colored indicators for other modes)
             # elif self.impedance_command_mode[env_id, 0] == self.CMD_LINVEL:
