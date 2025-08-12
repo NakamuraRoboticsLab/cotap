@@ -157,6 +157,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 代理位置目标 (Surrogate position target)
         self.surrogate_pos_target = torch.zeros(
             self.num_envs, len(self.surr_steps), 3, device=self.device)
+        
+        # 代理速度目标 (Surrogate velocity target)
+        self.surrogate_lin_vel_target = torch.zeros(
+            self.num_envs, len(self.surr_steps), 3, device=self.device)
 
         # EMA滤波器 (EMA filters)
         # 使用模拟器的正确根速度项 (Use correct root velocity terms from simulator)
@@ -182,10 +186,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         result = super().step(actor_state)
 
         # print("self.pos_err_r:", self.pos_err_r)
-
-        # # 调试可视化 (Debug visualization)
-        # if hasattr(self, 'simulator'):
-        #     self.debug_visualization()
         
         return result
 
@@ -227,6 +227,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 使用多个时间步的参考轨迹位置作为代理目标 (Use multi-time step reference positions)
         # 从参考轨迹中提取指定时间步的位置 (Extract positions at specified time steps)
         self.surrogate_pos_target = self.ref_pos_w[:, self.surr_steps]
+        
+        # 更新代理速度目标 (Update surrogate velocity target)
+        # 从参考轨迹中提取指定时间步的速度 (Extract velocities at specified time steps)
+        self.surrogate_lin_vel_target = self.ref_lin_vel_w[:, self.surr_steps]
 
         # 更新EMA滤波器 (Update EMA filters)
         # 使用机器人本体坐标系的速度 (Use velocities in robot body frame)
@@ -624,24 +628,40 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
     def _reward_impedance_vel_tracking(self):
         """
-        阻抗速度跟踪奖励 (Impedance velocity tracking reward)
+        代理速度跟踪奖励 (Surrogate velocity tracking reward)
         
-        基于速度误差计算奖励
-        Calculate reward based on velocity error
+        使用多时间步代理速度目标与EMA滤波速度的跟踪奖励
+        Multi-step surrogate velocity target tracking with EMA filtered vel
         
         Returns:
-            速度跟踪奖励 (Velocity tracking reward)
+            代理速度跟踪奖励 (Surrogate velocity tracking reward)
         """
-        if (not hasattr(self, 'set_linvel') or
-                not hasattr(self, 'simulator') or
-                not hasattr(self.simulator, 'robot_root_states')):
+        if (not hasattr(self, 'surrogate_lin_vel_target') or
+                not hasattr(self, 'lin_vel_ema') or
+                not hasattr(self.lin_vel_ema, 'ema') or
+                self.lin_vel_ema.ema is None):
             return torch.zeros(self.num_envs, device=self.device)
 
-        # 计算速度误差 (Calculate velocity error)
-        # 使用模拟器的正确根状态速度 (Use correct root state velocities from simulator)
-        current_vel = self.simulator.robot_root_states[:, 7:10]
-        vel_error = (current_vel - self.set_linvel).norm(dim=-1)
-        return torch.exp(-vel_error / 1.0)
+        # 计算多时间步速度误差 (Calculate multi-step velocity error)
+        # surrogate_lin_vel_target: (num_envs, num_surr_steps, 3)
+        # lin_vel_ema.ema: (num_envs, num_ema_gammas, 3)
+        
+        # 使用不同EMA gamma值与不同时间步进行比较
+        # Compare different EMA gamma values with different time steps
+        surr_vel = self.surrogate_lin_vel_target  # (n, t1, 3)
+        ema_vel = self.lin_vel_ema.ema  # (n, t2, 3)
+        
+        # 扩展维度进行广播计算 (Expand dimensions for broadcast calculation)
+        surr_vel_expanded = surr_vel.unsqueeze(2)  # (n, t1, 1, 3)
+        ema_vel_expanded = ema_vel.unsqueeze(1)    # (n, 1, t2, 3)
+        
+        # 计算差值和L2误差 (Calculate difference and L2 error)
+        diff = surr_vel_expanded - ema_vel_expanded  # (n, t1, t2, 3)
+        error_l2 = diff.square().sum(dim=-1, keepdim=True)  # (n, t1, t2, 1)
+        
+        # 计算奖励 (Calculate reward)
+        reward = ((- error_l2 / 0.25).exp() - 0.25 * error_l2).mean(1)
+        return reward.max(dim=1).values.squeeze(-1)
 
     def _reward_force_resistance(self):
         """
@@ -833,6 +853,71 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                             if hasattr(self.simulator, 'draw_sphere'):
                                 self.simulator.draw_sphere(surr_pos, surrogate_radius,
                                                           surr_color, env_id)
+                            
+                            # 绘制代理速度目标箭头 (Draw surrogate velocity target arrow)
+                            if (hasattr(self, 'surrogate_lin_vel_target') and
+                                    hasattr(self.simulator, 'draw_line')):
+                                
+                                surr_vel = self.surrogate_lin_vel_target[env_id, i]
+                                vel_magnitude = surr_vel.norm()
+                                
+                                # 只在速度足够大时绘制箭头 (Only draw arrow if significant)
+                                if vel_magnitude > 0.1:
+                                    # 归一化速度向量并缩放为合适的箭头长度
+                                    arrow_length = 0.3  # 箭头长度 (Arrow length)
+                                    vel_normalized = (
+                                        surr_vel /
+                                        vel_magnitude.clamp_min(1e-6))
+                                    arrow_end = (
+                                        surr_pos +
+                                        vel_normalized * arrow_length)
+                                    
+                                    # 使用与球体相同的颜色绘制速度箭头
+                                    vel_color = surr_color
+                                    
+                                    # 绘制主箭头线 (Draw main arrow line)
+                                    self.simulator.draw_line(
+                                        Point(surr_pos),
+                                        Point(arrow_end),
+                                        Point(vel_color),
+                                        env_id
+                                    )
+                                    
+                                    # 绘制箭头头部 (Draw arrow head)
+                                    head_length = 0.08
+                                    vel_direction = torch.atan2(
+                                        vel_normalized[1], vel_normalized[0])
+                                    head_angle = torch.pi / 6  # 30度
+                                    
+                                    # 左侧箭头线 (Left arrow head line)
+                                    left_head_end = arrow_end.clone()
+                                    left_head_end[0] -= (
+                                        head_length *
+                                        torch.cos(vel_direction - head_angle))
+                                    left_head_end[1] -= (
+                                        head_length *
+                                        torch.sin(vel_direction - head_angle))
+                                    self.simulator.draw_line(
+                                        Point(arrow_end),
+                                        Point(left_head_end),
+                                        Point(vel_color),
+                                        env_id
+                                    )
+                                    
+                                    # 右侧箭头线 (Right arrow head line)
+                                    right_head_end = arrow_end.clone()
+                                    right_head_end[0] -= (
+                                        head_length *
+                                        torch.cos(vel_direction + head_angle))
+                                    right_head_end[1] -= (
+                                        head_length *
+                                        torch.sin(vel_direction + head_angle))
+                                    self.simulator.draw_line(
+                                        Point(arrow_end),
+                                        Point(right_head_end),
+                                        Point(vel_color),
+                                        env_id
+                                    )
                             
                             # 绘制从当前位置到代理位置的细线 (Draw thin line)
                             if hasattr(self.simulator, 'draw_line'):
