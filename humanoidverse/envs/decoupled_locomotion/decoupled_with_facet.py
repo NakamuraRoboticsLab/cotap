@@ -19,21 +19,15 @@ from loguru import logger
 
 DEBUG = False
 
-def clamp_norm(x: torch.Tensor, min_norm: float = 0.0,
-               max_norm: float = 1.0) -> torch.Tensor:
-    """
-    将张量范数限制在指定区间 (Clamp tensor norm to specified range)
-    
-    Args:
-        x: 输入张量 (Input tensor)
-        min_norm: 最小范数 (Minimum norm)
-        max_norm: 最大范数 (Maximum norm)
-    
-    Returns:
-        范数被限制的张量 (Tensor with clamped norm)
-    """
-    norm = x.norm(dim=-1, keepdim=True)
-    return x * torch.clamp(norm, min_norm, max_norm) / norm.clamp_min(1e-8)
+def clamp_norm(x: torch.Tensor, min: float=0., max: float=torch.inf):
+    x_norm = x.norm(dim=-1, keepdim=True).clamp(1e-6)
+    x = torch.where(x_norm < min, x / x_norm * min, x)
+    x = torch.where(x_norm > max, x / x_norm * max, x)
+    return x
+
+def clamp_along(x: torch.Tensor, axis: torch.Tensor, min: float, max: float):
+    projection = (x * axis).sum(dim=-1, keepdim=True)
+    return x - projection * axis + projection.clamp(min, max) * axis
 
 
 def saturate(x: torch.Tensor, a: float) -> torch.Tensor:
@@ -101,7 +95,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.force_saturate = self.config.facet_params.force_saturate
         self.temporal_smoothing = self.config.facet_params.temporal_smoothing
         self.virtual_mass = self.config.facet_params.virtual_mass
-        
+        self.max_acc_xy = self.config.facet_params.max_acc_xy
+        self.max_vel_xy = self.config.facet_params.max_vel_xy
+
         # 代理目标时间步 (Surrogate target time steps)
         self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
         # self.surr_steps = [8, 16, 24, 32]
@@ -110,6 +106,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         max_surr_step = max(self.surr_steps) if self.surr_steps else 32
         if self.temporal_smoothing < max_surr_step:
             self.temporal_smoothing = max_surr_step
+
+        self.max_acc_xyz = self.max_acc_xy + (0.,)
+        self.max_vel_xyz = self.max_vel_xy + (0.,)
 
         # 初始化FACET阻抗控制系统 (Initialize FACET impedance control system)
         self._init_impedance_control()
@@ -293,10 +292,16 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 保持Z方向稳定 (Keep Z direction stable)
         ref_acc_w[..., 2] = 0.0
 
+        x_b = torch.cat([self.ref_yaw_w.cos(), self.ref_yaw_w.sin(), torch.zeros_like(self.ref_yaw_w)], dim=-1)
+        y_b = torch.cat([-self.ref_yaw_w.sin(), self.ref_yaw_w.cos(), torch.zeros_like(self.ref_yaw_w)], dim=-1)
+        # ref_acc_w = clamp_norm(ref_acc_w, 0., 80.)
+        ref_acc_w = clamp_along(ref_acc_w, x_b, -self.max_acc_xyz[0], self.max_acc_xyz[0])
+        ref_acc_w = clamp_along(ref_acc_w, y_b, -self.max_acc_xyz[1], self.max_acc_xyz[1])
+
         # 积分速度和位置 (Integrate velocity and position)
         ref_vel_w = self.ref_lin_vel_w + ref_acc_w * dt
         ref_vel_w[..., 2] = 0.0
-        ref_vel_w = clamp_norm(ref_vel_w, 0., 2.4)
+        ref_vel_w = clamp_norm(ref_vel_w, 0., 1.5) # mannually set walking speed limit
 
         self.ref_lin_vel_w = ref_vel_w
         self.ref_pos_w.add_(self.ref_lin_vel_w * dt)
