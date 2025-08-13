@@ -99,8 +99,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.max_vel_xy = self.config.facet_params.max_vel_xy
 
         # 代理目标时间步 (Surrogate target time steps)
-        # self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
-        self.surr_steps = [8, 16]
+        self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
+        # self.surr_steps = [8, 16, 24]
         
         # 确保temporal_smoothing足够大以支持surr_steps (Ensure large enough)
         max_surr_step = max(self.surr_steps) if self.surr_steps else 32
@@ -264,7 +264,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         """更新阻抗控制指令 (Update impedance control commands)"""
         
         # 周期性采样新指令 (Periodically sample new commands)
-        sample_command = ((self.impedance_command_time - 50) % 150 == 0)
+        sample_command = ((self.impedance_command_time - 50) % 200 == 0) # every 150
         sample_command = sample_command & (
             torch.rand(self.num_envs, device=self.device) < 0.5)
 
@@ -676,8 +676,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 方法2: 可选的多时间步加权奖励 (Method 2: Optional multi-step weighted reward)
         # 对多个时间步进行加权平均 (Weighted average across multiple time steps)
-        # weights = torch.tensor([0.5, 0.3, 0.2], device=self.device)
-        weights = torch.tensor([0.7, 0.3], device=self.device)
+        weights = torch.tensor([0.3, 0.3, 0.3], device=self.device)
+        # weights = torch.tensor([0.7, 0.3], device=self.device)
         multi_step_errors = []
         for i in range(len(self.surr_steps)):
             diff = current_pos[:, :2] - self.surrogate_pos_target[:, i, :2]
@@ -725,6 +725,46 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 计算差值和L2误差 (Calculate difference and L2 error)
         diff = surr_vel_expanded - ema_vel_expanded  # (n, t1, t2, 3)
+        error_l2 = diff.square().sum(dim=-1, keepdim=True)  # (n, t1, t2, 1)
+        
+        # 计算奖励 (Calculate reward)
+        reward = torch.exp(-error_l2 / 0.25)  # (n, t1, t2, 1)
+        # 对多个EMA和时间步取平均，然后取最佳匹配
+        # Average across multiple EMA and time steps, then take best match
+        reward = reward.mean(dim=[1, 2]).squeeze(-1)  # (n,)
+        return reward
+    
+    def _reward_impedance_yaw_vel_tracking(self):
+        """
+        代理偏航角速度跟踪奖励 (Surrogate yaw velocity tracking reward)
+        
+        使用多时间步代理偏航角速度目标与EMA滤波角速度的跟踪奖励
+        Multi-step surrogate yaw velocity target tracking with EMA filtered angular vel
+        
+        Returns:
+            代理偏航角速度跟踪奖励 (Surrogate yaw velocity tracking reward)
+        """
+        if (not hasattr(self, 'surrogate_yaw_vel_target') or
+                not hasattr(self, 'ang_vel_ema') or
+                not hasattr(self.ang_vel_ema, 'ema') or
+                self.ang_vel_ema.ema is None):
+            return torch.zeros(self.num_envs, device=self.device)
+
+        # 计算多时间步偏航角速度误差 (Calculate multi-step yaw velocity error)
+        # surrogate_yaw_vel_target: (num_envs, num_surr_steps, 1)
+        # ang_vel_ema.ema: (num_envs, num_ema_gammas, 3)
+        
+        # 使用不同EMA gamma值与不同时间步进行比较
+        # Compare different EMA gamma values with different time steps
+        surr_yaw_vel = self.surrogate_yaw_vel_target  # (n, t1, 1)
+        ema_yaw_vel = self.ang_vel_ema.ema[:, :, 2:3]  # (n, t2, 1) - Z component only
+        
+        # 扩展维度进行广播计算 (Expand dimensions for broadcast calculation)
+        surr_yaw_vel_expanded = surr_yaw_vel.unsqueeze(2)  # (n, t1, 1, 1)
+        ema_yaw_vel_expanded = ema_yaw_vel.unsqueeze(1)    # (n, 1, t2, 1)
+        
+        # 计算差值和L2误差 (Calculate difference and L2 error)
+        diff = surr_yaw_vel_expanded - ema_yaw_vel_expanded  # (n, t1, t2, 1)
         error_l2 = diff.square().sum(dim=-1, keepdim=True)  # (n, t1, t2, 1)
         
         # 计算奖励 (Calculate reward)
@@ -910,7 +950,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                     surrogate_colors = [
                         (0.8, 0.0, 0.0),  # 深红色 - 第一个时间步 (Dark red - first)
                         (1.0, 0.4, 0.4),  # 中红色 - 第二个时间步 (Medium red - second)
-                        # (1.0, 0.7, 0.7),  # 浅红色 - 第三个时间步 (Light red - third)
+                        (1.0, 0.7, 0.7),  # 浅红色 - 第三个时间步 (Light red - third)
                         # (1.0, 0.9, 0.9),  # 浅红色 - 第四个时间步 (Light red - fourth)
                     ]
                     surrogate_radius = 0.08  # 稍小的半径 (Slightly smaller radius)
