@@ -99,8 +99,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.max_vel_xy = self.config.facet_params.max_vel_xy
 
         # 代理目标时间步 (Surrogate target time steps)
-        self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
-        # self.surr_steps = [8, 16, 24, 32]
+        # self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
+        self.surr_steps = [8, 16]
         
         # 确保temporal_smoothing足够大以支持surr_steps (Ensure large enough)
         max_surr_step = max(self.surr_steps) if self.surr_steps else 32
@@ -300,6 +300,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # 积分速度和位置 (Integrate velocity and position)
         ref_vel_w = self.ref_lin_vel_w + ref_acc_w * dt
+        ref_vel_w = clamp_along(ref_vel_w, x_b, -self.max_vel_xyz[0], self.max_vel_xyz[0])
+        ref_vel_w = clamp_along(ref_vel_w, y_b, -self.max_vel_xyz[1], self.max_vel_xyz[1])
         ref_vel_w[..., 2] = 0.0
         ref_vel_w = clamp_norm(ref_vel_w, 0., 1.5) # mannually set walking speed limit
 
@@ -625,7 +627,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 方法2: 可选的多时间步加权奖励 (Method 2: Optional multi-step weighted reward)
         # 对多个时间步进行加权平均 (Weighted average across multiple time steps)
-        weights = torch.tensor([0.5, 0.3, 0.2], device=self.device)
+        # weights = torch.tensor([0.5, 0.3, 0.2], device=self.device)
+        weights = torch.tensor([0.7, 0.3], device=self.device)
         multi_step_errors = []
         for i in range(len(self.surr_steps)):
             diff = current_pos[:, :2] - self.surrogate_pos_target[:, i, :2]
@@ -855,7 +858,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                     surrogate_colors = [
                         (0.8, 0.0, 0.0),  # 深红色 - 第一个时间步 (Dark red - first)
                         (1.0, 0.4, 0.4),  # 中红色 - 第二个时间步 (Medium red - second)
-                        (1.0, 0.7, 0.7),  # 浅红色 - 第三个时间步 (Light red - third)
+                        # (1.0, 0.7, 0.7),  # 浅红色 - 第三个时间步 (Light red - third)
                         # (1.0, 0.9, 0.9),  # 浅红色 - 第四个时间步 (Light red - fourth)
                     ]
                     surrogate_radius = 0.08  # 稍小的半径 (Slightly smaller radius)
@@ -877,10 +880,17 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                                 surr_vel = self.surrogate_lin_vel_target[env_id, i]
                                 vel_magnitude = surr_vel.norm()
                                 
-                                # 只在速度足够大时绘制箭头 (Only draw arrow if significant)
-                                if vel_magnitude > 0.1:
-                                    # 归一化速度向量并缩放为合适的箭头长度
-                                    arrow_length = 0.3  # 箭头长度 (Arrow length)
+                                # 只在速度足够大时绘制箭头 (Only draw if significant)
+                                if vel_magnitude > 0.01:
+                                    # 箭头长度与速度大小成比例
+                                    # Arrow length proportional to velocity magnitude
+                                    base_len = 0.1  # Min arrow length
+                                    scale = 0.2  # Velocity scale
+                                    vel_comp = vel_magnitude * scale
+                                    arrow_length = base_len + vel_comp
+                                    # 限制最大箭头长度以避免过长
+                                    arrow_length = min(arrow_length, 1.0)
+                                    
                                     vel_normalized = (
                                         surr_vel /
                                         vel_magnitude.clamp_min(1e-6))
