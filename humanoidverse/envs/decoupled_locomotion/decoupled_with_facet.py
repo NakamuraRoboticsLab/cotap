@@ -152,14 +152,19 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.ref_lin_vel_w = torch.zeros(*bshape, 3, device=self.device)
         self.ref_pos_w = torch.zeros(*bshape, 3, device=self.device)
         self.ref_yaw_w = torch.zeros(*bshape, 1, device=self.device)
+        self.ref_yaw_vel_w = torch.zeros(*bshape, 1, device=self.device)
         
         # 代理位置目标 (Surrogate position target)
         self.surrogate_pos_target = torch.zeros(
             self.num_envs, len(self.surr_steps), 3, device=self.device)
-        
         # 代理速度目标 (Surrogate velocity target)
         self.surrogate_lin_vel_target = torch.zeros(
             self.num_envs, len(self.surr_steps), 3, device=self.device)
+        
+        self.surrogate_yaw_target = torch.zeros(
+            self.num_envs, len(self.surr_steps), 1, device=self.device)
+        self.surrogate_yaw_vel_target = torch.zeros(
+            self.num_envs, len(self.surr_steps), 1, device=self.device)
 
         # EMA滤波器 (EMA filters)
         # 使用模拟器的正确根速度项 (Use correct root velocity terms from simulator)
@@ -199,6 +204,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.ref_lin_vel_w[:, :-1] = self.ref_lin_vel_w[:, :-1].roll(1, dims=1)
         self.ref_pos_w[:, :-1] = self.ref_pos_w[:, :-1].roll(1, dims=1)
         self.ref_yaw_w[:, :-1] = self.ref_yaw_w[:, :-1].roll(1, dims=1)
+        self.ref_yaw_vel_w[:, :-1] = self.ref_yaw_vel_w[:, :-1].roll(1, dims=1)
 
         # 更新当前状态到缓冲区首位 (Update current state to buffer front)
         if (hasattr(self, 'simulator') and
@@ -214,10 +220,17 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             current_yaw = torch.atan2(2.0 * (qz * qy + qw * qx),
                                       1.0 - 2.0 * (qx**2 + qy**2))
             
+            # 计算当前偏航角速度 (Calculate current yaw velocity)
+            # 使用角速度的Z分量作为偏航角速度
+            # Use Z component of angular velocity as yaw velocity
+            current_ang_vel = self.simulator.robot_root_states[:, 10:13]
+            current_yaw_vel = current_ang_vel[:, 2]  # Z component
+            
             # 更新当前状态到缓冲区第一个位置 (Update current state to first position)
             self.ref_pos_w[:, 0] = current_pos
             self.ref_lin_vel_w[:, 0] = current_vel
             self.ref_yaw_w[:, 0] = current_yaw.unsqueeze(1)
+            self.ref_yaw_vel_w[:, 0] = current_yaw_vel.unsqueeze(1)
 
         # 积分参考轨迹 (Integrate reference trajectory)
         self._integrate_reference_trajectory()
@@ -231,10 +244,19 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 从参考轨迹中提取指定时间步的速度 (Extract velocities at specified time steps)
         self.surrogate_lin_vel_target = self.ref_lin_vel_w[:, self.surr_steps]
 
+        # 更新代理偏航角目标 (Update surrogate yaw target)
+        # 从参考轨迹中提取指定时间步的偏航角 (Extract yaw angles at specified time steps)
+        self.surrogate_yaw_target = self.ref_yaw_w[:, self.surr_steps]
+        
+        # 更新代理偏航角速度目标 (Update surrogate yaw velocity target)
+        # 从参考轨迹中提取指定时间步的偏航角速度 (Extract yaw velocities at specified time steps)
+        self.surrogate_yaw_vel_target = self.ref_yaw_vel_w[:, self.surr_steps]
+
         # 更新EMA滤波器 (Update EMA filters)
         # 使用机器人本体坐标系的速度 (Use velocities in robot body frame)
         # should be used in reward function for tracking
         if hasattr(self, 'base_lin_vel') and hasattr(self, 'base_ang_vel'):
+            # print("EMA Update")
             self.lin_vel_ema.update(self.base_lin_vel)
             self.ang_vel_ema.update(self.base_ang_vel)
 
@@ -314,6 +336,33 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             current_z = self.simulator.robot_root_states[:, 2:3]
             self.ref_pos_w[..., 2:3] = current_z.unsqueeze(1)
 
+        # 积分偏航角轨迹 (Integrate yaw trajectory)
+        # 计算期望偏航角 (Calculate desired yaw angle)
+        setyaw_w = self.command_setrpy_w[:, 2:3].unsqueeze(1)
+        
+        # 计算偏航角加速度 (Calculate yaw angular acceleration)
+        # 使用类似位置控制的PD控制器 (Use PD controller similar to position)
+        ref_yaw_acc_w = (
+            self.ang_kp.reshape(self.num_envs, 1, 1) *
+            (setyaw_w - self.ref_yaw_w) +
+            self.ang_kd.reshape(self.num_envs, 1, 1) *
+            (0.0 - self.ref_yaw_vel_w)
+        ) / self.virtual_mass_tensor.unsqueeze(1)
+        
+        # 限制偏航角加速度 (Limit yaw angular acceleration)
+        max_yaw_acc = 5.0  # rad/s^2
+        ref_yaw_acc_w = torch.clamp(ref_yaw_acc_w, -max_yaw_acc, max_yaw_acc)
+        
+        # 积分偏航角速度和偏航角 (Integrate yaw velocity and yaw angle)
+        ref_yaw_vel_w = self.ref_yaw_vel_w + ref_yaw_acc_w * dt
+        
+        # 限制偏航角速度 (Limit yaw angular velocity)
+        max_yaw_vel = 2.0  # rad/s
+        ref_yaw_vel_w = torch.clamp(ref_yaw_vel_w, -max_yaw_vel, max_yaw_vel)
+        
+        self.ref_yaw_vel_w = ref_yaw_vel_w
+        self.ref_yaw_w.add_(self.ref_yaw_vel_w * dt)
+
     # ================================================================
     # 指令采样方法 (Command Sampling Methods)
     # ================================================================
@@ -341,7 +390,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # 采样目标位置 (Sample target position)
         offset = torch.zeros(len(env_ids), 3, device=self.device)
-        offset[:, 0].uniform_(0.6, 1.0)  # X方向前进 (X direction forward)
+        offset[:, 0].uniform_(-1.0, 1.0)  # X方向前进 (X direction forward)
         offset[:, 1].uniform_(-0.6, 0.6)  # Y方向左右 (Y direction left/right)
         # when stance or tapping, no offset
         self.tapping_in_place[env_ids, 0] = (
@@ -679,8 +728,11 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         error_l2 = diff.square().sum(dim=-1, keepdim=True)  # (n, t1, t2, 1)
         
         # 计算奖励 (Calculate reward)
-        reward = ((- error_l2 / 0.25).exp() - 0.25 * error_l2).mean(1)
-        return reward.max(dim=1).values.squeeze(-1)
+        reward = torch.exp(-error_l2 / 0.25)  # (n, t1, t2, 1)
+        # 对多个EMA和时间步取平均，然后取最佳匹配
+        # Average across multiple EMA and time steps, then take best match
+        reward = reward.mean(dim=[1, 2]).squeeze(-1)  # (n,)
+        return reward
 
     def _reward_force_resistance(self):
         """

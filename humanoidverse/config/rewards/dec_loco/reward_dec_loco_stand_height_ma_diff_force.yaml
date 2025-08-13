@@ -160,7 +160,7 @@ rewards:
   # fix upper body
   fix_upper_body: False
   # gait period
-  gait_period: 1.2
+  gait_period: 1.0
 
   reward_tracking_sigma:
     lin_vel: 0.25
