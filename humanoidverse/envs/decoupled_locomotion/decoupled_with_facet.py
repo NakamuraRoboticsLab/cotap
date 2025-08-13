@@ -128,10 +128,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.ang_kd = torch.zeros(self.num_envs, 1, device=self.device)
 
         # 目标状态 (Target states)
-        self.command_setpos_w = torch.zeros(self.num_envs, 3,
-                                            device=self.device)
-        self.command_setrpy_w = torch.zeros(self.num_envs, 3,
-                                            device=self.device)
+        self.command_setpos_w = torch.zeros(self.num_envs, 3, device=self.device)
+        self.command_setrpy_w = torch.zeros(self.num_envs, 3, device=self.device)
         self.set_linvel = torch.zeros(self.num_envs, 3, device=self.device)
 
         # 虚拟动力学参数 (Virtual dynamics parameters)
@@ -153,18 +151,15 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.ref_pos_w = torch.zeros(*bshape, 3, device=self.device)
         self.ref_yaw_w = torch.zeros(*bshape, 1, device=self.device)
         self.ref_yaw_vel_w = torch.zeros(*bshape, 1, device=self.device)
+        self.ref_lin_acc_w = torch.zeros(*bshape, 3, device=self.device)
         
         # 代理位置目标 (Surrogate position target)
-        self.surrogate_pos_target = torch.zeros(
-            self.num_envs, len(self.surr_steps), 3, device=self.device)
+        self.surrogate_pos_target = torch.zeros(self.num_envs, len(self.surr_steps), 3, device=self.device)
         # 代理速度目标 (Surrogate velocity target)
-        self.surrogate_lin_vel_target = torch.zeros(
-            self.num_envs, len(self.surr_steps), 3, device=self.device)
+        self.surrogate_lin_vel_target = torch.zeros(self.num_envs, len(self.surr_steps), 3, device=self.device)
         
-        self.surrogate_yaw_target = torch.zeros(
-            self.num_envs, len(self.surr_steps), 1, device=self.device)
-        self.surrogate_yaw_vel_target = torch.zeros(
-            self.num_envs, len(self.surr_steps), 1, device=self.device)
+        self.surrogate_yaw_target = torch.zeros(self.num_envs, len(self.surr_steps), 1, device=self.device)
+        self.surrogate_yaw_vel_target = torch.zeros(self.num_envs, len(self.surr_steps), 1, device=self.device)
 
         # EMA滤波器 (EMA filters)
         # 使用模拟器的正确根速度项 (Use correct root velocity terms from simulator)
@@ -244,6 +239,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 从参考轨迹中提取指定时间步的速度 (Extract velocities at specified time steps)
         self.surrogate_lin_vel_target = self.ref_lin_vel_w[:, self.surr_steps]
 
+        # print("self.surrogate_lin_vel_target:", self.surrogate_lin_vel_target)
+
         # 更新代理偏航角目标 (Update surrogate yaw target)
         # 从参考轨迹中提取指定时间步的偏航角 (Extract yaw angles at specified time steps)
         self.surrogate_yaw_target = self.ref_yaw_w[:, self.surr_steps]
@@ -319,6 +316,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # ref_acc_w = clamp_norm(ref_acc_w, 0., 80.)
         ref_acc_w = clamp_along(ref_acc_w, x_b, -self.max_acc_xyz[0], self.max_acc_xyz[0])
         ref_acc_w = clamp_along(ref_acc_w, y_b, -self.max_acc_xyz[1], self.max_acc_xyz[1])
+
+        # 存储当前时间步的参考加速度 (Store current timestep reference acceleration)
+        self.ref_lin_acc_w = ref_acc_w
 
         # 积分速度和位置 (Integrate velocity and position)
         ref_vel_w = self.ref_lin_vel_w + ref_acc_w * dt
@@ -732,6 +732,45 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 对多个EMA和时间步取平均，然后取最佳匹配
         # Average across multiple EMA and time steps, then take best match
         reward = reward.mean(dim=[1, 2]).squeeze(-1)  # (n,)
+        return reward
+    
+    def _reward_impedance_acc_tracking(self):
+        """
+        阻抗加速度跟踪奖励 (Impedance acceleration tracking reward)
+        
+        使用参考轨迹积分产生的加速度与当前机器人加速度进行比较
+        Compare reference trajectory integrated acceleration with current robot acceleration
+        
+        Returns:
+            加速度跟踪奖励 (Acceleration tracking reward)
+        """
+        if (not hasattr(self, 'ref_lin_acc_w') or
+                not hasattr(self, 'simulator') or
+                not hasattr(self.simulator, 'robot_root_states')):
+            return torch.zeros(self.num_envs, device=self.device)
+
+        # 计算当前加速度 (Calculate current acceleration)
+        # 使用速度差分近似加速度 (Use velocity difference to approximate acceleration)
+        current_vel = self.simulator.robot_root_states[:, 7:10]
+        if not hasattr(self, 'prev_vel'):
+            self.prev_vel = current_vel.clone()
+            return torch.zeros(self.num_envs, device=self.device)
+        
+        current_acc = (current_vel - self.prev_vel) / self.dt
+        self.prev_vel = current_vel.clone()
+        
+        # 使用存储的参考加速度 (Use stored reference acceleration)
+        # ref_lin_acc_w: (num_envs, temporal_smoothing + 1, 3)
+        # 使用当前时间步的参考加速度 (Use current timestep reference acceleration)
+        ref_acc = self.ref_lin_acc_w[:, 0]  # Current timestep acceleration
+        
+        # 只考虑XY平面的加速度误差 (Only consider XY plane acceleration error)
+        acc_diff = current_acc[:, :2] - ref_acc[:, :2]
+        error_l2 = acc_diff.square().sum(dim=-1)
+
+        # 使用指数衰减奖励函数 (Use exponential decay reward function)
+        reward = torch.exp(-error_l2 / 2.0)
+        
         return reward
     
     def _reward_impedance_yaw_vel_tracking(self):
