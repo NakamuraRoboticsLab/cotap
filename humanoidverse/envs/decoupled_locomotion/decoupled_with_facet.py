@@ -324,7 +324,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 采样阻抗增益 (Sample impedance gains)
         lin_kp = torch.empty(len(env_ids), 1, device=self.device).uniform_(
             *self.linear_kp_range)
-        lin_kd = 1.8 * lin_kp.sqrt()
+        # 临界阻尼：lin_kd = 2 * sqrt(kp * mass) (Critical damping)
+        lin_kd = 2.0 * torch.sqrt(lin_kp * self.virtual_mass_tensor[env_ids])
 
         self.lin_kp[env_ids] = lin_kp
         self.lin_kd[env_ids] = lin_kd
@@ -333,8 +334,15 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # 采样目标位置 (Sample target position)
         offset = torch.zeros(len(env_ids), 3, device=self.device)
-        offset[:, 0].uniform_(0.6, 1.2)  # X方向前进 (X direction forward)
+        offset[:, 0].uniform_(0.6, 1.0)  # X方向前进 (X direction forward)
         offset[:, 1].uniform_(-0.6, 0.6)  # Y方向左右 (Y direction left/right)
+        # when stance or tapping, no offset
+        self.tapping_in_place[env_ids, 0] = (
+            torch.rand(len(env_ids), device=self.device) >
+            self.tapping_in_place_prob).float()
+        # Apply offset only in walking mode with tapping allowed
+        offset[:, 0] *= (self.commands[env_ids, 4] * self.tapping_in_place[env_ids, 0])
+        offset[:, 1] *= (self.commands[env_ids, 4] * self.tapping_in_place[env_ids, 0])
 
         # 使用模拟器的正确根状态 (Use correct root states from simulator)
         if (hasattr(self, 'simulator') and
@@ -342,7 +350,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             current_pos = self.simulator.robot_root_states[env_ids, :3]
             self.command_setpos_w[env_ids] = current_pos + offset
 
-        print(f"采样位置指令: {self.command_setpos_w[env_ids]}")  # 调试输出 (Debug output)
+        # print(f"采样位置指令: {self.command_setpos_w[env_ids]}")  # 调试输出 (Debug output)
 
         # 采样目标偏航角 (Sample target yaw angle)
         target_yaw = torch.empty(len(env_ids), 1, device=self.device).uniform_(
@@ -365,7 +373,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 采样阻抗增益 (Sample impedance gains)
         lin_kp = torch.empty(len(env_ids), 1, device=self.device).uniform_(
             *self.linear_kp_range)
-        lin_kd = 1.8 * lin_kp.sqrt()
+        # 临界阻尼：lin_kd = 2 * sqrt(kp * mass) (Critical damping)
+        lin_kd = 2.0 * torch.sqrt(lin_kp * self.virtual_mass_tensor[env_ids])
 
         self.lin_kp[env_ids] = lin_kp
         self.lin_kd[env_ids] = lin_kd
@@ -399,7 +408,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         lin_kp = torch.empty(len(env_ids), 1, device=self.device).uniform_(
             *self.linear_kp_range)
-        lin_kd = 1.8 * lin_kp.sqrt()
+        # 临界阻尼：lin_kd = 2 * sqrt(kp * mass) (Critical damping)
+        lin_kd = 2.0 * torch.sqrt(lin_kp * self.virtual_mass_tensor[env_ids])
 
         # 柔顺模式：零刚度 (Compliant mode: zero stiffness)
         self.lin_kp[env_ids] = 0.0
@@ -426,7 +436,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 大力模式使用高刚度 (Large force mode uses high stiffness)
         lin_kp = torch.empty(len(env_ids), 1, device=self.device).uniform_(
             24.0, 48.0)
-        lin_kd = 1.8 * lin_kp.sqrt()
+        # 临界阻尼：lin_kd = 2 * sqrt(kp * mass) (Critical damping)
+        lin_kd = 2.0 * torch.sqrt(lin_kp * self.virtual_mass_tensor[env_ids])
 
         self.lin_kp[env_ids] = lin_kp
         self.lin_kd[env_ids] = lin_kd
