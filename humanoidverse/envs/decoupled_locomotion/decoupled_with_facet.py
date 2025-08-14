@@ -298,6 +298,13 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             self.lin_vel_ema.update(world_lin_vel)
             self.ang_vel_ema.update(world_ang_vel)
 
+        self.tapping_in_place[env_ids, 0] = (
+            torch.rand(len(env_ids), device=self.device) >
+            self.tapping_in_place_prob).float()
+        self.commands[:, 0] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
+        self.commands[:, 1] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
+        self.commands[:, 2] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
+
         # print("surrogate_lin_vel:", self.surrogate_lin_vel_target[:, 0])
         # print("linear_velocity_ema:", self.lin_vel_ema.ema[:, 0])
 
@@ -437,12 +444,12 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         offset[:, 0].uniform_(-1.0, 1.0)  # X方向前进 (X direction forward)
         offset[:, 1].uniform_(-0.6, 0.6)  # Y方向左右 (Y direction left/right)
         # when stance or tapping, no offset
-        self.tapping_in_place[env_ids, 0] = (
-            torch.rand(len(env_ids), device=self.device) >
-            self.tapping_in_place_prob).float()
-        # Apply offset only in walking mode with tapping allowed
-        offset[:, 0] *= (self.commands[env_ids, 4] * self.tapping_in_place[env_ids, 0])
-        offset[:, 1] *= (self.commands[env_ids, 4] * self.tapping_in_place[env_ids, 0])
+        # self.tapping_in_place[env_ids, 0] = (
+        #     torch.rand(len(env_ids), device=self.device) >
+        #     self.tapping_in_place_prob).float()
+        # # Apply offset only in walking mode with tapping allowed
+        # offset[:, 0] *= (self.commands[env_ids, 4] * self.tapping_in_place[env_ids, 0])
+        # offset[:, 1] *= (self.commands[env_ids, 4] * self.tapping_in_place[env_ids, 0])
 
         # 使用模拟器的正确根状态 (Use correct root states from simulator)
         if (hasattr(self, 'simulator') and
