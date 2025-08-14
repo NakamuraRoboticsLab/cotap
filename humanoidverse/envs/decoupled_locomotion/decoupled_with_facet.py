@@ -118,6 +118,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         self.pos_err_r = torch.zeros(self.num_envs, 1, device=self.device)
         self.vel_err_r = torch.zeros(self.num_envs, 1, device=self.device)
+        self.surr_vel_base = torch.zeros(self.num_envs, 3, device=self.device)
 
     def _init_impedance_control(self):
         """初始化FACET阻抗控制系统 (Initialize FACET impedance system)"""
@@ -189,6 +190,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # print("self.pos_err_r:", self.pos_err_r)
         # print("self.vel_err_r:", self.vel_err_r)
+        # print("self.surr_vel_base:", self.surr_vel_base)
+        # print("self.base_lin_vel:", self.base_lin_vel)
 
         return result
 
@@ -721,22 +724,38 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 self.lin_vel_ema.ema is None):
             return torch.zeros(self.num_envs, device=self.device)
 
-        # 获取当前机器人世界坐标系速度 (Get current robot world frame velocity)
-        world_lin_vel = self.simulator.robot_root_states[:, 7:10]
+        # 获取当前机器人状态 (Get current robot states)
+        current_quat = self.simulator.robot_root_states[:, 3:7]  # (num_envs, 4)
         
         # 获取第一个代理时间步的速度目标 (Get first surrogate time step velocity target)
         # surrogate_lin_vel_target: (num_envs, num_surr_steps, 3)
-        surr_vel = self.surrogate_lin_vel_target  # (num_envs, num_surr_steps, 3)
+        surr_vel_world = self.surrogate_lin_vel_target  # (num_envs, num_surr_steps, 3)
+        
+        # 将代理速度从世界坐标系转换到base link坐标系
+        # Transform surrogate velocity from world frame to base link frame
+        # 使用四元数的逆变换将世界速度转换到机体坐标系
+        # Use inverse quaternion transformation to convert world velocity to body frame
+        quat_inv = current_quat.clone()
+        quat_inv[:, 1:4] *= -1  # Conjugate quaternion for inverse rotation
+        surr_vel_world_first = surr_vel_world[:, 0]  # (num_envs, 3) - first time step
+        self.surr_vel_base = my_quat_rotate(quat_inv, surr_vel_world_first)  # (num_envs, 3)
         
         # 计算差值和L2误差 (Calculate difference and L2 error)
-        # 使用第一个代理时间步与当前世界速度比较
-        # Compare first surrogate time step with current world velocity
-        diff = surr_vel[:, 0] - world_lin_vel
+        # 使用第一个代理时间步的base link速度与当前base link速度比较
+        # Compare first surrogate time step base link velocity with current base link velocity
+        diff = self.surr_vel_base - self.base_lin_vel
 
-        error_l2 = diff.square().sum(dim=-1)  # (num_envs,)
+        # error_l2 = diff.square().sum(dim=-1)  # (num_envs,)
+
+        error_l2_x = torch.square(diff[:, 0])
+        error_l2_y = torch.square(diff[:, 1])
+
+        # error_l2 = torch.square(self.commands[:, 0] - self.base_lin_vel[:, 0])
+        # error_l2 += torch.square(self.commands[:, 1] - self.base_lin_vel[:, 1])
         
         # 计算奖励 (Calculate reward)
-        reward = torch.exp(-error_l2 / 0.25)  # (num_envs,)
+        # reward = torch.exp(-error_l2 / 0.25)  # (num_envs,)
+        reward = torch.exp(-error_l2_x / 0.25) + torch.exp(-error_l2_y / 0.25)  # (num_envs,)
         self.vel_err_r = reward.unsqueeze(1)  # Store actual error, not reward
 
         return reward
@@ -795,10 +814,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 not hasattr(self.simulator, 'robot_root_states')):
             return torch.zeros(self.num_envs, device=self.device)
 
-        # 获取当前机器人偏航角速度 (Get current robot yaw velocity)
-        # 使用角速度的Z分量作为偏航角速度 (Use Z component of angular velocity as yaw velocity)
-        world_ang_vel = self.simulator.robot_root_states[:, 10:13]
-        current_yaw_vel = world_ang_vel[:, 2]  # Z component (num_envs,)
+        # 获取当前机器人角速度 (Get current robot angular velocity)
+        current_ang_vel = self.simulator.robot_root_states[:, 10:13]  # (num_envs, 3)
+        current_yaw_vel = current_ang_vel[:, 2]  # Z component for yaw velocity
         
         # 获取第一个代理时间步的偏航角速度目标 (Get first surrogate time step yaw velocity target)
         # surrogate_yaw_vel_target: (num_envs, num_surr_steps, 1)
@@ -807,7 +825,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 计算差值和L2误差 (Calculate difference and L2 error)
         # 使用第一个代理时间步与当前偏航角速度比较
         # Compare first surrogate time step with current yaw velocity
-        diff = surr_yaw_vel[:, 0, 0] - current_yaw_vel  # (num_envs,)
+        diff = surr_yaw_vel[:, 0, 0] - current_yaw_vel
 
         error_l2 = diff.square()  # (num_envs,)
         
