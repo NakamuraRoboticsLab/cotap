@@ -100,7 +100,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # 代理目标时间步 (Surrogate target time steps)
         # self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
-        self.surr_steps = [8, 16]
+        self.surr_steps = [8, 16] # should use current step? 
         
         # 确保temporal_smoothing足够大以支持surr_steps (Ensure large enough)
         max_surr_step = max(self.surr_steps) if self.surr_steps else 32
@@ -117,6 +117,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         #             f"environment initialized) - {self.num_envs} envs")
 
         self.pos_err_r = torch.zeros(self.num_envs, 1, device=self.device)
+        self.vel_err_r = torch.zeros(self.num_envs, 1, device=self.device)
 
     def _init_impedance_control(self):
         """初始化FACET阻抗控制系统 (Initialize FACET impedance system)"""
@@ -187,7 +188,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         result = super().step(actor_state)
 
         # print("self.pos_err_r:", self.pos_err_r)
-        
+        # print("self.vel_err_r:", self.vel_err_r)
+
         return result
 
     def update_impedance_control(self):
@@ -262,6 +264,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             world_ang_vel = self.simulator.robot_root_states[:, 10:13]
             self.lin_vel_ema.update(world_lin_vel)
             self.ang_vel_ema.update(world_ang_vel)
+
+        # print("surrogate_lin_vel:", self.surrogate_lin_vel_target[:, 0])
+        # print("linear_velocity_ema:", self.lin_vel_ema.ema[:, 0])
 
     def update_impedance_command(self):
         """更新阻抗控制指令 (Update impedance control commands)"""
@@ -677,7 +682,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 方法1: 使用第一个代理时间步作为主要目标 (Method 1: Use first surrogate step)
         # 只考虑XY平面的误差，忽略Z方向 (Only consider XY plane error, ignore Z)
-        pos_diff = current_pos[:, :2] - self.surrogate_pos_target[:, 0, :2]
+        pos_diff = current_pos[:, :2] - self.surrogate_pos_target[:, 0, :2] # next pos.
         pos_error_l2 = pos_diff.square().sum(dim=-1)
         
         # 方法2: 可选的多时间步加权奖励 (Method 2: Optional multi-step weighted reward)
@@ -704,8 +709,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         """
         代理速度跟踪奖励 (Surrogate velocity tracking reward)
         
-        使用多时间步代理速度目标与EMA滤波速度的跟踪奖励
-        Multi-step surrogate velocity target tracking with EMA filtered vel
+        使用第一个时间步代理速度目标与当前机器人速度的跟踪奖励
+        First time step surrogate velocity target tracking with current robot velocity
         
         Returns:
             代理速度跟踪奖励 (Surrogate velocity tracking reward)
@@ -716,28 +721,24 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 self.lin_vel_ema.ema is None):
             return torch.zeros(self.num_envs, device=self.device)
 
-        # 计算多时间步速度误差 (Calculate multi-step velocity error)
+        # 获取当前机器人世界坐标系速度 (Get current robot world frame velocity)
+        world_lin_vel = self.simulator.robot_root_states[:, 7:10]
+        
+        # 获取第一个代理时间步的速度目标 (Get first surrogate time step velocity target)
         # surrogate_lin_vel_target: (num_envs, num_surr_steps, 3)
-        # lin_vel_ema.ema: (num_envs, num_ema_gammas, 3)
-        
-        # 使用不同EMA gamma值与不同时间步进行比较
-        # Compare different EMA gamma values with different time steps
-        surr_vel = self.surrogate_lin_vel_target  # (n, t1, 3) # surr_vel in world frame
-        ema_vel = self.lin_vel_ema.ema  # (n, t2, 3) # ema_vel in world frame
-        
-        # 扩展维度进行广播计算 (Expand dimensions for broadcast calculation)
-        surr_vel_expanded = surr_vel.unsqueeze(2)  # (n, t1, 1, 3)
-        ema_vel_expanded = ema_vel.unsqueeze(1)    # (n, 1, t2, 3)
+        surr_vel = self.surrogate_lin_vel_target  # (num_envs, num_surr_steps, 3)
         
         # 计算差值和L2误差 (Calculate difference and L2 error)
-        diff = surr_vel_expanded - ema_vel_expanded  # (n, t1, t2, 3)
-        error_l2 = diff.square().sum(dim=-1, keepdim=True)  # (n, t1, t2, 1)
+        # 使用第一个代理时间步与当前世界速度比较
+        # Compare first surrogate time step with current world velocity
+        diff = surr_vel[:, 0] - world_lin_vel
+
+        error_l2 = diff.square().sum(dim=-1)  # (num_envs,)
         
         # 计算奖励 (Calculate reward)
-        reward = torch.exp(-error_l2 / 0.25)  # (n, t1, t2, 1)
-        # 对多个EMA和时间步取平均，然后取最佳匹配
-        # Average across multiple EMA and time steps, then take best match
-        reward = reward.mean(dim=[1, 2]).squeeze(-1)  # (n,)
+        reward = torch.exp(-error_l2 / 0.25)  # (num_envs,)
+        self.vel_err_r = reward.unsqueeze(1)  # Store actual error, not reward
+
         return reward
     
     def _reward_impedance_acc_tracking(self):
@@ -783,40 +784,35 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         """
         代理偏航角速度跟踪奖励 (Surrogate yaw velocity tracking reward)
         
-        使用多时间步代理偏航角速度目标与EMA滤波角速度的跟踪奖励
-        Multi-step surrogate yaw velocity target tracking with EMA filtered angular vel
+        使用第一个时间步代理偏航角速度目标与当前机器人偏航角速度的跟踪奖励
+        First time step surrogate yaw velocity target tracking with current robot yaw velocity
         
         Returns:
             代理偏航角速度跟踪奖励 (Surrogate yaw velocity tracking reward)
         """
         if (not hasattr(self, 'surrogate_yaw_vel_target') or
-                not hasattr(self, 'ang_vel_ema') or
-                not hasattr(self.ang_vel_ema, 'ema') or
-                self.ang_vel_ema.ema is None):
+                not hasattr(self, 'simulator') or
+                not hasattr(self.simulator, 'robot_root_states')):
             return torch.zeros(self.num_envs, device=self.device)
 
-        # 计算多时间步偏航角速度误差 (Calculate multi-step yaw velocity error)
+        # 获取当前机器人偏航角速度 (Get current robot yaw velocity)
+        # 使用角速度的Z分量作为偏航角速度 (Use Z component of angular velocity as yaw velocity)
+        world_ang_vel = self.simulator.robot_root_states[:, 10:13]
+        current_yaw_vel = world_ang_vel[:, 2]  # Z component (num_envs,)
+        
+        # 获取第一个代理时间步的偏航角速度目标 (Get first surrogate time step yaw velocity target)
         # surrogate_yaw_vel_target: (num_envs, num_surr_steps, 1)
-        # ang_vel_ema.ema: (num_envs, num_ema_gammas, 3)
-        
-        # 使用不同EMA gamma值与不同时间步进行比较
-        # Compare different EMA gamma values with different time steps
-        surr_yaw_vel = self.surrogate_yaw_vel_target  # (n, t1, 1)
-        ema_yaw_vel = self.ang_vel_ema.ema[:, :, 2:3]  # (n, t2, 1) - Z component only
-        
-        # 扩展维度进行广播计算 (Expand dimensions for broadcast calculation)
-        surr_yaw_vel_expanded = surr_yaw_vel.unsqueeze(2)  # (n, t1, 1, 1)
-        ema_yaw_vel_expanded = ema_yaw_vel.unsqueeze(1)    # (n, 1, t2, 1)
+        surr_yaw_vel = self.surrogate_yaw_vel_target  # (num_envs, num_surr_steps, 1)
         
         # 计算差值和L2误差 (Calculate difference and L2 error)
-        diff = surr_yaw_vel_expanded - ema_yaw_vel_expanded  # (n, t1, t2, 1)
-        error_l2 = diff.square().sum(dim=-1, keepdim=True)  # (n, t1, t2, 1)
+        # 使用第一个代理时间步与当前偏航角速度比较
+        # Compare first surrogate time step with current yaw velocity
+        diff = surr_yaw_vel[:, 0, 0] - current_yaw_vel  # (num_envs,)
+
+        error_l2 = diff.square()  # (num_envs,)
         
         # 计算奖励 (Calculate reward)
-        reward = torch.exp(-error_l2 / 0.25)  # (n, t1, t2, 1)
-        # 对多个EMA和时间步取平均，然后取最佳匹配
-        # Average across multiple EMA and time steps, then take best match
-        reward = reward.mean(dim=[1, 2]).squeeze(-1)  # (n,)
+        reward = torch.exp(-error_l2 / 0.25)  # (num_envs,)
         return reward
 
     def _reward_force_resistance(self):
