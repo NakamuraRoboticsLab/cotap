@@ -119,6 +119,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.pos_err_r = torch.zeros(self.num_envs, 1, device=self.device)
         self.vel_err_r = torch.zeros(self.num_envs, 1, device=self.device)
         self.surr_vel_base = torch.zeros(self.num_envs, 3, device=self.device)
+        self.surr_yaw_vel_base = torch.zeros(self.num_envs, 1, device=self.device)
 
     def _init_impedance_control(self):
         """初始化FACET阻抗控制系统 (Initialize FACET impedance system)"""
@@ -192,6 +193,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # print("self.vel_err_r:", self.vel_err_r)
         # print("self.surr_vel_base:", self.surr_vel_base)
         # print("self.base_lin_vel:", self.base_lin_vel)
+        # print("self.surr_yaw_vel_base:", self.surr_yaw_vel_base)
+        # print("self.base_ang_vel[:, 2]:", self.base_ang_vel[:, 2])
 
         return result
 
@@ -245,6 +248,21 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 更新代理速度目标 (Update surrogate velocity target)
         # 从参考轨迹中提取指定时间步的速度 (Extract velocities at specified time steps)
         self.surrogate_lin_vel_target = self.ref_lin_vel_w[:, self.surr_steps]
+        
+        # 获取第一个代理时间步的速度目标 (Get first surrogate time step velocity target)
+        # surrogate_lin_vel_target: (num_envs, num_surr_steps, 3)
+        surr_vel_world = self.surrogate_lin_vel_target  # (num_envs, num_surr_steps, 3)
+        
+        # 将代理速度从世界坐标系转换到base link坐标系
+        # Transform surrogate velocity from world frame to base link frame
+        # 使用四元数的逆变换将世界速度转换到机体坐标系
+        # Use inverse quaternion transformation to convert world velocity to body frame
+        quat_inv = current_quat.clone()
+        quat_inv[:, 1:4] *= -1  # Conjugate quaternion for inverse rotation
+        surr_vel_world_first = surr_vel_world[:, 0]  # (num_envs, 3) - first time step
+        self.surr_vel_base = my_quat_rotate(quat_inv, surr_vel_world_first)  # (num_envs, 3)
+
+        self.commands[:, :2] = self.surr_vel_base[:, :2]  # 更新命令速度 (Update command velocity)
 
         # print("self.surrogate_lin_vel_target:", self.surrogate_lin_vel_target)
 
@@ -255,6 +273,18 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 更新代理偏航角速度目标 (Update surrogate yaw velocity target)
         # 从参考轨迹中提取指定时间步的偏航角速度 (Extract yaw velocities at specified time steps)
         self.surrogate_yaw_vel_target = self.ref_yaw_vel_w[:, self.surr_steps]
+
+        # 获取第一个代理时间步的偏航角速度目标 (Get first surrogate time step yaw velocity target)
+        # surrogate_yaw_vel_target: (num_envs, num_surr_steps, 1)
+        surr_yaw_vel_world = self.surrogate_yaw_vel_target  # (num_envs, num_surr_steps, 1)
+        
+        # 偏航角速度在base link坐标系中与世界坐标系相同 (Yaw velocity is same in base link frame as world frame)
+        # 因为偏航角是围绕Z轴的旋转，在base link坐标系中不需要变换
+        # Because yaw is rotation around Z-axis, no transformation needed in base link frame
+        self.surr_yaw_vel_base = surr_yaw_vel_world[:, 0]  # (num_envs, 1)
+        
+        # 更新命令偏航角速度 (Update command yaw velocity)
+        self.commands[:, 2:3] = self.surr_yaw_vel_base
 
         # 更新EMA滤波器 (Update EMA filters)
         # 使用世界坐标系的速度 (Use world frame velocities)
@@ -724,34 +754,34 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 self.lin_vel_ema.ema is None):
             return torch.zeros(self.num_envs, device=self.device)
 
-        # 获取当前机器人状态 (Get current robot states)
-        current_quat = self.simulator.robot_root_states[:, 3:7]  # (num_envs, 4)
+        # # 获取当前机器人状态 (Get current robot states)
+        # current_quat = self.simulator.robot_root_states[:, 3:7]  # (num_envs, 4)
         
-        # 获取第一个代理时间步的速度目标 (Get first surrogate time step velocity target)
-        # surrogate_lin_vel_target: (num_envs, num_surr_steps, 3)
-        surr_vel_world = self.surrogate_lin_vel_target  # (num_envs, num_surr_steps, 3)
+        # # 获取第一个代理时间步的速度目标 (Get first surrogate time step velocity target)
+        # # surrogate_lin_vel_target: (num_envs, num_surr_steps, 3)
+        # surr_vel_world = self.surrogate_lin_vel_target  # (num_envs, num_surr_steps, 3)
         
-        # 将代理速度从世界坐标系转换到base link坐标系
-        # Transform surrogate velocity from world frame to base link frame
-        # 使用四元数的逆变换将世界速度转换到机体坐标系
-        # Use inverse quaternion transformation to convert world velocity to body frame
-        quat_inv = current_quat.clone()
-        quat_inv[:, 1:4] *= -1  # Conjugate quaternion for inverse rotation
-        surr_vel_world_first = surr_vel_world[:, 0]  # (num_envs, 3) - first time step
-        self.surr_vel_base = my_quat_rotate(quat_inv, surr_vel_world_first)  # (num_envs, 3)
+        # # 将代理速度从世界坐标系转换到base link坐标系
+        # # Transform surrogate velocity from world frame to base link frame
+        # # 使用四元数的逆变换将世界速度转换到机体坐标系
+        # # Use inverse quaternion transformation to convert world velocity to body frame
+        # quat_inv = current_quat.clone()
+        # quat_inv[:, 1:4] *= -1  # Conjugate quaternion for inverse rotation
+        # surr_vel_world_first = surr_vel_world[:, 0]  # (num_envs, 3) - first time step
+        # self.surr_vel_base = my_quat_rotate(quat_inv, surr_vel_world_first)  # (num_envs, 3)
         
         # 计算差值和L2误差 (Calculate difference and L2 error)
         # 使用第一个代理时间步的base link速度与当前base link速度比较
         # Compare first surrogate time step base link velocity with current base link velocity
-        diff = self.surr_vel_base - self.base_lin_vel
+        # diff = self.surr_vel_base - self.base_lin_vel
 
         # error_l2 = diff.square().sum(dim=-1)  # (num_envs,)
 
-        error_l2_x = torch.square(diff[:, 0])
-        error_l2_y = torch.square(diff[:, 1])
+        # error_l2_x = torch.square(diff[:, 0])
+        # error_l2_y = torch.square(diff[:, 1])
 
-        # error_l2 = torch.square(self.commands[:, 0] - self.base_lin_vel[:, 0])
-        # error_l2 += torch.square(self.commands[:, 1] - self.base_lin_vel[:, 1])
+        error_l2_x = torch.square(self.commands[:, 0] - self.base_lin_vel[:, 0])
+        error_l2_y = torch.square(self.commands[:, 1] - self.base_lin_vel[:, 1])
         
         # 计算奖励 (Calculate reward)
         # reward = torch.exp(-error_l2 / 0.25)  # (num_envs,)
@@ -803,32 +833,18 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         """
         代理偏航角速度跟踪奖励 (Surrogate yaw velocity tracking reward)
         
-        使用第一个时间步代理偏航角速度目标与当前机器人偏航角速度的跟踪奖励
-        First time step surrogate yaw velocity target tracking with current robot yaw velocity
+        使用阻抗控制生成的代理偏航角速度目标与当前机器人偏航角速度的跟踪奖励
+        Track surrogate yaw velocity generated by impedance control vs current robot yaw velocity
         
         Returns:
             代理偏航角速度跟踪奖励 (Surrogate yaw velocity tracking reward)
         """
-        if (not hasattr(self, 'surrogate_yaw_vel_target') or
+        if (not hasattr(self, 'surr_yaw_vel_base') or
                 not hasattr(self, 'simulator') or
                 not hasattr(self.simulator, 'robot_root_states')):
             return torch.zeros(self.num_envs, device=self.device)
 
-        # 获取当前机器人角速度 (Get current robot angular velocity)
-        current_ang_vel = self.simulator.robot_root_states[:, 10:13]  # (num_envs, 3)
-        current_yaw_vel = current_ang_vel[:, 2]  # Z component for yaw velocity
-        
-        # 获取第一个代理时间步的偏航角速度目标 (Get first surrogate time step yaw velocity target)
-        # surrogate_yaw_vel_target: (num_envs, num_surr_steps, 1)
-        surr_yaw_vel = self.surrogate_yaw_vel_target  # (num_envs, num_surr_steps, 1)
-        
-        # 计算差值和L2误差 (Calculate difference and L2 error)
-        # 使用第一个代理时间步与当前偏航角速度比较
-        # Compare first surrogate time step with current yaw velocity
-        diff = surr_yaw_vel[:, 0, 0] - current_yaw_vel
-
-        error_l2 = diff.square()  # (num_envs,)
-        
+        error_l2 = torch.square(self.commands[:, 2] - self.base_ang_vel[:, 2])
         # 计算奖励 (Calculate reward)
         reward = torch.exp(-error_l2 / 0.25)  # (num_envs,)
         return reward
