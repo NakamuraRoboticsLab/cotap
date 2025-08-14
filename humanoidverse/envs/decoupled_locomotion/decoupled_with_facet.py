@@ -99,8 +99,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.max_vel_xy = self.config.facet_params.max_vel_xy
 
         # 代理目标时间步 (Surrogate target time steps)
-        self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
-        # self.surr_steps = [8, 16, 24]
+        # self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
+        self.surr_steps = [8, 16]
         
         # 确保temporal_smoothing足够大以支持surr_steps (Ensure large enough)
         max_surr_step = max(self.surr_steps) if self.surr_steps else 32
@@ -133,8 +133,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.set_linvel = torch.zeros(self.num_envs, 3, device=self.device)
 
         # 虚拟动力学参数 (Virtual dynamics parameters)
-        self.virtual_mass_tensor = torch.ones(self.num_envs, 1, 
-                                               device=self.device) * self.virtual_mass
+        self.virtual_mass_tensor = torch.ones(self.num_envs, 1, device=self.device) * self.virtual_mass
 
         # 外力状态 (External force states)
         self.force_ext_w = torch.zeros(self.num_envs, 3, device=self.device)
@@ -162,15 +161,18 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.surrogate_yaw_vel_target = torch.zeros(self.num_envs, len(self.surr_steps), 1, device=self.device)
 
         # EMA滤波器 (EMA filters)
-        # 使用模拟器的正确根速度项 (Use correct root velocity terms from simulator)
-        if hasattr(self, 'base_lin_vel') and hasattr(self, 'base_ang_vel'):
-            # 使用已转换到机器人本体坐标系的速度
-            # Use velocities already transformed to robot body frame
-            self.lin_vel_ema = EMA(self.base_lin_vel, [0.0, 0.5, 0.8])
-            self.ang_vel_ema = EMA(self.base_ang_vel, [0.0, 0.5, 0.8])
+        # 使用世界坐标系的速度 (Use world frame velocities)
+        if (hasattr(self, 'simulator') and 
+            hasattr(self.simulator, 'robot_root_states')):
+            # 使用世界坐标系的线速度和角速度
+            # Use world frame linear and angular velocities
+            world_lin_vel = self.simulator.robot_root_states[:, 7:10]
+            world_ang_vel = self.simulator.robot_root_states[:, 10:13]
+            self.lin_vel_ema = EMA(world_lin_vel, [0.0, 0.5, 0.8])
+            self.ang_vel_ema = EMA(world_ang_vel, [0.0, 0.5, 0.8])
         else:
-            # 如果base_lin_vel和base_ang_vel还没有初始化，使用零向量
-            # If base velocities are not initialized yet, use zero vectors
+            # 如果模拟器还没有初始化，使用零向量
+            # If simulator is not initialized yet, use zero vectors
             dummy_data = torch.zeros(self.num_envs, 3, device=self.device)
             self.lin_vel_ema = EMA(dummy_data, [0.0, 0.5, 0.8])
             self.ang_vel_ema = EMA(dummy_data, [0.0, 0.5, 0.8])
@@ -250,12 +252,16 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.surrogate_yaw_vel_target = self.ref_yaw_vel_w[:, self.surr_steps]
 
         # 更新EMA滤波器 (Update EMA filters)
-        # 使用机器人本体坐标系的速度 (Use velocities in robot body frame)
+        # 使用世界坐标系的速度 (Use world frame velocities)
         # should be used in reward function for tracking
-        if hasattr(self, 'base_lin_vel') and hasattr(self, 'base_ang_vel'):
-            # print("EMA Update")
-            self.lin_vel_ema.update(self.base_lin_vel)
-            self.ang_vel_ema.update(self.base_ang_vel)
+        if (hasattr(self, 'simulator') and 
+            hasattr(self.simulator, 'robot_root_states')):
+            # 使用世界坐标系的线速度和角速度更新EMA
+            # Update EMA with world frame linear and angular velocities
+            world_lin_vel = self.simulator.robot_root_states[:, 7:10]
+            world_ang_vel = self.simulator.robot_root_states[:, 10:13]
+            self.lin_vel_ema.update(world_lin_vel)
+            self.ang_vel_ema.update(world_ang_vel)
 
     def update_impedance_command(self):
         """更新阻抗控制指令 (Update impedance control commands)"""
@@ -671,21 +677,21 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 方法1: 使用第一个代理时间步作为主要目标 (Method 1: Use first surrogate step)
         # 只考虑XY平面的误差，忽略Z方向 (Only consider XY plane error, ignore Z)
-        # pos_diff = current_pos[:, :2] - self.surrogate_pos_target[:, 0, :2]
-        # pos_error_l2 = pos_diff.square().sum(dim=-1)
+        pos_diff = current_pos[:, :2] - self.surrogate_pos_target[:, 0, :2]
+        pos_error_l2 = pos_diff.square().sum(dim=-1)
         
         # 方法2: 可选的多时间步加权奖励 (Method 2: Optional multi-step weighted reward)
         # 对多个时间步进行加权平均 (Weighted average across multiple time steps)
-        weights = torch.tensor([0.3, 0.3, 0.3], device=self.device)
-        # weights = torch.tensor([0.7, 0.3], device=self.device)
-        multi_step_errors = []
-        for i in range(len(self.surr_steps)):
-            diff = current_pos[:, :2] - self.surrogate_pos_target[:, i, :2]
-            step_error = diff.square().sum(dim=-1)
-            # Ensure we don't go out of bounds for weights
-            weight = weights[i] if i < len(weights) else 0.01
-            multi_step_errors.append(step_error * weight)
-        pos_error_l2 = torch.stack(multi_step_errors, dim=1).sum(dim=1)
+        # weights = torch.tensor([0.3, 0.3, 0.3], device=self.device)
+        # # weights = torch.tensor([0.7, 0.3], device=self.device)
+        # multi_step_errors = []
+        # for i in range(len(self.surr_steps)):
+        #     diff = current_pos[:, :2] - self.surrogate_pos_target[:, i, :2]
+        #     step_error = diff.square().sum(dim=-1)
+        #     # Ensure we don't go out of bounds for weights
+        #     weight = weights[i] if i < len(weights) else 0.01
+        #     multi_step_errors.append(step_error * weight)
+        # pos_error_l2 = torch.stack(multi_step_errors, dim=1).sum(dim=1)
         
         # 使用指数衰减奖励函数 (Use exponential decay reward function)
         # 误差标准差设为0.5米，与原始impedance.py一致 (Error std = 0.5m)
@@ -716,8 +722,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 使用不同EMA gamma值与不同时间步进行比较
         # Compare different EMA gamma values with different time steps
-        surr_vel = self.surrogate_lin_vel_target  # (n, t1, 3)
-        ema_vel = self.lin_vel_ema.ema  # (n, t2, 3)
+        surr_vel = self.surrogate_lin_vel_target  # (n, t1, 3) # surr_vel in world frame
+        ema_vel = self.lin_vel_ema.ema  # (n, t2, 3) # ema_vel in world frame
         
         # 扩展维度进行广播计算 (Expand dimensions for broadcast calculation)
         surr_vel_expanded = surr_vel.unsqueeze(2)  # (n, t1, 1, 3)

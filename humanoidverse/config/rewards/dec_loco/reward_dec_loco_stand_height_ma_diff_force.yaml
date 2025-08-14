@@ -50,7 +50,7 @@ rewards:
       # contact: 0.18 # 0.18
       # alive: 1.0 # 0.15
       # penalty_waist_dofs: -0.5
-      penalty_upper_body_dofs_freeze: -2.0 # only for freeze upper body # -2.0
+      penalty_upper_body_dofs_freeze: -1.0 # only for freeze upper body # -2.0
       penalty_stand_still: -0.15
       penalty_stance_symmetry: 0
       # penalty_stance_contact_no_ang_vel: -0.1
