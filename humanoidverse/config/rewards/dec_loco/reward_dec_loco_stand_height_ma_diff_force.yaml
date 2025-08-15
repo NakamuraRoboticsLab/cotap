@@ -13,9 +13,9 @@ rewards:
       # tracking_ang_vel: 4.0 # 4.0
       tracking_walk_base_height: 2.0 # 1.0
       tracking_stance_base_height: 4.0 # 1.0
-      # tracking_waist_dofs: 0.5
-      tracking_waist_dofs_tapping: 1.5 # 0.5
-      tracking_waist_dofs_stance: 2.0 # 1.0
+      tracking_waist_dofs: 0.5
+      # tracking_waist_dofs_tapping: 1.5 # 0.5
+      # tracking_waist_dofs_stance: 2.0 # 1.0
       # tracking_arm_dofs: 0.5
       penalty_lin_vel_z: -2.0
       penalty_ang_vel_xy: -0.05 # -0.5
@@ -91,9 +91,9 @@ rewards:
       # "tracking_lin_vel_x",
       # "tracking_lin_vel_y",
       # "tracking_ang_vel",
-      # "tracking_waist_dofs",
-      "tracking_waist_dofs_tapping",
-      "tracking_waist_dofs_stance",
+      "tracking_waist_dofs",
+      # "tracking_waist_dofs_tapping",
+      # "tracking_waist_dofs_stance",
       "tracking_walk_base_height",
       "tracking_stance_base_height",
       "penalty_lin_vel_z",

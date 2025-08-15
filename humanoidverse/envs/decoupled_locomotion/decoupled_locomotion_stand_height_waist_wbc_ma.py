@@ -591,16 +591,12 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
     
     def _reward_tracking_waist_dofs(self):
         # Penalize the difference between the waist dof pos and the reference
-        waist_dofs_error = torch.zeros(self.num_envs, dtype=torch.float32, 
-                                     device=self.device)
-        
-        # Waist RPY already computed in _pre_compute_observations_callback
-        
-        # Compute tracking errors for each DOF
-        # Note: RPY order is [roll, pitch, yaw], commands order is [yaw, roll, pitch]
-        waist_dofs_error += torch.square(self.waist_rpy[:, 2] - self.commands[:, 5])  # yaw tracking
-        waist_dofs_error += torch.square(self.waist_rpy[:, 0] - self.commands[:, 6])  # roll tracking
-        waist_dofs_error += torch.square(self.waist_rpy[:, 1] - self.commands[:, 7])  # pitch tracking
+        # Use current torso joint angle instead of RPY calculation
+        # Get current waist/torso joint angle (assuming first waist DOF is yaw)
+        current_torso_joint_angle = self.simulator.dof_pos[:, self.waist_dof_indices[0]]
+
+        # Compute tracking error between current torso joint angle and command
+        waist_dofs_error = torch.square(current_torso_joint_angle - self.commands[:, 5])
         
         return torch.exp(-waist_dofs_error/self.config.rewards.reward_tracking_sigma.waist_dofs)
     
@@ -613,8 +609,9 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         
         # Compute tracking errors for each DOF
         waist_dofs_error += torch.square(self.waist_rpy[:, 2] - self.commands[:, 5])  # yaw
-        waist_dofs_error += torch.square(self.waist_rpy[:, 0] - self.commands[:, 6])  # roll
-        waist_dofs_error += torch.square(self.waist_rpy[:, 1] - self.commands[:, 7])  # pitch
+        # for H1, no roll/pitch tracking
+        # waist_dofs_error += torch.square(self.waist_rpy[:, 0] - self.commands[:, 6])  # roll
+        # waist_dofs_error += torch.square(self.waist_rpy[:, 1] - self.commands[:, 7])  # pitch
 
         # Apply only during stance mode (when commands[:, 4] == 0)
         reward = torch.exp(-waist_dofs_error / self.config.rewards.reward_tracking_sigma.waist_dofs)
@@ -629,8 +626,9 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         
         # Compute tracking errors for each DOF
         waist_dofs_error += torch.square(self.waist_rpy[:, 2] - self.commands[:, 5])  # yaw
-        waist_dofs_error += torch.square(self.waist_rpy[:, 0] - self.commands[:, 6])  # roll
-        waist_dofs_error += torch.square(self.waist_rpy[:, 1] - self.commands[:, 7])  # pitch
+        # for H1, no roll/pitch tracking
+        # waist_dofs_error += torch.square(self.waist_rpy[:, 0] - self.commands[:, 6])  # roll
+        # waist_dofs_error += torch.square(self.waist_rpy[:, 1] - self.commands[:, 7])  # pitch
 
         # Apply only during tapping mode (when commands[:, 4] == 1)
         reward = torch.exp(-waist_dofs_error / self.config.rewards.reward_tracking_sigma.waist_dofs)

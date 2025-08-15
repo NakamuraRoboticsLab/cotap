@@ -8,8 +8,8 @@ robot:
   num_bodies: 20
   dof_obs_size: 19
   actions_dim: 19
-  lower_body_actions_dim: 10 # he
-  upper_body_actions_dim: 9 # he
+  lower_body_actions_dim: 11 # he
+  upper_body_actions_dim: 8 # he
   policy_obs_dim: -1 # Jiawei
   critic_obs_dim: -1
 
@@ -51,8 +51,7 @@ robot:
 
   decouple_upper_and_lower_dofs: true
 
-  upper_dof_names: ['torso_joint', 
-                    'left_shoulder_pitch_joint', 
+  upper_dof_names: ['left_shoulder_pitch_joint', 
                     'left_shoulder_roll_joint', 
                     'left_shoulder_yaw_joint', 
                     'left_elbow_joint',
@@ -81,7 +80,8 @@ robot:
                     'right_hip_roll_joint', 
                     'right_hip_pitch_joint', 
                     'right_knee_joint', 
-                    'right_ankle_joint']
+                    'right_ankle_joint',
+                    'torso_joint']
     
   # DOF properties
   symmetric_dofs_idx:
