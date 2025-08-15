@@ -334,13 +334,13 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         if not self.is_evaluating:
             env_ids = (self.episode_length_buf % int(self.config.locomotion_command_resampling_time / self.dt)==0).nonzero(as_tuple=False).flatten()
             self._resample_commands(env_ids)
-        forward = quat_apply(self.base_quat, self.forward_vec)
-        heading = torch.atan2(forward[:, 1], forward[:, 0])
-        self.commands[:, 2] = torch.clip(
-            0.5 * wrap_to_pi(self.commands[:, 3] - heading), 
-            self.command_ranges["ang_vel_yaw"][0], 
-            self.command_ranges["ang_vel_yaw"][1]
-        )
+        # forward = quat_apply(self.base_quat, self.forward_vec)
+        # heading = torch.atan2(forward[:, 1], forward[:, 0])
+        # self.commands[:, 2] = torch.clip(
+        #     0.5 * wrap_to_pi(self.commands[:, 3] - heading), 
+        #     self.command_ranges["ang_vel_yaw"][0], 
+        #     self.command_ranges["ang_vel_yaw"][1]
+        # )
         # only apply the velocity command if it is tapping command or not tapping in place
         # print("commands: ", self.commands)
         # print("tapping_in_place: ", self.tapping_in_place)

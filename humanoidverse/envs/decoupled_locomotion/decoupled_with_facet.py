@@ -222,13 +222,16 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             # 使用模拟器的当前状态 (Use current state from simulator)
             current_pos = self.simulator.robot_root_states[:, :3]
             current_vel = self.simulator.robot_root_states[:, 7:10]
-            current_quat = self.simulator.robot_root_states[:, 3:7]
+            # current_quat = self.simulator.robot_root_states[:, 3:7]
             
             # 计算当前偏航角 (Calculate current yaw angle)
-            qw, qx, qy, qz = (current_quat[:, 0], current_quat[:, 1],
-                              current_quat[:, 2], current_quat[:, 3])
-            current_yaw = torch.atan2(2.0 * (qz * qy + qw * qx),
-                                      1.0 - 2.0 * (qx**2 + qy**2))
+            # qw, qx, qy, qz = (current_quat[:, 0], current_quat[:, 1],
+            #                   current_quat[:, 2], current_quat[:, 3])
+            # current_yaw = torch.atan2(2.0 * (qz * qy + qw * qx),
+            #                           1.0 - 2.0 * (qx**2 + qy**2))
+            
+            forward = quat_apply(self.base_quat, self.forward_vec)
+            current_yaw = torch.atan2(forward[:, 1], forward[:, 0])
             
             # 计算当前偏航角速度 (Calculate current yaw velocity)
             # 使用角速度的Z分量作为偏航角速度
@@ -304,7 +307,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.surr_yaw_vel_base = surr_yaw_vel_world[:, 0]  # (num_envs, 1)
         
         # 更新命令偏航角速度 (Update command yaw velocity)
-        # self.commands[:, 2:3] = self.surr_yaw_vel_base
+        self.commands[:, 2:3] = self.surr_yaw_vel_base
+
+        # print("self.commands[:, 2]", self.commands[:, 2])
+        # print("self.simulator.robot_root_states[:, 12]", self.simulator.robot_root_states[:, 12])
 
         # 更新EMA滤波器 (Update EMA filters)
         # 使用世界坐标系的速度 (Use world frame velocities)
@@ -320,7 +326,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         self.commands[:, 0] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
         self.commands[:, 1] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
-        self.commands[:, 2] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
+        self.commands[:, 2] *= self.commands[:, 4]
 
         # print("surrogate_lin_vel:", self.surrogate_lin_vel_target[:, 0])
         # print("linear_velocity_ema:", self.lin_vel_ema.ema[:, 0])
@@ -867,7 +873,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 not hasattr(self.simulator, 'robot_root_states')):
             return torch.zeros(self.num_envs, device=self.device)
 
-        error_l2 = torch.square(self.commands[:, 2] - self.base_ang_vel[:, 2])
+        # error_l2 = torch.square(self.commands[:, 2] - self.base_ang_vel[:, 2])
+        error_l2 = torch.square(self.commands[:, 2] - self.simulator.robot_root_states[:, 12])
         # 计算奖励 (Calculate reward)
         reward = torch.exp(-error_l2 / 0.25)  # (num_envs,)
         return reward

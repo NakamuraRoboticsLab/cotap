@@ -165,6 +165,7 @@ class LeggedRobotDecoupledLocomotionStance(LeggedRobotLocomotion):
             self.command_ranges["ang_vel_yaw"][0], 
             self.command_ranges["ang_vel_yaw"][1]
         )
+        print("debug tag")
         # only apply the velocity command if it is tapping command or not tapping in place
         # print("commands: ", self.commands)
         # print("tapping_in_place: ", self.tapping_in_place)
