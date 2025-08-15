@@ -95,6 +95,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.force_saturate = self.config.facet_params.force_saturate
         self.temporal_smoothing = self.config.facet_params.temporal_smoothing
         self.virtual_mass = self.config.facet_params.virtual_mass
+        self.virtual_inertia = self.config.facet_params.virtual_inertia
         self.max_acc_xy = self.config.facet_params.max_acc_xy
         self.max_vel_xy = self.config.facet_params.max_vel_xy
 
@@ -137,6 +138,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # 虚拟动力学参数 (Virtual dynamics parameters)
         self.virtual_mass_tensor = torch.ones(self.num_envs, 1, device=self.device) * self.virtual_mass
+        self.virtual_inertia_tensor = torch.ones(self.num_envs, 1, device=self.device) * self.virtual_inertia
 
         # 外力状态 (External force states)
         self.force_ext_w = torch.zeros(self.num_envs, 3, device=self.device)
@@ -304,10 +306,12 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 偏航角速度在base link坐标系中与世界坐标系相同 (Yaw velocity is same in base link frame as world frame)
         # 因为偏航角是围绕Z轴的旋转，在base link坐标系中不需要变换
         # Because yaw is rotation around Z-axis, no transformation needed in base link frame
-        self.surr_yaw_vel_base = surr_yaw_vel_world[:, 0]  # (num_envs, 1)
+        # self.surr_yaw_vel_base = surr_yaw_vel_world[:, 0]  # (num_envs, 1)
+        surr_yaw_vel_world_weighted = torch.sum(surr_yaw_vel_world * weights.view(1, -1, 1), dim=1)  # (num_envs, 1)
         
         # 更新命令偏航角速度 (Update command yaw velocity)
-        self.commands[:, 2:3] = self.surr_yaw_vel_base
+        # self.commands[:, 2:3] = self.surr_yaw_vel_base
+        self.commands[:, 2:3] = surr_yaw_vel_world_weighted
 
         # print("self.commands[:, 2]", self.commands[:, 2])
         # print("self.simulator.robot_root_states[:, 12]", self.simulator.robot_root_states[:, 12])
@@ -421,10 +425,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             (setyaw_w - self.ref_yaw_w) +
             self.ang_kd.reshape(self.num_envs, 1, 1) *
             (0.0 - self.ref_yaw_vel_w)
-        ) / self.virtual_mass_tensor.unsqueeze(1)
+        ) / self.virtual_inertia_tensor.unsqueeze(1)
         
         # 限制偏航角加速度 (Limit yaw angular acceleration)
-        max_yaw_acc = 5.0  # rad/s^2
+        max_yaw_acc = 10.0  # rad/s^2
         ref_yaw_acc_w = torch.clamp(ref_yaw_acc_w, -max_yaw_acc, max_yaw_acc)
         
         # 积分偏航角速度和偏航角 (Integrate yaw velocity and yaw angle)

@@ -100,6 +100,7 @@ env:
       max_vel_xy: [1.5, 1.5]
       force_saturate: 300.0
       virtual_mass: 5.0
+      virtual_inertia: 0.1
 
 
 # Globally accessible parameters
