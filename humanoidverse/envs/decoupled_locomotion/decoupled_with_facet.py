@@ -194,6 +194,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # print("commands:", self.commands[:, :3])
         # print("self.base_ang_vel[:, 2]:", self.base_ang_vel[:, 2])
 
+        # current_torso_joint_angle = self.simulator.dof_pos[:, self.waist_dof_indices[0]]
+        # print("current_torso_joint_angle:", current_torso_joint_angle)
 
         # 执行父类步进 (Execute parent class step)
         result = super().step(actor_state)
@@ -214,6 +216,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.ref_yaw_vel_w[:, :-1] = self.ref_yaw_vel_w[:, :-1].roll(1, dims=1)
 
         # 更新当前状态到缓冲区首位 (Update current state to buffer front)
+        # this part need check
         if (hasattr(self, 'simulator') and
                 hasattr(self.simulator, 'robot_root_states')):
             # 使用模拟器的当前状态 (Use current state from simulator)
@@ -264,24 +267,28 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 计算加权平均的代理速度 (Calculate weighted average of surrogate velocities)
         # surr_vel_world: (num_envs, num_surr_steps, 3)
         # weights: (num_surr_steps,)
+        # surr_vel_world_first = surr_vel_world[:, 0]
         surr_vel_world_weighted = torch.sum(surr_vel_world * weights.view(1, -1, 1), dim=1)  # (num_envs, 3)
         
         # 将加权代理速度从世界坐标系转换到base link坐标系
         # Transform weighted surrogate velocity from world frame to base link frame
         # 使用四元数的逆变换将世界速度转换到机体坐标系
         # Use inverse quaternion transformation to convert world velocity to body frame
-        quat_inv = current_quat.clone()
-        quat_inv[:, 1:4] *= -1  # Conjugate quaternion for inverse rotation
+        # quat_inv = current_quat.clone()
+        # quat_inv[:, 1:4] *= -1  # Conjugate quaternion for inverse rotation
 
-        self.surr_vel_base = my_quat_rotate(quat_inv, surr_vel_world_weighted)  # (num_envs, 3)
+        # self.surr_vel_base = my_quat_rotate(quat_inv, surr_vel_world_first)  # (num_envs, 3)
+        # self.surr_vel_base_1 = my_quat_rotate(quat_inv, surr_vel_world_weighted)  # (num_envs, 3)
+        # self.surr_vel_base = quat_rotate_inverse(self.base_quat, surr_vel_world_weighted)
 
-        self.commands[:, :2] = self.surr_vel_base[:, :2]  # 更新命令速度 (Update command velocity)
+        # self.commands[:, :2] = self.surr_vel_base[:, :2]  # 更新命令速度 (Update command velocity)
+        self.commands[:, :2] = surr_vel_world_weighted[:, :2]
 
         # 更新代理偏航角目标 (Update surrogate yaw target)
         # 从参考轨迹中提取指定时间步的偏航角 (Extract yaw angles at specified time steps)
         self.surrogate_yaw_target = self.ref_yaw_w[:, self.surr_steps]
 
-        self.commands[:, 3:4] = self.surrogate_yaw_target[:, 0]  # 更新命令偏航角 (Update command yaw angle)
+        # self.commands[:, 3:4] = self.surrogate_yaw_target[:, 0]  # 更新命令偏航角 (Update command yaw angle)
         
         # 更新代理偏航角速度目标 (Update surrogate yaw velocity target)
         # 从参考轨迹中提取指定时间步的偏航角速度 (Extract yaw velocities at specified time steps)
@@ -297,7 +304,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.surr_yaw_vel_base = surr_yaw_vel_world[:, 0]  # (num_envs, 1)
         
         # 更新命令偏航角速度 (Update command yaw velocity)
-        self.commands[:, 2:3] = self.surr_yaw_vel_base
+        # self.commands[:, 2:3] = self.surr_yaw_vel_base
 
         # 更新EMA滤波器 (Update EMA filters)
         # 使用世界坐标系的速度 (Use world frame velocities)
@@ -313,7 +320,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         self.commands[:, 0] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
         self.commands[:, 1] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
-        self.commands[:, 2] *= self.commands[:, 4]
+        self.commands[:, 2] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
 
         # print("surrogate_lin_vel:", self.surrogate_lin_vel_target[:, 0])
         # print("linear_velocity_ema:", self.lin_vel_ema.ema[:, 0])
@@ -467,7 +474,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             current_pos = self.simulator.robot_root_states[env_ids, :3]
             self.command_setpos_w[env_ids] = current_pos + offset
 
-        # print(f"采样位置指令: {self.command_setpos_w[env_ids]}")  # 调试输出 (Debug output)
+        # print(f"采样位置指令: {self.command_setpos_w[:]}")  # 调试输出 (Debug output)
 
         # 采样目标偏航角 (Sample target yaw angle)
         target_yaw = torch.empty(len(env_ids), 1, device=self.device).uniform_(
@@ -796,9 +803,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # error_l2_x = torch.square(diff[:, 0])
         # error_l2_y = torch.square(diff[:, 1])
 
-        error_l2_x = torch.square(self.commands[:, 0] - self.base_lin_vel[:, 0])
-        error_l2_y = torch.square(self.commands[:, 1] - self.base_lin_vel[:, 1])
-        
+        error_l2_x = torch.square(self.commands[:, 0] - self.simulator.robot_root_states[:, 7])
+        error_l2_y = torch.square(self.commands[:, 1] - self.simulator.robot_root_states[:, 8])
+
         # 计算奖励 (Calculate reward)
         # reward = torch.exp(-error_l2 / 0.25)  # (num_envs,)
         reward = torch.exp(-error_l2_x / 0.25) + torch.exp(-error_l2_y / 0.25)  # (num_envs,)
