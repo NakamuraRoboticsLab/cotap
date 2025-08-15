@@ -79,9 +79,9 @@ rewards:
       limits_upper_body_torque: -0.1
 
       # impedance_pos_tracking: 2.5 # 1.0
-      impedance_vel_tracking: 2.5 # 2.0
+      impedance_vel_tracking: 3 # 2.0
       # impedance_acc_tracking: 3.0
-      impedance_yaw_vel_tracking: 3.0
+      impedance_yaw_vel_tracking: 5.0
       # force_resistance: 0.0
       # impedance_mode_stability: 0.0
       # impedance_energy_efficiency: 0.0

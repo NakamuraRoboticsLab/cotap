@@ -186,15 +186,17 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 更新阻抗控制 (Update impedance control)
         self.update_impedance_control()
 
-        # 执行父类步进 (Execute parent class step)
-        result = super().step(actor_state)
-
         # print("self.pos_err_r:", self.pos_err_r)
         # print("self.vel_err_r:", self.vel_err_r)
         # print("self.surr_vel_base:", self.surr_vel_base)
         # print("self.base_lin_vel:", self.base_lin_vel)
         # print("self.surr_yaw_vel_base:", self.surr_yaw_vel_base)
+        # print("commands:", self.commands[:, :3])
         # print("self.base_ang_vel[:, 2]:", self.base_ang_vel[:, 2])
+
+
+        # 执行父类步进 (Execute parent class step)
+        result = super().step(actor_state)
 
         return result
 
@@ -266,9 +268,12 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # print("self.surrogate_lin_vel_target:", self.surrogate_lin_vel_target)
 
+
         # 更新代理偏航角目标 (Update surrogate yaw target)
         # 从参考轨迹中提取指定时间步的偏航角 (Extract yaw angles at specified time steps)
         self.surrogate_yaw_target = self.ref_yaw_w[:, self.surr_steps]
+
+        self.commands[:, 3:4] = self.surrogate_yaw_target[:, 0]  # 更新命令偏航角 (Update command yaw angle)
         
         # 更新代理偏航角速度目标 (Update surrogate yaw velocity target)
         # 从参考轨迹中提取指定时间步的偏航角速度 (Extract yaw velocities at specified time steps)
@@ -298,12 +303,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             self.lin_vel_ema.update(world_lin_vel)
             self.ang_vel_ema.update(world_ang_vel)
 
-        self.tapping_in_place[env_ids, 0] = (
-            torch.rand(len(env_ids), device=self.device) >
-            self.tapping_in_place_prob).float()
         self.commands[:, 0] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
         self.commands[:, 1] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
-        self.commands[:, 2] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
+        self.commands[:, 2] *= self.commands[:, 4]
 
         # print("surrogate_lin_vel:", self.surrogate_lin_vel_target[:, 0])
         # print("linear_velocity_ema:", self.lin_vel_ema.ema[:, 0])
@@ -444,9 +446,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         offset[:, 0].uniform_(-1.0, 1.0)  # X方向前进 (X direction forward)
         offset[:, 1].uniform_(-0.6, 0.6)  # Y方向左右 (Y direction left/right)
         # when stance or tapping, no offset
-        # self.tapping_in_place[env_ids, 0] = (
-        #     torch.rand(len(env_ids), device=self.device) >
-        #     self.tapping_in_place_prob).float()
+        self.tapping_in_place[env_ids, 0] = (
+            torch.rand(len(env_ids), device=self.device) >
+            self.tapping_in_place_prob).float()
         # # Apply offset only in walking mode with tapping allowed
         # offset[:, 0] *= (self.commands[env_ids, 4] * self.tapping_in_place[env_ids, 0])
         # offset[:, 1] *= (self.commands[env_ids, 4] * self.tapping_in_place[env_ids, 0])
