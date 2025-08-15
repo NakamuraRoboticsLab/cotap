@@ -100,7 +100,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # 代理目标时间步 (Surrogate target time steps)
         # self.surr_steps = [16, 24, 32]  # 可配置的多时间步 (Configurable)
-        self.surr_steps = [8, 16] # should use current step? 
+        self.surr_steps = [8, 16, 24] # should use current step? 
         
         # 确保temporal_smoothing足够大以支持surr_steps (Ensure large enough)
         max_surr_step = max(self.surr_steps) if self.surr_steps else 32
@@ -251,29 +251,37 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 从参考轨迹中提取指定时间步的速度 (Extract velocities at specified time steps)
         self.surrogate_lin_vel_target = self.ref_lin_vel_w[:, self.surr_steps]
         
-        # 获取第一个代理时间步的速度目标 (Get first surrogate time step velocity target)
+        # 获取代理时间步的速度目标 (Get surrogate time step velocity targets)
         # surrogate_lin_vel_target: (num_envs, num_surr_steps, 3)
         surr_vel_world = self.surrogate_lin_vel_target  # (num_envs, num_surr_steps, 3)
         
-        # 将代理速度从世界坐标系转换到base link坐标系
-        # Transform surrogate velocity from world frame to base link frame
+        # 定义多时间步的权重 (Define weights for multiple time steps)
+        # 权重分配：近期步骤权重更高 (Higher weights for nearer time steps)
+        weights = torch.tensor([0.6, 0.3, 0.1], device=self.device)  # weights for steps [8, 16, 24]
+        weights = weights[:len(self.surr_steps)]  # 确保权重数量匹配时间步数量
+        weights = weights / weights.sum()  # 归一化权重 (Normalize weights)
+        
+        # 计算加权平均的代理速度 (Calculate weighted average of surrogate velocities)
+        # surr_vel_world: (num_envs, num_surr_steps, 3)
+        # weights: (num_surr_steps,)
+        surr_vel_world_weighted = torch.sum(surr_vel_world * weights.view(1, -1, 1), dim=1)  # (num_envs, 3)
+        
+        # 将加权代理速度从世界坐标系转换到base link坐标系
+        # Transform weighted surrogate velocity from world frame to base link frame
         # 使用四元数的逆变换将世界速度转换到机体坐标系
         # Use inverse quaternion transformation to convert world velocity to body frame
         quat_inv = current_quat.clone()
         quat_inv[:, 1:4] *= -1  # Conjugate quaternion for inverse rotation
-        surr_vel_world_first = surr_vel_world[:, 0]  # (num_envs, 3) - first time step
-        self.surr_vel_base = my_quat_rotate(quat_inv, surr_vel_world_first)  # (num_envs, 3)
+
+        self.surr_vel_base = my_quat_rotate(quat_inv, surr_vel_world_weighted)  # (num_envs, 3)
 
         self.commands[:, :2] = self.surr_vel_base[:, :2]  # 更新命令速度 (Update command velocity)
-
-        # print("self.surrogate_lin_vel_target:", self.surrogate_lin_vel_target)
-
 
         # 更新代理偏航角目标 (Update surrogate yaw target)
         # 从参考轨迹中提取指定时间步的偏航角 (Extract yaw angles at specified time steps)
         self.surrogate_yaw_target = self.ref_yaw_w[:, self.surr_steps]
 
-        self.commands[:, 3:4] = self.surrogate_yaw_target[:, 0]  # 更新命令偏航角 (Update command yaw angle)
+        # self.commands[:, 3:4] = self.surrogate_yaw_target[:, 0]  # 更新命令偏航角 (Update command yaw angle)
         
         # 更新代理偏航角速度目标 (Update surrogate yaw velocity target)
         # 从参考轨迹中提取指定时间步的偏航角速度 (Extract yaw velocities at specified time steps)
@@ -289,7 +297,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.surr_yaw_vel_base = surr_yaw_vel_world[:, 0]  # (num_envs, 1)
         
         # 更新命令偏航角速度 (Update command yaw velocity)
-        self.commands[:, 2:3] = self.surr_yaw_vel_base
+        # self.commands[:, 2:3] = self.surr_yaw_vel_base
 
         # 更新EMA滤波器 (Update EMA filters)
         # 使用世界坐标系的速度 (Use world frame velocities)
@@ -724,21 +732,20 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 方法1: 使用第一个代理时间步作为主要目标 (Method 1: Use first surrogate step)
         # 只考虑XY平面的误差，忽略Z方向 (Only consider XY plane error, ignore Z)
-        pos_diff = current_pos[:, :2] - self.surrogate_pos_target[:, 0, :2] # next pos.
-        pos_error_l2 = pos_diff.square().sum(dim=-1)
+        # pos_diff = current_pos[:, :2] - self.surrogate_pos_target[:, 0, :2] # next pos.
+        # pos_error_l2 = pos_diff.square().sum(dim=-1)
         
         # 方法2: 可选的多时间步加权奖励 (Method 2: Optional multi-step weighted reward)
         # 对多个时间步进行加权平均 (Weighted average across multiple time steps)
-        # weights = torch.tensor([0.3, 0.3, 0.3], device=self.device)
-        # # weights = torch.tensor([0.7, 0.3], device=self.device)
-        # multi_step_errors = []
-        # for i in range(len(self.surr_steps)):
-        #     diff = current_pos[:, :2] - self.surrogate_pos_target[:, i, :2]
-        #     step_error = diff.square().sum(dim=-1)
-        #     # Ensure we don't go out of bounds for weights
-        #     weight = weights[i] if i < len(weights) else 0.01
-        #     multi_step_errors.append(step_error * weight)
-        # pos_error_l2 = torch.stack(multi_step_errors, dim=1).sum(dim=1)
+        weights = torch.tensor([0.6, 0.3, 0.1], device=self.device)
+        multi_step_errors = []
+        for i in range(len(self.surr_steps)):
+            diff = current_pos[:, :2] - self.surrogate_pos_target[:, i, :2]
+            step_error = diff.square().sum(dim=-1)
+            # Ensure we don't go out of bounds for weights
+            weight = weights[i] if i < len(weights) else 0.01
+            multi_step_errors.append(step_error * weight)
+        pos_error_l2 = torch.stack(multi_step_errors, dim=1).sum(dim=1)
         
         # 使用指数衰减奖励函数 (Use exponential decay reward function)
         # 误差标准差设为0.5米，与原始impedance.py一致 (Error std = 0.5m)

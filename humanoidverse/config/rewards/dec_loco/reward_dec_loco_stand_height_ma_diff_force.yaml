@@ -78,8 +78,8 @@ rewards:
       limits_upper_body_dof_vel: -5.0
       limits_upper_body_torque: -0.1
 
-      # impedance_pos_tracking: 2.5 # 1.0
-      impedance_vel_tracking: 3 # 2.0
+      impedance_pos_tracking: 1.0 # 1.0
+      impedance_vel_tracking: 5.0 # 2.0
       # impedance_acc_tracking: 3.0
       impedance_yaw_vel_tracking: 5.0
       # force_resistance: 0.0
@@ -134,7 +134,7 @@ rewards:
       "penalty_ang_shift_in_zero_command",
       # "penalty_root_acc_lower_body",
       # "penalty_stance_contact_no_ang_vel"
-      # "impedance_pos_tracking",
+      "impedance_pos_tracking",
       "impedance_vel_tracking",
       # "impedance_acc_tracking",
       "impedance_yaw_vel_tracking",
