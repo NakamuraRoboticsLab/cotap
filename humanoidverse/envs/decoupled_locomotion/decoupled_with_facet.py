@@ -281,7 +281,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 从参考轨迹中提取指定时间步的偏航角 (Extract yaw angles at specified time steps)
         self.surrogate_yaw_target = self.ref_yaw_w[:, self.surr_steps]
 
-        # self.commands[:, 3:4] = self.surrogate_yaw_target[:, 0]  # 更新命令偏航角 (Update command yaw angle)
+        self.commands[:, 3:4] = self.surrogate_yaw_target[:, 0]  # 更新命令偏航角 (Update command yaw angle)
         
         # 更新代理偏航角速度目标 (Update surrogate yaw velocity target)
         # 从参考轨迹中提取指定时间步的偏航角速度 (Extract yaw velocities at specified time steps)
@@ -297,7 +297,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.surr_yaw_vel_base = surr_yaw_vel_world[:, 0]  # (num_envs, 1)
         
         # 更新命令偏航角速度 (Update command yaw velocity)
-        # self.commands[:, 2:3] = self.surr_yaw_vel_base
+        self.commands[:, 2:3] = self.surr_yaw_vel_base
 
         # 更新EMA滤波器 (Update EMA filters)
         # 使用世界坐标系的速度 (Use world frame velocities)
