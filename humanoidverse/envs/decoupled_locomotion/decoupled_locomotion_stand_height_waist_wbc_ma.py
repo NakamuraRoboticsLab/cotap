@@ -457,6 +457,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
     ########################### FEET REWARDS ###########################
     def _reward_penalty_hip_pos(self):
         # Penalize the hip joints (only roll and yaw)
+        # need check index sequence!
         hips_roll_yaw_indices = self.hips_dof_id[1:3] + self.hips_dof_id[4:6]
         hip_pos = self.simulator.dof_pos[:, hips_roll_yaw_indices]
         penalty_hip_pos = torch.sum(torch.square(hip_pos), dim=1)

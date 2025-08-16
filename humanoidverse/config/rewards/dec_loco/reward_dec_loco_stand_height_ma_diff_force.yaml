@@ -19,8 +19,8 @@ rewards:
       # tracking_arm_dofs: 0.5
       penalty_lin_vel_z: -2.0
       penalty_ang_vel_xy: -0.5 # -0.5
-      penalty_orientation: -5.0 # -1.0
-      penalty_torso_orientation: -5.0 # -1.0
+      penalty_orientation: -1.0 # -1.0
+      penalty_torso_orientation: -2.0 # -1.0
       penalty_lower_body_torques: -1e-5 #-0.00001
       penalty_lower_body_dof_vel: -1.0e-3
       penalty_lower_body_dof_acc: -2.5e-7
@@ -35,13 +35,13 @@ rewards:
       # limits_lower_body_torque: -0.1
       feet_air_time: 4.0
       base_height: -10.0
-      termination: -250.0 # -500.0
+      termination: -500.0 # -500.0
       penalty_feet_height: -5.0
       penalty_feet_swing_height: -20.0
       feet_heading_alignment: -1.5 # -0.25
       penalty_close_feet_xy: -10.
       # penalty_close_knees_xy: -2.
-      penalty_hip_pos: -1.5 # -5.0
+      penalty_hip_pos: -5.0 # -5.0
       penalty_ang_vel_xy_torso: -1.0 # -0.75
       penalty_stance_dof: -1.0e-3 # -1.0e-3
       # penalty_stance_feet: -2.5
@@ -50,7 +50,7 @@ rewards:
       # contact: 0.18 # 0.18
       # alive: 1.0 # 0.15
       # penalty_waist_dofs: -0.5
-      penalty_upper_body_dofs_freeze: -1.0 # only for freeze upper body # -2.0
+      # penalty_upper_body_dofs_freeze: -1.0 # only for freeze upper body # -2.0
       penalty_stand_still: -0.15
       penalty_stance_symmetry: 0
       # penalty_stance_contact_no_ang_vel: -0.1
@@ -66,7 +66,7 @@ rewards:
       # penalty_root_acc_lower_body: -1e-4
 
       # tracking_arm_dofs: 0.5
-      # tracking_upper_body_dofs: 0 # 4.0 2.0
+      tracking_upper_body_dofs: 4.0 # 4.0 2.0
       penalty_upper_body_torques: -1e-5 #-0.00001
       penalty_upper_body_dof_vel: -1.0e-3
       penalty_upper_body_dof_acc: -2.5e-7
@@ -143,8 +143,8 @@ rewards:
       # "impedance_energy_efficiency",
       ]
     upper_body: [
-      # "tracking_upper_body_dofs",
-      "penalty_upper_body_dofs_freeze",
+      "tracking_upper_body_dofs",
+      # "penalty_upper_body_dofs_freeze",
       "penalty_upper_body_torques",
       "penalty_upper_body_dof_vel",
       "penalty_upper_body_dof_acc",
