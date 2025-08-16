@@ -526,7 +526,7 @@ class LeggedRobotDecoupledLocomotionStance(LeggedRobotLocomotion):
         res[is_stance & (num_feet_on_ground < 2)] = 1.0  
         # Penalize if both feet are on the ground when commands[:, 4] == 1 (walking mode)
         # is it necessary? 
-        # res[~is_stance & ((num_feet_on_ground == 2) | (num_feet_on_ground == 0))] = 1.0  
+        res[~is_stance & ((num_feet_on_ground == 2) | (num_feet_on_ground == 0))] = 1.0  
         return res
     
     def _reward_penalty_hip_pos(self):
