@@ -766,8 +766,11 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 使用指数衰减奖励函数 (Use exponential decay reward function)
         # 误差标准差设为0.5米，与原始impedance.py一致 (Error std = 0.5m)
-        reward = torch.exp(-pos_error_l2 / 0.25)  # 0.25 = 0.5^2
-        self.pos_err_r = reward.unsqueeze(1)  # Store actual error, not reward
+        base_reward = torch.exp(-pos_error_l2 / 0.25)  # 0.25 = 0.5^2
+        # Only apply position tracking reward in walking/tapping mode
+        reward = base_reward * self.commands[:, 4]
+        # Store actual L2 error, not reward
+        self.pos_err_r = pos_error_l2.unsqueeze(1)
         
         return reward
 
