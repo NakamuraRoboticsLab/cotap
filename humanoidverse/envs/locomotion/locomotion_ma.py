@@ -314,7 +314,7 @@ class LeggedRobotLocomotion(LeggedRobotBase):
     def _reward_contact(self):
         res = torch.zeros(self.num_envs, dtype=torch.float, device=self.device)
         for i in range(2): # left and right feet
-            is_stance = self.leg_phase[:, i] < 0.6
+            is_stance = self.leg_phase[:, i] < 0.55
             contact = self.simulator.contact_forces[:, self.feet_indices[i], 2] > 1
             res += ~(contact ^ is_stance)
         return res
