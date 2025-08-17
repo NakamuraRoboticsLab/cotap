@@ -462,6 +462,11 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         hip_roll_pos = self.simulator.dof_pos[:, hips_roll_indices]
         penalty_hip_pos = torch.sum(torch.square(hip_roll_pos), dim=1)
 
+        # Index 2: left_hip_yaw, Index 5: right_hip_yaw
+        hips_yaw_indices = [self.hips_dof_id[2], self.hips_dof_id[5]]
+        hip_yaw_pos = self.simulator.dof_pos[:, hips_yaw_indices]
+        penalty_hip_pos += torch.sum(torch.square(hip_yaw_pos), dim=1)
+
         return penalty_hip_pos * (self.commands[:, 4] + (1 - self.commands[:, 4]) * self.commands[:, 8])
 
     def _reward_penalty_lin_vel_z(self):
