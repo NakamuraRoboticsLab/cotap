@@ -104,7 +104,7 @@ env:
 
 
 # Globally accessible parameters
-log_task_name: decoupled_locomotion_with_facet
+log_task_name: decoupled_locomotion_with_facet_rvc
 
 eval_overrides:
   env:

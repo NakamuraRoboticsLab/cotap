@@ -1,5 +1,5 @@
 import torch
-from humanoidverse.envs.decoupled_locomotion.decoupled_with_facet_rvc import LeggedRobotDecoupledLocomotionWithFACET
+from humanoidverse.envs.decoupled_locomotion.decoupled_with_facet import LeggedRobotDecoupledLocomotionWithFACET
 import numpy as np
 
 class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionWithFACET):
@@ -9,10 +9,15 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         super().__init__(config, device)
 
 
-    def _compute_rvc_torques(self, actions):
+    def _compute_rvc_torques(self, actions_scaled):
+        ref_actions_scaled = actions_scaled.clone()
 
-        torques = actions
+        # used for other function
+        ref_actions_scaled[:, self.upper_dof_indices] = self.ref_upper_dof_pos
+        self.ref_pd_torques = self._kp_scale * self.p_gains*(ref_actions_scaled + self.default_dof_pos - self.simulator.dof_pos) - self._kd_scale * self.d_gains*self.simulator.dof_vel
 
+        torques = self._kp_scale * self.p_gains*(actions_scaled + self.default_dof_pos - self.simulator.dof_pos) - self._kd_scale * self.d_gains*self.simulator.dof_vel
+        
         return torques
 
     def _compute_torques(self, actions):
@@ -29,6 +34,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         ref_actions_scaled = actions_scaled.clone()
         if self.residual_upper_body_action:
             actions_scaled[:, self.upper_dof_indices] += (self.ref_upper_dof_pos - self.default_dof_pos[:, self.upper_dof_indices])
+            # print("Residual upper body action applied")
         control_type = self.config.robot.control.control_type
         if control_type=="P":
             torques = self._kp_scale * self.p_gains*(actions_scaled + self.default_dof_pos - self.simulator.dof_pos) - self._kd_scale * self.d_gains*self.simulator.dof_vel
