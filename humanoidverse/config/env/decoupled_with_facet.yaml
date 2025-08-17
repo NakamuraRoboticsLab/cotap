@@ -102,6 +102,9 @@ env:
       virtual_mass: 5.0
       virtual_inertia: 0.1
 
+    rvc_params: 
+      task_kp_range: [50.0, 100.0]
+      task_kd_range: [10.0, 50.0]
 
 # Globally accessible parameters
 log_task_name: decoupled_locomotion_with_facet_rvc
