@@ -109,6 +109,7 @@ class LeggedRobotLocomotion(LeggedRobotBase):
     def update_phase_time(self):
         # Update the phase time
         self.phase_time_np = self._calc_phase_time()
+        # print("phase_time_np: ", self.phase_time_np)
         self.phase_time = torch.tensor(self.phase_time_np, device=self.device, dtype=torch.float, requires_grad=False)
         self.phase_left = (self.phase_time + self.left_offset) % 1
         self.phase_right = (self.phase_time + self.right_offset) % 1
@@ -313,7 +314,7 @@ class LeggedRobotLocomotion(LeggedRobotBase):
     def _reward_contact(self):
         res = torch.zeros(self.num_envs, dtype=torch.float, device=self.device)
         for i in range(2): # left and right feet
-            is_stance = self.leg_phase[:, i] < 0.55
+            is_stance = self.leg_phase[:, i] < 0.6
             contact = self.simulator.contact_forces[:, self.feet_indices[i], 2] > 1
             res += ~(contact ^ is_stance)
         return res
