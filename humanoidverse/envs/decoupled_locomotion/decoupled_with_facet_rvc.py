@@ -202,16 +202,63 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
     #     return G_2, J_2
     
     # def _gravity_compensation(self, com_jacobian_gen, total_mass):
-
+    #     """
+    #     Computes gravity compensation torques using center of mass Jacobian.
+        
+    #     Args:
+    #         com_jacobian_gen (torch.Tensor): Generalized COM Jacobian matrix of shape (num_envs, 3, num_dof+6)
+    #         total_mass (float or torch.Tensor): Total mass of the robot (scalar or per-environment tensor)
+            
+    #     Returns:
+    #         torch.Tensor: Gravity compensation torques of shape (num_envs, num_dof)
+    #     """
+    #     # Validate input shapes
+    #     if com_jacobian_gen.dim() != 3 or com_jacobian_gen.shape[1] != 3:
+    #         raise ValueError(f"Expected com_jacobian_gen shape (num_envs, 3, num_dof+6), got {com_jacobian_gen.shape}")
+        
+    #     # Compute local Jacobian for center of mass
     #     com_jacobian = self._compute_local_jacobian(com_jacobian_gen)  # Shape: (num_envs, 3, num_dof)
+        
+    #     # Validate computed Jacobian shape
+    #     expected_shape = (self.num_envs, 3, self.num_dof)
+    #     if com_jacobian.shape != expected_shape:
+    #         raise ValueError(f"Computed COM Jacobian shape {com_jacobian.shape} doesn't match expected {expected_shape}")
 
-    #     gravity_vec = torch.tensor([0., 0., -9.81], device=self.device).unsqueeze(0).repeat(com_jacobian_gen.shape[0], 1)  # Shape: (num_envs, 3)
-    #     gravity_vec = total_mass * gravity_vec  # Shape: (num_envs, 3)
+    #     # Create gravity vector (pointing downward in z-direction)
+    #     gravity_vec = torch.tensor([0., 0., -9.81], device=self.device, dtype=torch.float32)
+    #     gravity_vec = gravity_vec.unsqueeze(0).repeat(self.num_envs, 1)  # Shape: (num_envs, 3)
+        
+    #     # Handle total_mass as scalar or tensor
+    #     if isinstance(total_mass, (int, float)):
+    #         # Scalar mass - same for all environments
+    #         gravity_force = total_mass * gravity_vec  # Shape: (num_envs, 3)
+    #     else:
+    #         # Tensor mass - different per environment
+    #         if total_mass.shape[0] != self.num_envs:
+    #             raise ValueError(f"Mass tensor shape {total_mass.shape} doesn't match num_envs {self.num_envs}")
+    #         gravity_force = total_mass.unsqueeze(-1) * gravity_vec  # Shape: (num_envs, 3)
 
-    #     gravity_torques = torch.zeros(com_jacobian_gen.shape[0], self.num_dof, device=self.device)  # Shape: (num_envs, num_dof)
-    #     gravity_torques = torch.matmul(com_jacobian.transpose(1, 2), gravity_vec.unsqueeze(-1)).squeeze(-1)  # Shape: (num_envs, num_dof)
+    #     # Compute gravity compensation torques using transposed Jacobian
+    #     # τ_gravity = J_com^T * F_gravity
+    #     try:
+    #         gravity_torques = torch.matmul(
+    #             com_jacobian.transpose(-2, -1),  # Shape: (num_envs, num_dof, 3)
+    #             gravity_force.unsqueeze(-1)      # Shape: (num_envs, 3, 1)
+    #         ).squeeze(-1)  # Shape: (num_envs, num_dof)
+    #     except RuntimeError as e:
+    #         print(f"Error in gravity compensation matrix multiplication: {e}")
+    #         print(f"COM Jacobian shape: {com_jacobian.shape}")
+    #         print(f"Gravity force shape: {gravity_force.shape}")
+    #         # Return zero torques as fallback
+    #         gravity_torques = torch.zeros(self.num_envs, self.num_dof, device=self.device)
+
+    #     # Validate output shape
+    #     expected_output_shape = (self.num_envs, self.num_dof)
+    #     if gravity_torques.shape != expected_output_shape:
+    #         print(f"Warning: Gravity torques shape {gravity_torques.shape} doesn't match expected {expected_output_shape}")
 
     #     return gravity_torques
+    
     
     # def _gravity_compensation_double(self, com_jacobian_gen, total_mass):
 
