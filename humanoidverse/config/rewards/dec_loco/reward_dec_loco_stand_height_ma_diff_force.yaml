@@ -85,7 +85,7 @@ rewards:
       # force_resistance: 0.0
       # impedance_mode_stability: 0.0
       # impedance_energy_efficiency: 0.0
-      contact: 2.0
+      # contact: 2.0
 
   reward_groups:
     lower_body: [
@@ -142,7 +142,7 @@ rewards:
       # "force_resistance",
       # "impedance_mode_stability",
       # "impedance_energy_efficiency",
-      "contact",
+      # "contact",
       ]
     upper_body: [
       "tracking_upper_body_dofs",
