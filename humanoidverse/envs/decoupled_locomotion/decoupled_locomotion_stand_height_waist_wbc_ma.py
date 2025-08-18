@@ -44,6 +44,9 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         self.motion_len = torch.zeros(self.num_envs, dtype=torch.float32, device=self.device, requires_grad=False)
         self.ref_upper_dof_pos = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, \
                                                dtype=torch.float32, device=self.device, requires_grad=False)
+        self.ref_root_pos = torch.zeros(self.num_envs, 3, dtype=torch.float32, device=self.device, requires_grad=False)
+        self.ref_root_rot = torch.zeros(self.num_envs, 4, dtype=torch.float32,
+                                        device=self.device, requires_grad=False)
         self.episode_motion_length = torch.zeros(self.num_envs, dtype=torch.float32, device=self.device, requires_grad=False)
         self.tapping_in_place = torch.zeros(self.num_envs, 1, dtype=torch.float32, device=self.device, requires_grad=False)
         self.fix_waist_yaw_range = self.config.fix_waist_yaw_range
@@ -193,6 +196,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
             self.num_envs, num_bodies, 3) + current_base_pos.unsqueeze(1)
         
         # Update the reference body positions in current world frame
+        # if use the world frame, comment out
         self.ref_body_pos_extend[:, :ref_body_pos_world_current.shape[1], :] = \
             ref_body_pos_world_current
         
@@ -204,6 +208,11 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         # Apply upper body action scale
         self.ref_upper_dof_pos *= self.action_scale_upper_body
 
+        # Store reference root position and rotation
+        self.ref_root_pos = ref_root_pos.clone()
+        # Keep the current z position for height tracking
+        self.ref_root_pos[:, 2] = current_base_pos[:, 2]
+        self.ref_root_rot = ref_root_rot
 
     def _resample_commands(self, env_ids):
         if self._motion_lib and not self.config.robot.motion.reverse_motion: self._resample_motion_times(env_ids)
