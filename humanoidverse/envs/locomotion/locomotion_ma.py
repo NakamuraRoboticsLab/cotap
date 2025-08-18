@@ -109,6 +109,7 @@ class LeggedRobotLocomotion(LeggedRobotBase):
     def update_phase_time(self):
         # Update the phase time
         self.phase_time_np = self._calc_phase_time()
+        # print("phase_time_np: ", self.phase_time_np)
         self.phase_time = torch.tensor(self.phase_time_np, device=self.device, dtype=torch.float, requires_grad=False)
         self.phase_left = (self.phase_time + self.left_offset) % 1
         self.phase_right = (self.phase_time + self.right_offset) % 1

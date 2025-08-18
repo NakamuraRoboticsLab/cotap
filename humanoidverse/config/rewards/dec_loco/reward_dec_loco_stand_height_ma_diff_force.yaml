@@ -19,7 +19,7 @@ rewards:
       # tracking_arm_dofs: 0.5
       penalty_lin_vel_z: -2.0
       penalty_ang_vel_xy: -0.5 # -0.5
-      penalty_orientation: -1.0 # -1.0
+      penalty_orientation: -2.0 # -1.0
       penalty_torso_orientation: -2.0 # -1.0
       penalty_lower_body_torques: -1e-5 #-0.00001
       penalty_lower_body_dof_vel: -1.0e-3
@@ -41,7 +41,7 @@ rewards:
       feet_heading_alignment: -1.5 # -0.25
       penalty_close_feet_xy: -10.
       # penalty_close_knees_xy: -2.
-      # penalty_hip_pos: -5.0 # -5.0
+      penalty_hip_pos: -3.0 # -5.0
       penalty_ang_vel_xy_torso: -1.0 # -0.75
       penalty_stance_dof: -1.0e-3 # -1.0e-3
       # penalty_stance_feet: -2.5
@@ -85,8 +85,7 @@ rewards:
       # force_resistance: 0.0
       # impedance_mode_stability: 0.0
       # impedance_energy_efficiency: 0.0
-
-      gait_period: 2.0
+      # contact: 2.0
 
   reward_groups:
     lower_body: [
@@ -119,7 +118,7 @@ rewards:
       # "penalty_feet_contact_forces",
       "feet_heading_alignment",
       "penalty_close_feet_xy",
-      # "penalty_hip_pos",
+      "penalty_hip_pos",
       "penalty_ang_vel_xy_torso",
       "penalty_stance_dof",
       "penalty_stance_tap_feet",
@@ -143,7 +142,7 @@ rewards:
       # "force_resistance",
       # "impedance_mode_stability",
       # "impedance_energy_efficiency",
-      "gait_period",
+      # "contact",
       ]
     upper_body: [
       "tracking_upper_body_dofs",
@@ -167,7 +166,7 @@ rewards:
   # fix upper body
   fix_upper_body: False
   # gait period
-  gait_period: 1.2
+  gait_period: 0.8
 
   reward_tracking_sigma:
     lin_vel: 0.25
