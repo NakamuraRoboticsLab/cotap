@@ -195,7 +195,8 @@ robot:
     default_dof_drive_mode: 3
 
   motion:
-    motion_file : 'humanoidverse/data/motions/h1_19dof/v1/stable_punch.pkl'
+    # motion_file : 'humanoidverse/data/motions/h1_19dof/v1/stable_punch.pkl'
+    motion_file : 'humanoidverse/data/motions/h1_19dof/v1/amass_phc_filtered.pkl'
     # motion_file : 'humanoidverse/data/motions/g1_29dof/v1/cmu_all.pkl'
     # motion_file : 'humanoidverse/data/motions/g1_29dof/v1/amass_all.pkl'
     # motion_file : 'humanoidverse/data/motions/g1_29dof/v1/singles/0-ACCAD_Male2General_c3d_A6- Box lift_poses.pkl'

@@ -25,6 +25,8 @@ class IsaacGym(BaseSimulator):
             self.save_rendering_dir = Path(config.save_rendering_dir)
         # For force visualization
         self.vis_force_range = False
+        # Next motion switch
+        self.switch_motion = False
 
     def set_headless(self, headless):
         # call super
@@ -539,9 +541,9 @@ class IsaacGym(BaseSimulator):
             self.viewer, gymapi.KEY_P, "push_robots"
         )
 
-        # self.gym.subscribe_viewer_keyboard_event(
-        #     self.viewer, gymapi.KEY_N, "next_task"
-        # )
+        self.gym.subscribe_viewer_keyboard_event(
+            self.viewer, gymapi.KEY_N, "next_task"
+        )
         self.gym.subscribe_viewer_keyboard_event(
                 self.viewer, gymapi.KEY_R, "toggle_video_record"
             )
@@ -631,8 +633,8 @@ class IsaacGym(BaseSimulator):
             elif evt.action == "push_robots" and evt.value > 0:
                 logger.info("Push Robots")
                 self._push_robots(torch.arange(self.num_envs, device=self.device))
-            # elif evt.action == "next_task" and evt.value > 0:
-            #     self.next_task()
+            elif evt.action == "next_task" and evt.value > 0:
+                self.next_task()
             elif evt.action == "toggle_video_record" and evt.value > 0:
                 # https://github.com/NVlabs/ProtoMotions/blob/94059259ba2b596bf908828cc04e8fc6ff901114/phys_anim/envs/base_interface/isaacgym.py#L179
                 self.user_is_recording = not self.user_is_recording
@@ -764,7 +766,7 @@ class IsaacGym(BaseSimulator):
                 os.removedirs(self.curr_user_recording_name)
 
     def next_task(self):
-        pass
+        self.switch_motion = True
 
     # debug visualization
     def clear_lines(self):

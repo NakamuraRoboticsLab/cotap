@@ -12,6 +12,7 @@ from typing import Optional, Dict, List, Tuple
 
 from isaac_utils.rotations import (
     my_quat_rotate,
+    get_euler_xyz_in_tensor,
 )
 from humanoidverse.envs.env_utils.visualization import Point
 
@@ -274,18 +275,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # weights: (num_surr_steps,)
         # surr_vel_world_first = surr_vel_world[:, 0]
         surr_vel_world_weighted = torch.sum(surr_vel_world * weights.view(1, -1, 1), dim=1)  # (num_envs, 3)
-        
-        # 将加权代理速度从世界坐标系转换到base link坐标系
-        # Transform weighted surrogate velocity from world frame to base link frame
-        # 使用四元数的逆变换将世界速度转换到机体坐标系
-        # Use inverse quaternion transformation to convert world velocity to body frame
-        # quat_inv = current_quat.clone()
-        # quat_inv[:, 1:4] *= -1  # Conjugate quaternion for inverse rotation
-
-        # self.surr_vel_base = my_quat_rotate(quat_inv, surr_vel_world_first)  # (num_envs, 3)
-        # self.surr_vel_base_1 = my_quat_rotate(quat_inv, surr_vel_world_weighted)  # (num_envs, 3)
-        # self.surr_vel_base = quat_rotate_inverse(self.base_quat, surr_vel_world_weighted)
-
         # self.commands[:, :2] = self.surr_vel_base[:, :2]  # 更新命令速度 (Update command velocity)
         self.commands[:, :2] = surr_vel_world_weighted[:, :2]
 
@@ -313,9 +302,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # self.commands[:, 2:3] = self.surr_yaw_vel_base
         self.commands[:, 2:3] = surr_yaw_vel_world_weighted
 
-        # print("self.commands[:, 2]", self.commands[:, 2])
-        # print("self.simulator.robot_root_states[:, 12]", self.simulator.robot_root_states[:, 12])
-
         # 更新EMA滤波器 (Update EMA filters)
         # 使用世界坐标系的速度 (Use world frame velocities)
         # should be used in reward function for tracking
@@ -328,11 +314,18 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             self.lin_vel_ema.update(world_lin_vel)
             self.ang_vel_ema.update(world_ang_vel)
 
-        self.commands[:, 0] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
-        self.commands[:, 1] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
+        # # use pos or vel to switch stance and tapping mode
+        # if ((torch.abs(self.commands[:, 0]) < 0.08) & (torch.abs(self.commands[:, 1]) < 0.08) & (torch.abs(self.commands[:, 2]) < 0.1)).any():
+        #     self.commands[:, 4] = 0.0
+        # else:
+        #     self.commands[:, 4] = 1.0
+
+        self.commands[:, 0] *= self.commands[:, 4]
+        self.commands[:, 1] *= self.commands[:, 4]
         self.commands[:, 2] *= self.commands[:, 4]
 
-        # print("surrogate_lin_vel:", self.surrogate_lin_vel_target[:, 0])
+        # print("surrogate_lin_vel_first:", self.surrogate_lin_vel_target[:, 0])
+        # print("surrogate_lin_vel:", surr_vel_world_weighted[:, :3])
         # print("linear_velocity_ema:", self.lin_vel_ema.ema[:, 0])
 
     def update_impedance_command(self):
@@ -358,8 +351,14 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             self.sample_command_setvel(sample_ids[mode == 1])
             self.sample_command_compliant(sample_ids[mode == 2])
             self.sample_command_large(sample_ids[mode == 3])
-
             # print("sample_ids:", sample_ids)
+
+            # # Set target pos and rot as to reference root position
+            # # if use randomize, comment out
+            # self.command_setpos_w = self.ref_root_pos
+            # # Convert reference quaternion to RPY and set command rotation
+            # ref_rpy = get_euler_xyz_in_tensor(self.ref_root_rot)
+            # self.command_setrpy_w = ref_rpy
 
         self.impedance_command_time += 1
 
@@ -470,21 +469,18 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         offset = torch.zeros(len(env_ids), 3, device=self.device)
         offset[:, 0].uniform_(-1.0, 1.0)  # X方向前进 (X direction forward)
         offset[:, 1].uniform_(-0.6, 0.6)  # Y方向左右 (Y direction left/right)
+
         # when stance or tapping, no offset
-        self.tapping_in_place[env_ids, 0] = (
-            torch.rand(len(env_ids), device=self.device) >
-            self.tapping_in_place_prob).float()
-        # # Apply offset only in walking mode with tapping allowed
-        # offset[:, 0] *= (self.commands[env_ids, 4] * self.tapping_in_place[env_ids, 0])
-        # offset[:, 1] *= (self.commands[env_ids, 4] * self.tapping_in_place[env_ids, 0])
+        # used for training mode
+        # self.tapping_in_place[env_ids, 0] = (
+        #     torch.rand(len(env_ids), device=self.device) >
+        #     self.tapping_in_place_prob).float()
 
         # 使用模拟器的正确根状态 (Use correct root states from simulator)
         if (hasattr(self, 'simulator') and
                 hasattr(self.simulator, 'robot_root_states')):
             current_pos = self.simulator.robot_root_states[env_ids, :3]
             self.command_setpos_w[env_ids] = current_pos + offset
-
-        # print(f"采样位置指令: {self.command_setpos_w[:]}")  # 调试输出 (Debug output)
 
         # 采样目标偏航角 (Sample target yaw angle)
         target_yaw = torch.empty(len(env_ids), 1, device=self.device).uniform_(
@@ -582,14 +578,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         target_yaw = (torch.randint(0, 2, (len(env_ids), 1),
                                     device=self.device) * np.pi)
         self.command_setrpy_w[env_ids, 2:3] = target_yaw
-
-        # # 采样弹簧力干扰 (Sample spring force disturbance)
-        # if len(env_ids) > 0:
-        #     self.spring_force.force[env_ids] = (
-        #         torch.randn(len(env_ids), 3, device=self.device) * 200.0)
-        #     self.spring_force.duration[env_ids] = (
-        #         torch.rand(len(env_ids), 1, device=self.device) * 10.0 + 5.0)
-        #     self.spring_force.time[env_ids] = 0.0
 
         self.impedance_command_mode[env_ids] = self.CMD_LARGE_FORCE
         
@@ -790,37 +778,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 self.lin_vel_ema.ema is None):
             return torch.zeros(self.num_envs, device=self.device)
 
-        # # 获取当前机器人状态 (Get current robot states)
-        # current_quat = self.simulator.robot_root_states[:, 3:7]  # (num_envs, 4)
-        
-        # # 获取第一个代理时间步的速度目标 (Get first surrogate time step velocity target)
-        # # surrogate_lin_vel_target: (num_envs, num_surr_steps, 3)
-        # surr_vel_world = self.surrogate_lin_vel_target  # (num_envs, num_surr_steps, 3)
-        
-        # # 将代理速度从世界坐标系转换到base link坐标系
-        # # Transform surrogate velocity from world frame to base link frame
-        # # 使用四元数的逆变换将世界速度转换到机体坐标系
-        # # Use inverse quaternion transformation to convert world velocity to body frame
-        # quat_inv = current_quat.clone()
-        # quat_inv[:, 1:4] *= -1  # Conjugate quaternion for inverse rotation
-        # surr_vel_world_first = surr_vel_world[:, 0]  # (num_envs, 3) - first time step
-        # self.surr_vel_base = my_quat_rotate(quat_inv, surr_vel_world_first)  # (num_envs, 3)
-        
-        # 计算差值和L2误差 (Calculate difference and L2 error)
-        # 使用第一个代理时间步的base link速度与当前base link速度比较
-        # Compare first surrogate time step base link velocity with current base link velocity
-        # diff = self.surr_vel_base - self.base_lin_vel
-
-        # error_l2 = diff.square().sum(dim=-1)  # (num_envs,)
-
-        # error_l2_x = torch.square(diff[:, 0])
-        # error_l2_y = torch.square(diff[:, 1])
-
         error_l2_x = torch.square(self.commands[:, 0] - self.simulator.robot_root_states[:, 7])
         error_l2_y = torch.square(self.commands[:, 1] - self.simulator.robot_root_states[:, 8])
 
         # 计算奖励 (Calculate reward)
-        # reward = torch.exp(-error_l2 / 0.25)  # (num_envs,)
         reward = torch.exp(-error_l2_x / 0.25) + torch.exp(-error_l2_y / 0.25)  # (num_envs,)
         self.vel_err_r = reward.unsqueeze(1)  # Store actual error, not reward
 
@@ -974,7 +935,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 
                 # 绘制目标位置球体 (Draw target position sphere)
                 # 使用绿色表示位置指令目标 (Use green color for position target)
-                sphere_color = (0.0, 1.0, 0.0)  # 绿色 (Green)
+                # sphere_color = (0.0, 1.0, 0.0) # 绿色 (Green)
+                sphere_color = (0.0, 0.0, 1.0) # 蓝色 (Blue)
                 sphere_radius = 0.1  # 球体半径 (Sphere radius)
 
                 # print("debug visualization")
@@ -1161,50 +1123,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                                     Point(surr_line_color),
                                     env_id
                                 )
-            
-            # # 为其他模式绘制不同颜色的指示器 (Draw colored indicators for other modes)
-            # elif self.impedance_command_mode[env_id, 0] == self.CMD_LINVEL:
-            #     # 速度模式 - 蓝色小球 (Velocity mode - blue small sphere)
-            #     if (hasattr(self, 'simulator') and
-            #             hasattr(self.simulator, 'robot_root_states') and
-            #             hasattr(self.simulator, 'draw_sphere')):
-                    
-            #         current_pos = self.simulator.robot_root_states[env_id, :3]
-            #         sphere_color = (0.0, 0.0, 1.0)  # 蓝色 (Blue)
-            #         sphere_radius = 0.05
-            #         offset_pos = current_pos + torch.tensor([0, 0, 0.3],
-            #                                                 device=self.device)
-            #         self.simulator.draw_sphere(offset_pos, sphere_radius,
-            #                                    sphere_color, env_id)
-                                               
-            # elif self.impedance_command_mode[env_id, 0] == self.CMD_COMPLIANT:
-            #     # 柔顺模式 - 紫色小球 (Compliant mode - purple small sphere)
-            #     if (hasattr(self, 'simulator') and
-            #             hasattr(self.simulator, 'robot_root_states') and
-            #             hasattr(self.simulator, 'draw_sphere')):
-                    
-            #         current_pos = self.simulator.robot_root_states[env_id, :3]
-            #         sphere_color = (1.0, 0.0, 1.0)  # 紫色 (Purple)
-            #         sphere_radius = 0.05
-            #         offset_pos = current_pos + torch.tensor([0, 0, 0.3],
-            #                                                 device=self.device)
-            #         self.simulator.draw_sphere(offset_pos, sphere_radius,
-            #                                    sphere_color, env_id)
-
-            # elif (self.impedance_command_mode[env_id, 0] ==
-            #       self.CMD_LARGE_FORCE):
-            #     # 大力模式 - 红色小球 (Large force mode - red small sphere)
-            #     if (hasattr(self, 'simulator') and
-            #             hasattr(self.simulator, 'robot_root_states') and
-            #             hasattr(self.simulator, 'draw_sphere')):
-
-            #         current_pos = self.simulator.robot_root_states[env_id, :3]
-            #         sphere_color = (1.0, 0.0, 0.0)  # 红色 (Red)
-            #         sphere_radius = 0.05
-            #         offset_pos = current_pos + torch.tensor([0, 0, 0.3],
-            #                                                 device=self.device)
-            #         self.simulator.draw_sphere(offset_pos, sphere_radius,
-            #                                    sphere_color, env_id)
 
     # ============= Observations =============
 
