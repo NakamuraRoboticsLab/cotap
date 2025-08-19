@@ -570,7 +570,7 @@ class LeggedRobotDecoupledLocomotionStance(LeggedRobotLocomotion):
         feet_diff = torch.abs(self.simulator._rigid_body_pos[:, self.feet_indices[0], :3] - self.simulator._rigid_body_pos[:, self.feet_indices[1], :3])
         pelvis_quat = self.simulator._rigid_body_rot[:, self.pelvis_id]
         projected_feet_diff = quat_rotate_inverse(pelvis_quat, feet_diff)
-        stance_tap = self.commands[:, 4] * (torch.abs(self.commands[:, 0]) > 0.05)
+        stance_tap = self.commands[:, 4] * (torch.abs(self.commands[:, 0]) > 0.06)
         return torch.abs(projected_feet_diff[:, 0]) * (1.0 - stance_tap)
     
     def _reward_penalty_stance_root(self):
