@@ -202,9 +202,10 @@ class LeggedRobotDecoupledLocomotionStance(LeggedRobotLocomotion):
         # This function is only called when evaluating
         if self.config.rewards.fix_upper_body:
             return
+        print("Next task started")
         self.motion_start_idx += self.num_envs
         self._motion_lib.load_motions(random_sample=False, start_idx=self.motion_start_idx)
-        self.reset_all()
+        # self.reset_all()
 
     def resample_motion(self):
         self._motion_lib.load_motions(random_sample=True)

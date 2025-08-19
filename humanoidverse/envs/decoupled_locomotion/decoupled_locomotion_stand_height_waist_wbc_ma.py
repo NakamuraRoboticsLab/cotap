@@ -366,6 +366,10 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
             if self.common_step_counter % self.resample_time_interval == 0:
                 logger.info(f"Resampling motion at step {self.common_step_counter}")
                 self.resample_motion()
+        if self.simulator.switch_motion: 
+            self.next_task()
+            self.simulator.switch_motion = False
+            # print(self.simulator.switch_motion)
         self.motion_len = self._motion_lib.get_motion_length(self.motion_ids)
         # motion_times = (self.episode_motion_length) * self.dt + self.motion_start_times # current frame
         # if self.config.robot.motion.reverse_motion:
