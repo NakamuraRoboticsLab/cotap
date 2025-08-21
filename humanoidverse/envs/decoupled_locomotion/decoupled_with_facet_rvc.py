@@ -18,6 +18,8 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         self.right_mask = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.double_mask = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device) 
 
+        self.upper_body_indices = torch.tensor([idx + 1 for idx in self.upper_dof_indices], device=self.device)
+
     def _compute_rvc_torques(self, actions_scaled):
         # Initialize task stiffness and damping matrices
         task_stiffs = torch.zeros(self.num_envs, self.task_num, device=self.device)
@@ -111,15 +113,15 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         stiff_torso = torch.zeros(self.num_envs, 6, device=self.device)
 
         # Define stiffness and damping parameters for 6D task (two hands, 3D each)
-        stiff_params = torch.tensor([100., 100., 100., 100., 100., 100.], device=self.device)
-        torso_params = torch.tensor([100., 100., 100., 50., 50., 50.], device=self.device)
+        stiff_params = torch.tensor([200., 200., 200., 200., 200., 200.], device=self.device)
+        torso_params = torch.tensor([1000., 1000., 1000., 500., 500., 500.], device=self.device)
 
         # Repeat across all environments
         task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
         stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
 
         # Joint control gains
-        self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * 10.0 # null-space stiffness, hardcoding now
+        self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * 30.0 # null-space stiffness, hardcoding now
 
         # Compute Jacobians for hand positions (only position, not orientation)
         J_lelb_gen = self.compute_jacobian("left_elbow_link")[:, :3, :]  # Only position (3x(num_dof+6))
@@ -187,12 +189,22 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # Compute torques using stiffness control
         torques = self._kp_scale * self.p_gains*delta_pos
         # Compute upper body position error for RVC controller
-        upper_body_pos_error = (self.ref_upper_dof_pos - self.simulator.dof_pos[:, self.upper_dof_indices]).unsqueeze(-1)
-        upper_body_torques = torch.matmul(jnt_stiff_matrix, upper_body_pos_error).squeeze(-1)
+        upper_body_pos_error = delta_pos[:, self.upper_dof_indices].unsqueeze(-1)  # Shape: (num_envs, upper_body_actions_dim, 1)
+        # upper_body_pos_error = self.ref_upper_dof_pos - self.simulator.dof_pos[:, self.upper_dof_indices]
+        # upper_body_torques = torch.matmul(jnt_stiff_matrix, upper_body_pos_error).squeeze(-1)  # Shape: (num_envs, upper_body_actions_dim)
+        # upper_body_pos_error = upper_body_pos_error.unsqueeze(-1)
+        upper_body_torques = torch.matmul(jnt_stiff_matrix, upper_body_pos_error).squeeze(-1) 
         torques[:, self.upper_dof_indices] = upper_body_torques
         # Add damping term
         torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
-        
+
+        # Gravity compensation calculation
+        grav_upper = self._gravity_upper_compensation()
+
+        # print("gravity compensation:", grav_upper)
+
+        torques[:, self.upper_dof_indices] += grav_upper
+
         return torques
     
     def _compute_jnt_compliance(self, J_task, C_task, C_jnt):
@@ -229,22 +241,40 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
 
         return link_jacobian
     
-    def _compute_local_jacobian(self, J_gen):
-        # Initialize J_foot_gen with zeros
-        J_foot_gen = torch.zeros(self.num_envs, 6, self.num_dof + 6, device=self.device)
+    # def _compute_local_jacobian(self, J_gen):
+    #     # Initialize J_foot_gen with zeros
+    #     J_foot_gen = torch.zeros(self.num_envs, 6, self.num_dof + 6, device=self.device)
 
+    #     # Compute Jacobians for all possible states
+    #     J_left = self.compute_jacobian("left_ankle_link")  # Shape: (num_envs, 6, num_dof+6)
+    #     J_right = self.compute_jacobian("right_ankle_link")  # Shape: (num_envs, 6, num_dof+6)
+
+    #     J_foot_gen[self.left_mask] = J_left[self.left_mask]
+    #     J_foot_gen[self.right_mask] = J_right[self.right_mask]
+    #     # For no contact and double case, use left foot as default
+    #     J_foot_gen[self.no_contact_mask] = J_left[self.no_contact_mask]
+    #     J_foot_gen[self.double_mask] = J_left[self.double_mask]
+
+    #     J_0 = J_foot_gen[:, :, :6]  # Shape: (num_envs, 6, 6)
+    #     J_jnt = J_foot_gen[:, :, 6:]  # Shape: (num_envs, 6, num_dof)
+
+    #     J_0_inv = torch.linalg.pinv(J_0)  # Shape: (num_envs, 6, 6)
+    #     J_u = torch.matmul(J_0_inv, J_jnt)  # Shape: (num_envs, 6, num_dof)
+    #     J_u = -J_u
+
+    #     unit_matrix = torch.eye(self.num_dof, self.num_dof, device=self.device).unsqueeze(0).repeat(J_u.shape[0], 1, 1)
+    #     J_u_extended = torch.cat((J_u, unit_matrix), dim=1)
+
+    #     J = torch.matmul(J_gen, J_u_extended)  # Shape: (num_envs, 6, num_dof)
+
+    #     return J
+
+    def _compute_local_torso_jacobian(self, J_gen):
         # Compute Jacobians for all possible states
-        J_left = self.compute_jacobian("left_ankle_link")  # Shape: (num_envs, 6, num_dof+6)
-        J_right = self.compute_jacobian("right_ankle_link")  # Shape: (num_envs, 6, num_dof+6)
+        J_torso_gen = self.compute_jacobian("torso_link")
 
-        J_foot_gen[self.left_mask] = J_left[self.left_mask]
-        J_foot_gen[self.right_mask] = J_right[self.right_mask]
-        # For no contact and double case, use left foot as default
-        J_foot_gen[self.no_contact_mask] = J_left[self.no_contact_mask]
-        J_foot_gen[self.double_mask] = J_left[self.double_mask]
-
-        J_0 = J_foot_gen[:, :, :6]  # Shape: (num_envs, 6, 6)
-        J_jnt = J_foot_gen[:, :, 6:]  # Shape: (num_envs, 6, num_dof)
+        J_0 = J_torso_gen[:, :, :6]  # Shape: (num_envs, 6, 6)
+        J_jnt = J_torso_gen[:, :, 6:]  # Shape: (num_envs, 6, num_dof)
 
         J_0_inv = torch.linalg.pinv(J_0)  # Shape: (num_envs, 6, 6)
         J_u = torch.matmul(J_0_inv, J_jnt)  # Shape: (num_envs, 6, num_dof)
@@ -257,52 +287,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
 
         return J
     
-    def _compute_double_support_jacobian(self, J_gen):
-
-        J_right_gen = self.compute_jacobian("right_ankle_link")  # Shape: (num_envs, 6, num_dof+6)
-        J_right = self._compute_local_jacobian(J_right_gen)
-
-        # SVD on J_right
-        U, S, Vh = torch.linalg.svd(J_right, full_matrices=True) 
-        # U: (num_envs, 6, 6), S: (num_envs, 6), Vh: (num_envs, num_dof, num_dof)
-        V = Vh.transpose(-2, -1)  # Shape: (num_envs, num_dof, 6)
-        G_2 = V[:, :, 6:]  # Shape: (num_envs, num_dof, num_dof-6)
-
-        J_task = self._compute_local_jacobian(J_gen) # J_task in left support
-        J_2 = torch.matmul(J_task, G_2)  # Shape: (num_envs, 6, 3)
-
-        return G_2, J_2
-    
-    def _compute_rvc_stiffness_close(self, C_task, nullspace_mat, J_2, G_2):
-
-        G_2T = G_2.transpose(-2, -1)  # Shape: (num_envs, num_dof, 3)
-        nullspace_mat_2 = G_2T @ nullspace_mat @ G_2
-        nullspace_mat_2 = torch.linalg.pinv(nullspace_mat_2) # Compliance matrix for nullspace
-        
-        J_pinv = torch.linalg.pinv(J_2)  # Shape: (num_envs, num_dof, 3)
-        J_pinv_T = J_pinv.transpose(-2, -1)  # Shape: (num_envs, 3, num_dof)
-
-        task_contribution = J_pinv @ C_task @ J_pinv_T
-        null_contribution = nullspace_mat_2 - J_pinv @ J_2 @ nullspace_mat_2 @ J_2.transpose(-2, -1) @ J_pinv_T
-
-        jnt_stiffs_mat = task_contribution + null_contribution
-        jnt_stiffs_mat = torch.linalg.pinv(jnt_stiffs_mat)
-
-        return jnt_stiffs_mat
-    
-    def _compute_rvc_stiffness_double(self, jnt_stiffs_2, nullspace_mat, G_2):
-
-        G_pinv = torch.linalg.pinv(G_2)  # Shape: (num_envs, num_dof, 3)
-        G_pinv_T = G_pinv.transpose(-2, -1)  # Shape: (num_envs, 3, num_dof)
-
-        task_contribution = G_pinv_T @ jnt_stiffs_2 @ G_pinv
-        null_contribution = nullspace_mat - G_pinv_T @ G_2.transpose(-2, -1) @ nullspace_mat @ G_2 @ G_pinv
-
-        jnt_stiffs_mat_db = task_contribution + null_contribution
-
-        return jnt_stiffs_mat_db
-    
-    def _gravity_compensation(self):
+    def _gravity_upper_compensation(self):
         """
         Compute gravity compensation torques for all joints.
         
@@ -311,11 +296,13 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
                          shape (num_envs, num_dof)
         """
         # Get COM Jacobian and total mass
-        com_jacobian_gen, total_mass, com_position = (self._compute_com_jacobian())
-        
+        com_jacobian_gen, total_mass, com_position = self._compute_com_jacobian()
+
         # Convert to local coordinates
-        com_jacobian = self._compute_local_jacobian(com_jacobian_gen)
-        
+        com_jacobian = self._compute_local_torso_jacobian(com_jacobian_gen)
+
+        upper_com_jacobian = com_jacobian[:, :, self.config.robot.lower_body_actions_dim:]  # Select upper body DOFs
+
         # Create gravity force vector (total mass * gravity acceleration)
         gravity_force = (
             total_mass.unsqueeze(-1) *
@@ -326,69 +313,55 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         
         # Compute gravity compensation torques: J_com^T * F_gravity
         gravity_torques = torch.bmm(
-            com_jacobian.transpose(-2, -1),
+            upper_com_jacobian.transpose(-2, -1),
             gravity_force
         ).squeeze(-1)
         
         return gravity_torques
     
     def _compute_com_jacobian(self):
-        """
-        Compute center of mass Jacobian efficiently.
-        
-        Returns:
-            tuple: (com_jacobian, total_mass, com_position)
-                - com_jacobian: shape (num_envs, 3, num_dof+6)
-                - total_mass: shape (num_envs, 1)
-                - com_position: shape (num_envs, 3)
-        """
-        # Get link masses
+        # Get link masses for all rigid bodies
         body_masses = self.get_link_masses()
-        
-        # Compute total mass
+
+        # Compute total mass of all bodies
         total_mass = body_masses.sum(dim=1, keepdim=True)
-        
-        # Get body positions for COM calculation (optional)
+
+        # Get body positions for all body links
         body_positions = self.simulator._rigid_body_pos
         com_position = (
             (body_positions * body_masses.unsqueeze(-1)).sum(dim=1) /
             total_mass
         )
-        
-        # Efficiently compute COM Jacobian using mass-weighted sum
-        # Get all body Jacobians at once
-        jacobian = self.simulator.jacobian[:, :, :3, :]  # Only position
-        
-        # Mass-weighted Jacobian sum
-        # Shape: (num_envs, num_bodies, 3, num_dof+6)
-        weighted_jacobians = (
-            jacobian * body_masses.view(self.num_envs, -1, 1, 1)
-        )
-        
-        # Sum over all bodies and normalize by total mass
-        com_jacobian = (
-            weighted_jacobians.sum(dim=1) / total_mass.unsqueeze(-1)
-        )
-        
+
+        jacobian = self.simulator.jacobian[:, :, :3, :]
+
+        # Mass-weighted Jacobian sum for all body links
+        # Shape: (num_envs, num_body_links, 3, num_dof+6)
+        weighted_jacobians = jacobian * body_masses.unsqueeze(-1).unsqueeze(-1)  # (num_envs, num_bodies, 3, num_dof+6)
+        com_jacobian = weighted_jacobians.sum(dim=1) / total_mass.unsqueeze(-1)  # (num_envs, 3, num_dof+6)
+
         return com_jacobian, total_mass, com_position
     
     def get_link_masses(self):
-        # Method 1: Get masses from Isaac Gym rigid body properties
-        # Get rigid body properties for the first environment (masses are same across envs)
+        """
+        Get masses for all rigid bodies (whole body).
+        
+        Returns:
+            torch.Tensor: Masses of all rigid bodies,
+                         shape (num_envs, num_bodies)
+        """
+        # Get rigid body properties for the first environment
         body_props = self.simulator.gym.get_actor_rigid_body_properties(
-            self.simulator.envs[0], 
+            self.simulator.envs[0],
             self.simulator.robot_handles[0]
         )
-        # Extract the mass of each rigid body
-        masses_list = []
-        for prop in body_props:
-            masses_list.append(prop.mass)
-        # Convert to tensor
-        link_masses_single = torch.tensor(masses_list, device=self.device, dtype=torch.float32)
-        
-        # Repeat for all environments (masses are same across environments)
+        # Extract masses for all rigid bodies
+        all_body_masses = [body.mass for body in body_props]
+        # Convert to tensor and repeat for all environments
+        link_masses_single = torch.tensor(
+            all_body_masses, device=self.device, dtype=torch.float32
+        )
         link_masses = link_masses_single.unsqueeze(0).repeat(self.num_envs, 1)
-            
         return link_masses
 
     def _compute_torques(self, actions):
