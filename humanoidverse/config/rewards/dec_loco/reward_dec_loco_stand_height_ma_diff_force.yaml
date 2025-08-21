@@ -66,7 +66,7 @@ rewards:
       # penalty_root_acc_lower_body: -1e-4
 
       # tracking_arm_dofs: 0.5
-      tracking_upper_body_dofs: 2.0 # 4.0 2.0
+      tracking_upper_body_dofs: 10.0 # 4.0 2.0
       penalty_upper_body_torques: -1e-5 #-0.00001
       penalty_upper_body_dof_vel: -1.0e-3
       penalty_upper_body_dof_acc: -2.5e-7
@@ -86,6 +86,7 @@ rewards:
       # impedance_mode_stability: 0.0
       # impedance_energy_efficiency: 0.0
       # contact: 2.0
+      upper_ref_close: 3.0
 
   reward_groups:
     lower_body: [
@@ -157,6 +158,7 @@ rewards:
       "penalty_ee_lin_acc",
       "penalty_ee_ang_acc",
       # "penalty_root_acc_upper_body",
+      "upper_ref_close",
       ]
   
   reward_weights:
@@ -241,7 +243,7 @@ rewards:
   force_scale_max: 1.0
   force_scale_min: 0.0
 
-  upper_body_tracking_sigma_curriculum: False # False
+  upper_body_tracking_sigma_curriculum: True # False
   upper_body_tracking_sigma_initial_scale: 1.0
   upper_body_tracking_sigma_scale_up_threshold: 0.45
   upper_body_tracking_sigma_scale_down_threshold: 0.5

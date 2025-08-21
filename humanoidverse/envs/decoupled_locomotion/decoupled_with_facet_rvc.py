@@ -113,37 +113,20 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         stiff_torso = torch.zeros(self.num_envs, 6, device=self.device)
 
         # Define stiffness and damping parameters for 6D task (two hands, 3D each)
-        stiff_params = torch.tensor([200., 200., 200., 200., 200., 200.], device=self.device)
-        torso_params = torch.tensor([1000., 1000., 1000., 500., 500., 500.], device=self.device)
+        stiff_params = torch.tensor([500., 500., 500., 500., 500., 500.], device=self.device)
+        torso_params = torch.tensor([2000., 2000., 2000., 500., 500., 500.], device=self.device)
 
         # Repeat across all environments
         task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
         stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
 
         # Joint control gains
-        self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * 30.0 # null-space stiffness, hardcoding now
+        self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * 50.0 # null-space stiffness, hardcoding now
 
         # Compute Jacobians for hand positions (only position, not orientation)
         J_lelb_gen = self.compute_jacobian("left_elbow_link")[:, :3, :]  # Only position (3x(num_dof+6))
         J_relb_gen = self.compute_jacobian("right_elbow_link")[:, :3, :]  # Only position (3x(num_dof+6))
         J_torso_gen = self.compute_jacobian("torso_link")  # position and rotation
-
-        # Determine contact states
-        contact_states = torch.zeros(self.num_envs, device=self.device)
-        contact = self.simulator.contact_forces[:, self.feet_indices, 2] > 1.
-
-        # Use proper boolean operations
-        contact_states[contact[:, 0] & ~contact[:, 1]] = 0  # Left support only
-        contact_states[~contact[:, 0] & contact[:, 1]] = 1  # Right support only
-        contact_states[~contact[:, 0] & ~contact[:, 1]] = 2  # No contact
-        contact_states[contact[:, 0] & contact[:, 1]] = 3   # Double contact
-
-        # self.cont_state = contact_states
-        # # Vectorized assignment based on cont_state
-        # self.left_mask = self.cont_state == 0  # Left support
-        # self.right_mask = self.cont_state == 1  # Right support
-        # self.no_contact_mask = self.cont_state == 2
-        # self.double_mask = self.cont_state == 3
 
         # Create selection matrix S_u to select upper body velocities from generalized velocity
         # Generalized velocity structure: [base_vel (6), joint_vel (num_dof)]
@@ -200,9 +183,6 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
 
         # Gravity compensation calculation
         grav_upper = self._gravity_upper_compensation()
-
-        # print("gravity compensation:", grav_upper)
-
         torques[:, self.upper_dof_indices] += grav_upper
 
         return torques
@@ -403,3 +383,13 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
             return torch.clip(torques, -self.torque_limits, self.torque_limits)
         else:
             return torques
+        
+    ########################### RVC REWARDS ###########################
+
+    def _reward_upper_ref_close(self):
+        err = torch.sum(torch.square(self.config.robot.control.action_scale * \
+                                      self.actions[:, self.upper_dof_indices] + \
+                                        self.default_dof_pos[:, self.upper_dof_indices] - self.ref_upper_dof_pos), dim=1)
+        reward = torch.exp(-err / 0.25)
+
+        return reward
