@@ -85,7 +85,7 @@ rewards:
       # force_resistance: 0.0
       # impedance_mode_stability: 0.0
       # impedance_energy_efficiency: 0.0
-      contact: 1.0
+      contact: 3.0
       upper_ref_close: 15.0 # 3.0
 
   reward_groups:
@@ -168,7 +168,7 @@ rewards:
   # fix upper body
   fix_upper_body: False
   # gait period
-  gait_period: 0.8
+  gait_period: 0.6
 
   reward_tracking_sigma:
     lin_vel: 0.25
