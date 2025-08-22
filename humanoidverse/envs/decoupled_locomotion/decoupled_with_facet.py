@@ -462,7 +462,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         ang_kp = torch.empty(len(env_ids), 1, device=self.device).uniform_(
             *self.angular_kp_range)
-        ang_kd = 2.0 * torch.sqrt(ang_kp * self.virtual_inertia[env_ids])
+        ang_kd = 2.0 * torch.sqrt(ang_kp * self.virtual_inertia_tensor[env_ids])
 
         self.lin_kp[env_ids] = lin_kp
         self.lin_kd[env_ids] = lin_kd
