@@ -127,10 +127,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         """初始化FACET阻抗控制系统 (Initialize FACET impedance system)"""
         
         # 阻抗控制参数 (Impedance control parameters)
-        self.lin_kp = torch.zeros(self.num_envs, 1, device=self.device)
-        self.lin_kd = torch.zeros(self.num_envs, 1, device=self.device)
-        self.ang_kp = torch.zeros(self.num_envs, 1, device=self.device)
-        self.ang_kd = torch.zeros(self.num_envs, 1, device=self.device)
+        self.lin_kp = torch.ones(self.num_envs, 1, device=self.device) * self.config.facet_params.linear_kp_init
+        self.lin_kd = torch.ones(self.num_envs, 1, device=self.device) * self.config.facet_params.linear_kd_init
+        self.ang_kp = torch.ones(self.num_envs, 1, device=self.device) * self.config.facet_params.angular_kp_init
+        self.ang_kd = torch.ones(self.num_envs, 1, device=self.device) * self.config.facet_params.angular_kd_init
 
         # 目标状态 (Target states)
         self.command_setpos_w = torch.zeros(self.num_envs, 3, device=self.device)
@@ -460,10 +460,14 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 临界阻尼：lin_kd = 2 * sqrt(kp * mass) (Critical damping)
         lin_kd = 2.0 * torch.sqrt(lin_kp * self.virtual_mass_tensor[env_ids])
 
+        ang_kp = torch.empty(len(env_ids), 1, device=self.device).uniform_(
+            *self.angular_kp_range)
+        ang_kd = 2.0 * torch.sqrt(ang_kp * self.virtual_inertia[env_ids])
+
         self.lin_kp[env_ids] = lin_kp
         self.lin_kd[env_ids] = lin_kd
-        self.ang_kp[env_ids] = lin_kp
-        self.ang_kd[env_ids] = lin_kd
+        self.ang_kp[env_ids] = ang_kp
+        self.ang_kd[env_ids] = ang_kd
 
         # 采样目标位置 (Sample target position)
         offset = torch.zeros(len(env_ids), 3, device=self.device)

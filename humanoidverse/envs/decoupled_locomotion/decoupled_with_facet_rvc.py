@@ -19,93 +19,94 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         self.double_mask = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device) 
 
         self.upper_body_indices = torch.tensor([idx + 1 for idx in self.upper_dof_indices], device=self.device)
+        self.grav_upper = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device)
 
-    def _compute_rvc_torques(self, actions_scaled):
-        # Initialize task stiffness and damping matrices
-        task_stiffs = torch.zeros(self.num_envs, self.task_num, device=self.device)
+    # def _compute_rvc_torques(self, actions_scaled):
+    #     # Initialize task stiffness and damping matrices
+    #     task_stiffs = torch.zeros(self.num_envs, self.task_num, device=self.device)
         
-        # Define stiffness and damping parameters for 6D task (two hands, 3D each)
-        stiff_params = torch.tensor([100., 100., 100., 100., 100., 100.], device=self.device)
+    #     # Define stiffness and damping parameters for 6D task (two hands, 3D each)
+    #     stiff_params = torch.tensor([100., 100., 100., 100., 100., 100.], device=self.device)
         
-        # Repeat across all environments
-        task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
+    #     # Repeat across all environments
+    #     task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
 
-        # Joint control gains
-        self.rev_p_gains = torch.ones(self.num_envs, self.num_dof, device=self.device) * 10.0 # null-space stiffness, hardcoding now
+    #     # Joint control gains
+    #     self.rev_p_gains = torch.ones(self.num_envs, self.num_dof, device=self.device) * 10.0 # null-space stiffness, hardcoding now
 
-        # Compute Jacobians for hand positions (only position, not orientation)
-        J_lelb_gen = self.compute_jacobian("left_elbow_link")[:, :3, :]  # Only position (3x(num_dof+6))
-        J_relb_gen = self.compute_jacobian("right_elbow_link")[:, :3, :]  # Only position (3x(num_dof+6))
+    #     # Compute Jacobians for hand positions (only position, not orientation)
+    #     J_lelb_gen = self.compute_jacobian("left_elbow_link")[:, :3, :]  # Only position (3x(num_dof+6))
+    #     J_relb_gen = self.compute_jacobian("right_elbow_link")[:, :3, :]  # Only position (3x(num_dof+6))
 
-        # Determine contact states
-        contact_states = torch.zeros(self.num_envs, device=self.device)
-        contact = self.simulator.contact_forces[:, self.feet_indices, 2] > 1.
+    #     # Determine contact states
+    #     contact_states = torch.zeros(self.num_envs, device=self.device)
+    #     contact = self.simulator.contact_forces[:, self.feet_indices, 2] > 1.
 
-        # Use proper boolean operations
-        contact_states[contact[:, 0] & ~contact[:, 1]] = 0  # Left support only
-        contact_states[~contact[:, 0] & contact[:, 1]] = 1  # Right support only
-        contact_states[~contact[:, 0] & ~contact[:, 1]] = 2  # No contact
-        contact_states[contact[:, 0] & contact[:, 1]] = 3   # Double contact
+    #     # Use proper boolean operations
+    #     contact_states[contact[:, 0] & ~contact[:, 1]] = 0  # Left support only
+    #     contact_states[~contact[:, 0] & contact[:, 1]] = 1  # Right support only
+    #     contact_states[~contact[:, 0] & ~contact[:, 1]] = 2  # No contact
+    #     contact_states[contact[:, 0] & contact[:, 1]] = 3   # Double contact
 
-        self.cont_state = contact_states
-        # Vectorized assignment based on cont_state
-        self.left_mask = self.cont_state == 0  # Left support
-        self.right_mask = self.cont_state == 1  # Right support
-        self.no_contact_mask = self.cont_state == 2
-        self.double_mask = self.cont_state == 3
+    #     self.cont_state = contact_states
+    #     # Vectorized assignment based on cont_state
+    #     self.left_mask = self.cont_state == 0  # Left support
+    #     self.right_mask = self.cont_state == 1  # Right support
+    #     self.no_contact_mask = self.cont_state == 2
+    #     self.double_mask = self.cont_state == 3
 
-        # Compute local Jacobians
-        J_lelb = self._compute_local_jacobian(J_lelb_gen)  # Shape: (num_envs, 3, num_dof)
-        J_relb = self._compute_local_jacobian(J_relb_gen)  # Shape: (num_envs, 3, num_dof)
+    #     # Compute local Jacobians
+    #     J_lelb = self._compute_local_jacobian(J_lelb_gen)  # Shape: (num_envs, 3, num_dof)
+    #     J_relb = self._compute_local_jacobian(J_relb_gen)  # Shape: (num_envs, 3, num_dof)
         
-        # Concatenate to form task Jacobian
-        J_task_gen = torch.cat([J_lelb_gen, J_relb_gen], dim=1)  # Shape: (num_envs, 6, 6+num_dof)
-        J_task = torch.cat([J_lelb, J_relb], dim=1)  # Shape: (num_envs, 6, num_dof)
+    #     # Concatenate to form task Jacobian
+    #     J_task_gen = torch.cat([J_lelb_gen, J_relb_gen], dim=1)  # Shape: (num_envs, 6, 6+num_dof)
+    #     J_task = torch.cat([J_lelb, J_relb], dim=1)  # Shape: (num_envs, 6, num_dof)
 
-        # Joint space stiffness and compliance matrices
-        K_jnt = torch.diag_embed(self.rev_p_gains)  # Shape: (num_envs, num_dof, num_dof)
-        C_jnt = torch.linalg.inv(K_jnt + torch.eye(self.num_dof, device=self.device) * 1e-6)  # Add regularization
+    #     # Joint space stiffness and compliance matrices
+    #     K_jnt = torch.diag_embed(self.rev_p_gains)  # Shape: (num_envs, num_dof, num_dof)
+    #     C_jnt = torch.linalg.inv(K_jnt + torch.eye(self.num_dof, device=self.device) * 1e-6)  # Add regularization
 
-        # Task space stiffness and compliance matrices  
-        K_task = torch.diag_embed(task_stiffs)  # Shape: (num_envs, 6, 6)
-        C_task = torch.linalg.inv(K_task + torch.eye(self.task_num, device=self.device) * 1e-6)  # Add regularization
+    #     # Task space stiffness and compliance matrices  
+    #     K_task = torch.diag_embed(task_stiffs)  # Shape: (num_envs, 6, 6)
+    #     C_task = torch.linalg.inv(K_task + torch.eye(self.task_num, device=self.device) * 1e-6)  # Add regularization
 
-        jnt_stiff_matrix = torch.zeros(self.num_envs, self.num_dof, self.num_dof, device=self.device)
+    #     jnt_stiff_matrix = torch.zeros(self.num_envs, self.num_dof, self.num_dof, device=self.device)
         
-        # Single-support situation (left or right foot contact)
-        single_support_mask = self.left_mask | self.right_mask
-        if torch.any(single_support_mask):
-            jnt_comp_matrix = self._compute_jnt_compliance(J_task, C_task, C_jnt)
-            # Apply regularization and invert for single support environments
-            regularized_comp = jnt_comp_matrix + torch.eye(self.num_dof, device=self.device).unsqueeze(0) * 1e-6
-            jnt_stiff_single = torch.linalg.inv(regularized_comp)
-            jnt_stiff_matrix[single_support_mask] = jnt_stiff_single[single_support_mask]
+    #     # Single-support situation (left or right foot contact)
+    #     single_support_mask = self.left_mask | self.right_mask
+    #     if torch.any(single_support_mask):
+    #         jnt_comp_matrix = self._compute_jnt_compliance(J_task, C_task, C_jnt)
+    #         # Apply regularization and invert for single support environments
+    #         regularized_comp = jnt_comp_matrix + torch.eye(self.num_dof, device=self.device).unsqueeze(0) * 1e-6
+    #         jnt_stiff_single = torch.linalg.inv(regularized_comp)
+    #         jnt_stiff_matrix[single_support_mask] = jnt_stiff_single[single_support_mask]
 
-        # Double-support situation - only apply to environments with double contact
-        if torch.any(self.double_mask):
-            G_2, J_2 = self._compute_double_support_jacobian(J_task_gen)
-            jnt_stiffs_2 = self._compute_rvc_stiffness_close(C_task, K_jnt, J_2, G_2)
-            jnt_stiff_matrix_double = self._compute_rvc_stiffness_double(jnt_stiffs_2, K_jnt, G_2)
-            # Only apply to environments with double contact
-            jnt_stiff_matrix[self.double_mask] = jnt_stiff_matrix_double[self.double_mask]
+    #     # Double-support situation - only apply to environments with double contact
+    #     if torch.any(self.double_mask):
+    #         G_2, J_2 = self._compute_double_support_jacobian(J_task_gen)
+    #         jnt_stiffs_2 = self._compute_rvc_stiffness_close(C_task, K_jnt, J_2, G_2)
+    #         jnt_stiff_matrix_double = self._compute_rvc_stiffness_double(jnt_stiffs_2, K_jnt, G_2)
+    #         # Only apply to environments with double contact
+    #         jnt_stiff_matrix[self.double_mask] = jnt_stiff_matrix_double[self.double_mask]
 
-        # When no contact (cont_state == 2), use simple diagonal stiffness matrix
-        if torch.any(self.no_contact_mask):
-            diagonal_stiffness = torch.diag_embed(self._kp_scale * self.p_gains)  # Shape: (num_envs, num_dof, num_dof)
-            jnt_stiff_matrix[self.no_contact_mask] = diagonal_stiffness[self.no_contact_mask]
+    #     # When no contact (cont_state == 2), use simple diagonal stiffness matrix
+    #     if torch.any(self.no_contact_mask):
+    #         diagonal_stiffness = torch.diag_embed(self._kp_scale * self.p_gains)  # Shape: (num_envs, num_dof, num_dof)
+    #         jnt_stiff_matrix[self.no_contact_mask] = diagonal_stiffness[self.no_contact_mask]
 
-        # Compute position error
-        delta_pos = actions_scaled + self.default_dof_pos - self.simulator.dof_pos
-        # Compute torques using stiffness control
-        torques = torch.matmul(jnt_stiff_matrix, delta_pos.unsqueeze(-1)).squeeze(-1)
-        # Add damping term
-        torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
+    #     # Compute position error
+    #     delta_pos = actions_scaled + self.default_dof_pos - self.simulator.dof_pos
+    #     # Compute torques using stiffness control
+    #     torques = torch.matmul(jnt_stiff_matrix, delta_pos.unsqueeze(-1)).squeeze(-1)
+    #     # Add damping term
+    #     torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
 
-        # add gravity compensation
-        grav_torques = self._gravity_compensation()
-        torques += grav_torques
+    #     # add gravity compensation
+    #     grav_torques = self._gravity_compensation()
+    #     torques += grav_torques
 
-        return torques
+    #     return torques
     
     def _compute_upper_rvc_torques(self, actions_scaled):
         # Initialize task stiffness and damping matrices
@@ -113,12 +114,15 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         stiff_torso = torch.zeros(self.num_envs, 6, device=self.device)
 
         # Define stiffness and damping parameters for 6D task (two hands, 3D each)
-        stiff_params = torch.tensor([500., 500., 500., 500., 500., 500.], device=self.device)
-        torso_params = torch.tensor([2000., 2000., 2000., 500., 500., 500.], device=self.device)
+        stiff_params = torch.tensor([1000., 1000., 5000., 1000., 1000., 5000.], device=self.device) # task stiffness
+        # torso_params = torch.tensor([2000., 2000., 2000., 500., 500., 500.], device=self.device)
+
+        # Create [num_envs, 6] tensor: first 3 columns lin_kp, last 3 columns ang_kp
+        # torso_params = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
 
         # Repeat across all environments
         task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
-        stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
+        stiff_torso = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
 
         # Joint control gains
         self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * 50.0 # null-space stiffness, hardcoding now
@@ -173,17 +177,15 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         torques = self._kp_scale * self.p_gains*delta_pos
         # Compute upper body position error for RVC controller
         upper_body_pos_error = delta_pos[:, self.upper_dof_indices].unsqueeze(-1)  # Shape: (num_envs, upper_body_actions_dim, 1)
-        # upper_body_pos_error = self.ref_upper_dof_pos - self.simulator.dof_pos[:, self.upper_dof_indices]
-        # upper_body_torques = torch.matmul(jnt_stiff_matrix, upper_body_pos_error).squeeze(-1)  # Shape: (num_envs, upper_body_actions_dim)
-        # upper_body_pos_error = upper_body_pos_error.unsqueeze(-1)
+        # upper_body_pos_error = (self.ref_upper_dof_pos - self.simulator.dof_pos[:, self.upper_dof_indices]).unsqueeze(-1)
         upper_body_torques = torch.matmul(jnt_stiff_matrix, upper_body_pos_error).squeeze(-1) 
         torques[:, self.upper_dof_indices] = upper_body_torques
         # Add damping term
         torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
 
         # Gravity compensation calculation
-        grav_upper = self._gravity_upper_compensation()
-        torques[:, self.upper_dof_indices] += grav_upper
+        self.grav_upper = self._gravity_upper_compensation()
+        torques[:, self.upper_dof_indices] += self.grav_upper
 
         return torques
     
@@ -393,3 +395,8 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         reward = torch.exp(-err / 0.25)
 
         return reward
+    
+    ######################### Observations #########################
+    
+    def _get_obs_grav_upper(self):
+        return self.grav_upper
