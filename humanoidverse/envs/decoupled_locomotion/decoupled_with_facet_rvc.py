@@ -400,3 +400,9 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
     
     def _get_obs_grav_upper(self):
         return self.grav_upper
+
+    def _get_obs_lin_kp(self):
+        return self.lin_kp
+
+    def _get_obs_ang_kp(self):
+        return self.ang_kp

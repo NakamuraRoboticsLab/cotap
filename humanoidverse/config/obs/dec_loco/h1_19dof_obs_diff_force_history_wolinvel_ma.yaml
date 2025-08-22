@@ -21,6 +21,8 @@ obs:
       sin_phase,
       cos_phase,
       grav_upper,
+      lin_kp,
+      ang_kp,
     ]
 
     critic_obs: [
@@ -43,6 +45,8 @@ obs:
       sin_phase,
       cos_phase,
       grav_upper,
+      lin_kp,
+      ang_kp,
     ]
   
   history_length:
@@ -70,6 +74,8 @@ obs:
     right_ee_apply_force: 0.1,
     history_actor: 1.0,
     grav_upper: 1.0,
+    lin_kp: 1.0,
+    ang_kp: 1.0,
   }
   
   add_noise: False
@@ -112,6 +118,8 @@ obs:
     right_ee_apply_force: 0.0,
     history_actor: 0.0,
     grav_upper: 0.0,
+    lin_kp: 0.0,
+    ang_kp: 0.0,
   }
 
   # obs_dims should use list instead of dict
@@ -136,3 +144,5 @@ obs:
     - left_ee_apply_force: 3
     - right_ee_apply_force: 3
     - grav_upper: 8 # check upper_body_actions_dim in h1.yaml
+    - lin_kp: 1
+    - ang_kp: 1
