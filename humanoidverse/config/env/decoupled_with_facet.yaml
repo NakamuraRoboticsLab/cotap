@@ -98,8 +98,8 @@ env:
       linear_kd_init: 100.0
       angular_kp_init: 200.0
       angular_kd_init: 50.0
-      linear_kp_range: [1000.0, 5000.0]
-      angular_kp_range: [300.0, 1000.0]
+      linear_kp_range: [2000.0, 3000.0]
+      angular_kp_range: [500.0, 800.0]
       max_acc_xy: [20.0, 15.0]
       max_vel_xy: [1.5, 1.5]
       force_saturate: 300.0
