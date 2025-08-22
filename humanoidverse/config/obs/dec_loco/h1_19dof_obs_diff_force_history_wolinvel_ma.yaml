@@ -17,9 +17,9 @@ obs:
       dof_pos,
       dof_vel,
       actions,
-      phase_time,
-      # sin_phase,
-      # cos_phase,
+      # phase_time,
+      sin_phase,
+      cos_phase,
     ]
 
     critic_obs: [
@@ -38,9 +38,9 @@ obs:
       actions,
       left_ee_apply_force,
       right_ee_apply_force,
-      phase_time,
-      # sin_phase,
-      # cos_phase,
+      # phase_time,
+      sin_phase,
+      cos_phase,
     ]
   
   history_length:
