@@ -186,27 +186,27 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             self.lin_vel_ema = EMA(dummy_data, [0.0, 0.5, 0.8])
             self.ang_vel_ema = EMA(dummy_data, [0.0, 0.5, 0.8])
         
-    def step(self, actor_state):
-        """环境步进 (Environment step)"""
+    # def step(self, actor_state):
+    #     """环境步进 (Environment step)"""
         
-        # 更新阻抗控制 (Update impedance control)
-        self.update_impedance_control()
+    #     # 更新阻抗控制 (Update impedance control)
+    #     self.update_impedance_control()
 
-        # print("self.pos_err_r:", self.pos_err_r)
-        # print("self.vel_err_r:", self.vel_err_r)
-        # print("self.surr_vel_base:", self.surr_vel_base)
-        # print("self.base_lin_vel:", self.base_lin_vel)
-        # print("self.surr_yaw_vel_base:", self.surr_yaw_vel_base)
-        # print("commands:", self.commands[:, :3])
-        # print("self.base_ang_vel[:, 2]:", self.base_ang_vel[:, 2])
+    #     # print("self.pos_err_r:", self.pos_err_r)
+    #     # print("self.vel_err_r:", self.vel_err_r)
+    #     # print("self.surr_vel_base:", self.surr_vel_base)
+    #     # print("self.base_lin_vel:", self.base_lin_vel)
+    #     # print("self.surr_yaw_vel_base:", self.surr_yaw_vel_base)
+    #     # print("commands:", self.commands[:, :3])
+    #     # print("self.base_ang_vel[:, 2]:", self.base_ang_vel[:, 2])
 
-        # current_torso_joint_angle = self.simulator.dof_pos[:, self.waist_dof_indices[0]]
-        # print("current_torso_joint_angle:", current_torso_joint_angle)
+    #     # current_torso_joint_angle = self.simulator.dof_pos[:, self.waist_dof_indices[0]]
+    #     # print("current_torso_joint_angle:", current_torso_joint_angle)
 
-        # 执行父类步进 (Execute parent class step)
-        result = super().step(actor_state)
+    #     # 执行父类步进 (Execute parent class step)
+    #     result = super().step(actor_state)
 
-        return result
+    #     return result
 
     def update_impedance_control(self):
         """更新阻抗控制 (Update impedance control)"""

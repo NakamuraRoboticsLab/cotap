@@ -21,6 +21,10 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         self.upper_body_indices = torch.tensor([idx + 1 for idx in self.upper_dof_indices], device=self.device)
         self.grav_upper = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device)
 
+        self.jnt_stiff_matrix = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, \
+                                       self.config.robot.upper_body_actions_dim, device=self.device)
+        
+
     # def _compute_rvc_torques(self, actions_scaled):
     #     # Initialize task stiffness and damping matrices
     #     task_stiffs = torch.zeros(self.num_envs, self.task_num, device=self.device)
@@ -107,8 +111,20 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
     #     torques += grav_torques
 
     #     return torques
-    
-    def _compute_upper_rvc_torques(self, actions_scaled):
+
+    def step(self, actor_state):
+        """环境步进 (Environment step)"""
+        
+        # 更新阻抗控制 (Update impedance control)
+        self.update_impedance_control()
+        self._compute_rvc_matrix()
+
+        # 执行父类步进 (Execute parent class step)
+        result = super().step(actor_state)
+
+        return result
+
+    def _compute_rvc_matrix(self):
         # Initialize task stiffness and damping matrices
         task_stiffs = torch.zeros(self.num_envs, self.task_num, device=self.device)
         stiff_torso = torch.zeros(self.num_envs, 6, device=self.device)
@@ -167,13 +183,12 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         C_task -= J_eb @ torch.linalg.inv(K_torso) @ J_eb.transpose(-1, -2)  # Adjust task compliance matrix
 
         # Solution
-        jnt_stiff_matrix = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, self.config.robot.upper_body_actions_dim, device=self.device)
-        
         jnt_comp_matrix = self._compute_jnt_compliance(J_eu, C_task, C_jnt)
         # Apply regularization and invert for single support environments
         regularized_comp = jnt_comp_matrix + torch.eye(self.config.robot.upper_body_actions_dim, device=self.device).unsqueeze(0) * 1e-6
-        jnt_stiff_matrix = torch.linalg.inv(regularized_comp)
+        self.jnt_stiff_matrix = torch.linalg.inv(regularized_comp)
 
+    def _compute_upper_rvc_torques(self, actions_scaled):
         # Compute position error
         delta_pos = actions_scaled + self.default_dof_pos - self.simulator.dof_pos
         # Compute torques using stiffness control
@@ -181,7 +196,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # Compute upper body position error for RVC controller
         upper_body_pos_error = delta_pos[:, self.upper_dof_indices].unsqueeze(-1)  # Shape: (num_envs, upper_body_actions_dim, 1)
         # upper_body_pos_error = (self.ref_upper_dof_pos - self.simulator.dof_pos[:, self.upper_dof_indices]).unsqueeze(-1)
-        upper_body_torques = torch.matmul(jnt_stiff_matrix, upper_body_pos_error).squeeze(-1) 
+        upper_body_torques = torch.matmul(self.jnt_stiff_matrix, upper_body_pos_error).squeeze(-1) 
         torques[:, self.upper_dof_indices] = upper_body_torques
         # Add damping term
         torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
