@@ -89,6 +89,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.init_done = False
         # 首先调用父类初始化 (Initialize parent class first)
         super().__init__(config, device)
+        
 
         # FACET阻抗控制配置 (FACET impedance control configuration)
         self.linear_kp_range = self.config.facet_params.linear_kp_range
@@ -746,6 +747,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # 获取当前机器人位置 (Get current robot position)
         current_pos = self.simulator.robot_root_states[:, :3]
+        # Get torso link position and velocity from simulator
+        # current_pos = self.simulator.link_states[:, self.torso_index, :3] # (num_envs, 3)
         
         # 方法1: 使用第一个代理时间步作为主要目标 (Method 1: Use first surrogate step)
         # 只考虑XY平面的误差，忽略Z方向 (Only consider XY plane error, ignore Z)
@@ -789,9 +792,13 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 not hasattr(self.lin_vel_ema, 'ema') or
                 self.lin_vel_ema.ema is None):
             return torch.zeros(self.num_envs, device=self.device)
+        
+        # current_vel = self.simulator.link_states[:, self.torso_index, 7:10]    # (num_envs, 3)
 
         error_l2_x = torch.square(self.commands[:, 0] - self.simulator.robot_root_states[:, 7])
         error_l2_y = torch.square(self.commands[:, 1] - self.simulator.robot_root_states[:, 8])
+        # error_l2_x = torch.square(self.commands[:, 0] - current_vel[:, 0])
+        # error_l2_y = torch.square(self.commands[:, 1] - current_vel[:, 1])
 
         # 计算奖励 (Calculate reward)
         reward = torch.exp(-error_l2_x / 0.25) + torch.exp(-error_l2_y / 0.25)  # (num_envs,)

@@ -13,7 +13,7 @@ rewards:
       # tracking_ang_vel: 4.0 # 4.0
       tracking_walk_base_height: 2.0 # 1.0
       tracking_stance_base_height: 4.0 # 1.0
-      tracking_waist_dofs: 3.0
+      tracking_waist_dofs: 4.0
       # tracking_waist_dofs_tapping: 1.5 # 0.5
       # tracking_waist_dofs_stance: 2.0 # 1.0
       # tracking_arm_dofs: 0.5
@@ -41,7 +41,7 @@ rewards:
       feet_heading_alignment: -1.5 # -0.25
       penalty_close_feet_xy: -10.
       # penalty_close_knees_xy: -2.
-      penalty_hip_pos: -3.0 # -5.0
+      penalty_hip_pos: -5.0 # -5.0
       penalty_ang_vel_xy_torso: -1.0 # -0.75
       penalty_stance_dof: -1.0e-3 # -1.0e-3
       # penalty_stance_feet: -2.5
@@ -56,7 +56,7 @@ rewards:
       # penalty_stance_contact_no_ang_vel: -0.1
       penalty_ankle_roll: -2.0
       # penalty_stance_feet_vel: -1.0e-2
-      penalty_contact: -2.0 # -4.0
+      penalty_contact: -4.0 # -4.0
       penalty_negative_knee_joint: -1.0
       # penalty_torso_roll_orientation: -2.5
       penalty_diff_feet_air_time: -5.0
@@ -66,7 +66,7 @@ rewards:
       # penalty_root_acc_lower_body: -1e-4
 
       # tracking_arm_dofs: 0.5
-      tracking_upper_body_dofs: 3.0 # 4.0 2.0
+      tracking_upper_body_dofs: 1.0 # 4.0 2.0
       penalty_upper_body_torques: -1e-5 #-0.00001
       penalty_upper_body_dof_vel: -1.0e-3
       penalty_upper_body_dof_acc: -2.5e-7
@@ -81,12 +81,12 @@ rewards:
       impedance_pos_tracking: 2.0 # 1.0
       impedance_vel_tracking: 4.0 # 2.0
       # impedance_acc_tracking: 3.0
-      impedance_yaw_vel_tracking: 10.0
+      impedance_yaw_vel_tracking: 5.0
       # force_resistance: 0.0
       # impedance_mode_stability: 0.0
       # impedance_energy_efficiency: 0.0
-      contact: 3.0
-      upper_ref_close: 15.0 # 3.0
+      contact: 1.0
+      upper_ref_close: 1.0 # 3.0
 
   reward_groups:
     lower_body: [

@@ -20,6 +20,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
 
         self.upper_body_indices = torch.tensor([idx + 1 for idx in self.upper_dof_indices], device=self.device)
         self.grav_upper = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device)
+        self.upper_torques = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device)
 
         self.jnt_stiff_matrix = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, \
                                        self.config.robot.upper_body_actions_dim, device=self.device)
@@ -196,14 +197,14 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # Compute upper body position error for RVC controller
         upper_body_pos_error = delta_pos[:, self.upper_dof_indices].unsqueeze(-1)  # Shape: (num_envs, upper_body_actions_dim, 1)
         # upper_body_pos_error = (self.ref_upper_dof_pos - self.simulator.dof_pos[:, self.upper_dof_indices]).unsqueeze(-1)
-        upper_body_torques = torch.matmul(self.jnt_stiff_matrix, upper_body_pos_error).squeeze(-1) 
-        torques[:, self.upper_dof_indices] = upper_body_torques
-        # Add damping term
-        torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
-
+        self.upper_torques = torch.matmul(self.jnt_stiff_matrix, upper_body_pos_error).squeeze(-1) 
         # Gravity compensation calculation
         self.grav_upper = self._gravity_upper_compensation()
-        torques[:, self.upper_dof_indices] += self.grav_upper
+        self.upper_torques += self.grav_upper
+
+        torques[:, self.upper_dof_indices] = self.upper_torques
+        # Add damping term
+        torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
 
         return torques
     
@@ -427,3 +428,6 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
     
     def _get_obs_ee_kp(self):
         return self.ee_kp
+
+    def _get_obs_upper_torq(self):
+        return self.upper_torques

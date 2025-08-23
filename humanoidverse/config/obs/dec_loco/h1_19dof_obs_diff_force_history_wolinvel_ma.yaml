@@ -20,10 +20,11 @@ obs:
       # phase_time,
       sin_phase,
       cos_phase,
-      grav_upper,
+      # grav_upper,
       # lin_kp,
       # ang_kp,
       ee_kp,
+      upper_torq,
     ]
 
     critic_obs: [
@@ -45,10 +46,11 @@ obs:
       # phase_time,
       sin_phase,
       cos_phase,
-      grav_upper,
+      # grav_upper,
       # lin_kp,
       # ang_kp,
       ee_kp,
+      upper_torq,
     ]
   
   history_length:
@@ -75,10 +77,11 @@ obs:
     left_ee_apply_force: 0.1,
     right_ee_apply_force: 0.1,
     history_actor: 1.0,
-    grav_upper: 1.0,
+    # grav_upper: 1.0,
     # lin_kp: 1.0,
     # ang_kp: 1.0,
-    ee_kp: 1.0
+    ee_kp: 1.0,
+    upper_torq: 1.0,
   }
   
   add_noise: False
@@ -120,10 +123,11 @@ obs:
     left_ee_apply_force: 0.0,
     right_ee_apply_force: 0.0,
     history_actor: 0.0,
-    grav_upper: 0.0,
+    # grav_upper: 0.0,
     # lin_kp: 0.0,
     # ang_kp: 0.0,
     ee_kp: 1.0,
+    upper_torq: 1.0,
   }
 
   # obs_dims should use list instead of dict
@@ -147,7 +151,8 @@ obs:
     - cos_phase: 1
     - left_ee_apply_force: 3
     - right_ee_apply_force: 3
-    - grav_upper: 8 # check upper_body_actions_dim in h1.yaml
+    # - grav_upper: ${robot.upper_body_actions_dim} # upper body dofs
     # - lin_kp: 1
     # - ang_kp: 1
     - ee_kp: 3
+    - upper_torq: ${robot.upper_body_actions_dim} # upper body dofs
