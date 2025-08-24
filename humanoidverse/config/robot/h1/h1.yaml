@@ -148,7 +148,7 @@ robot:
   ]
 
   control:
-    control_type: C
+    control_type: P # C
     # PD Drive parameters:
     stiffness: # [N*m/rad]
       hip_yaw: 200

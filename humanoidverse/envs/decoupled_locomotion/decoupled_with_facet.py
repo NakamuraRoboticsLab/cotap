@@ -176,8 +176,11 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             hasattr(self.simulator, 'robot_root_states')):
             # 使用世界坐标系的线速度和角速度
             # Use world frame linear and angular velocities
-            world_lin_vel = self.simulator.robot_root_states[:, 7:10]
-            world_ang_vel = self.simulator.robot_root_states[:, 10:13]
+            # world_lin_vel = self.simulator.robot_root_states[:, 7:10]
+            # world_ang_vel = self.simulator.robot_root_states[:, 10:13]
+            world_lin_vel = self.simulator._rigid_body_vel[:, self.torso_index, :]
+            world_ang_vel = self.simulator._rigid_body_ang_vel[:, self.torso_index, :]
+
             self.lin_vel_ema = EMA(world_lin_vel, [0.0, 0.5, 0.8])
             self.ang_vel_ema = EMA(world_ang_vel, [0.0, 0.5, 0.8])
         else:
@@ -219,8 +222,11 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         if (hasattr(self, 'simulator') and
                 hasattr(self.simulator, 'robot_root_states')):
             # 使用模拟器的当前状态 (Use current state from simulator)
-            current_pos = self.simulator.robot_root_states[:, :3]
-            current_vel = self.simulator.robot_root_states[:, 7:10]
+            # current_pos = self.simulator.robot_root_states[:, :3]
+            current_pos = self.simulator._rigid_body_pos[:, self.torso_index, :]
+            
+            # current_vel = self.simulator.robot_root_states[:, 7:10]
+            current_vel = self.simulator._rigid_body_vel[:, self.torso_index, :]
             # current_quat = self.simulator.robot_root_states[:, 3:7]
             
             # 计算当前偏航角 (Calculate current yaw angle)
@@ -235,7 +241,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             # 计算当前偏航角速度 (Calculate current yaw velocity)
             # 使用角速度的Z分量作为偏航角速度
             # Use Z component of angular velocity as yaw velocity
-            current_ang_vel = self.simulator.robot_root_states[:, 10:13]
+            current_ang_vel = self.simulator._rigid_body_ang_vel[:, self.torso_index, :]
+            # current_ang_vel = self.simulator.robot_root_states[:, 10:13]
             current_yaw_vel = current_ang_vel[:, 2]  # Z component
             
             # 更新当前状态到缓冲区第一个位置 (Update current state to first position)
@@ -301,14 +308,15 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 更新EMA滤波器 (Update EMA filters)
         # 使用世界坐标系的速度 (Use world frame velocities)
         # should be used in reward function for tracking
-        if (hasattr(self, 'simulator') and 
-            hasattr(self.simulator, 'robot_root_states')):
-            # 使用世界坐标系的线速度和角速度更新EMA
-            # Update EMA with world frame linear and angular velocities
-            world_lin_vel = self.simulator.robot_root_states[:, 7:10]
-            world_ang_vel = self.simulator.robot_root_states[:, 10:13]
-            self.lin_vel_ema.update(world_lin_vel)
-            self.ang_vel_ema.update(world_ang_vel)
+        # 使用世界坐标系的线速度和角速度更新EMA
+        # Update EMA with world frame linear and angular velocities
+        # world_lin_vel = self.simulator.robot_root_states[:, 7:10]
+        # world_ang_vel = self.simulator.robot_root_states[:, 10:13]
+        world_lin_vel = self.simulator._rigid_body_vel[:, self.torso_index, :]
+        world_ang_vel = self.simulator._rigid_body_ang_vel[:, self.torso_index, :]
+
+        self.lin_vel_ema.update(world_lin_vel)
+        self.ang_vel_ema.update(world_ang_vel)
 
         # # use pos or vel to switch stance and tapping mode
         # if ((torch.abs(self.commands[:, 0]) < 0.08) & (torch.abs(self.commands[:, 1]) < 0.08) & (torch.abs(self.commands[:, 2]) < 0.1)).any():
@@ -404,10 +412,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.ref_pos_w.add_(self.ref_lin_vel_w * dt)
         
         # 保持Z位置稳定 - 使用当前机器人Z位置 (Keep Z position stable)
-        if (hasattr(self, 'simulator') and
-                hasattr(self.simulator, 'robot_root_states')):
-            current_z = self.simulator.robot_root_states[:, 2:3]
-            self.ref_pos_w[..., 2:3] = current_z.unsqueeze(1)
+        # current_z = self.simulator.robot_root_states[:, 2:3]
+        current_z = self.simulator._rigid_body_pos[:, self.torso_index, 2:3]
+        self.ref_pos_w[..., 2:3] = current_z.unsqueeze(1)
 
         # 积分偏航角轨迹 (Integrate yaw trajectory)
         # 计算期望偏航角 (Calculate desired yaw angle)
@@ -477,10 +484,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         #     self.tapping_in_place_prob).float()
 
         # 使用模拟器的正确根状态 (Use correct root states from simulator)
-        if (hasattr(self, 'simulator') and
-                hasattr(self.simulator, 'robot_root_states')):
-            current_pos = self.simulator.robot_root_states[env_ids, :3]
-            self.command_setpos_w[env_ids] = current_pos + offset
+        # current_pos = self.simulator.robot_root_states[env_ids, :3]
+        current_pos = self.simulator._rigid_body_pos[env_ids, self.torso_index, :]
+        self.command_setpos_w[env_ids] = current_pos + offset
 
         # 采样目标偏航角 (Sample target yaw angle)
         target_yaw = torch.empty(len(env_ids), 1, device=self.device).uniform_(
@@ -738,10 +744,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             return torch.zeros(self.num_envs, device=self.device)
 
         # 获取当前机器人位置 (Get current robot position)
-        current_pos = self.simulator.robot_root_states[:, :3]
+        # current_pos = self.simulator.robot_root_states[:, :3]
         # Get torso link position and velocity from simulator
-        # rb_pos = self.simulator._rigid_body_pos  # expected shape: (num_envs, num_bodies, 3) or (num_envs*num_bodies, 3)
-        # current_pos = rb_pos[:, self.torso_index, :]
+        current_pos = self.simulator._rigid_body_pos[:, self.torso_index, :]
         
         # 方法1: 使用第一个代理时间步作为主要目标 (Method 1: Use first surrogate step)
         # 只考虑XY平面的误差，忽略Z方向 (Only consider XY plane error, ignore Z)
@@ -786,13 +791,12 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 self.lin_vel_ema.ema is None):
             return torch.zeros(self.num_envs, device=self.device)
 
-        # rb_vel = self.simulator._rigid_body_vel  # expected shape: (num_envs, num_bodies, 3)
-        # current_vel = rb_vel[:, self.torso_index, :]
+        current_vel = self.simulator._rigid_body_vel[:, self.torso_index, :]
 
-        error_l2_x = torch.square(self.commands[:, 0] - self.simulator.robot_root_states[:, 7])
-        error_l2_y = torch.square(self.commands[:, 1] - self.simulator.robot_root_states[:, 8])
-        # error_l2_x = torch.square(self.commands[:, 0] - current_vel[:, 0])
-        # error_l2_y = torch.square(self.commands[:, 1] - current_vel[:, 1])
+        # error_l2_x = torch.square(self.commands[:, 0] - self.simulator.robot_root_states[:, 7])
+        # error_l2_y = torch.square(self.commands[:, 1] - self.simulator.robot_root_states[:, 8])
+        error_l2_x = torch.square(self.commands[:, 0] - current_vel[:, 0])
+        error_l2_y = torch.square(self.commands[:, 1] - current_vel[:, 1])
 
         # 计算奖励 (Calculate reward)
         reward = torch.exp(-error_l2_x / 0.25) + torch.exp(-error_l2_y / 0.25)  # (num_envs,)
@@ -817,7 +821,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         # 计算当前加速度 (Calculate current acceleration)
         # 使用速度差分近似加速度 (Use velocity difference to approximate acceleration)
-        current_vel = self.simulator.robot_root_states[:, 7:10]
+        # current_vel = self.simulator.robot_root_states[:, 7:10]
+        current_vel = self.simulator._rigid_body_vel[:, self.torso_index, :]
+
         if not hasattr(self, 'prev_vel'):
             self.prev_vel = current_vel.clone()
             return torch.zeros(self.num_envs, device=self.device)
@@ -854,8 +860,11 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 not hasattr(self.simulator, 'robot_root_states')):
             return torch.zeros(self.num_envs, device=self.device)
 
+        current_ang_vel = self.simulator._rigid_body_ang_vel[:, self.torso_index, :]
+
         # error_l2 = torch.square(self.commands[:, 2] - self.base_ang_vel[:, 2])
-        error_l2 = torch.square(self.commands[:, 2] - self.simulator.robot_root_states[:, 12])
+        # error_l2 = torch.square(self.commands[:, 2] - self.simulator.robot_root_states[:, 12])
+        error_l2 = torch.square(self.commands[:, 2] - current_ang_vel[:, 2])
         # 计算奖励 (Calculate reward)
         reward = torch.exp(-error_l2 / 0.25)  # (num_envs,)
         return reward
@@ -1015,7 +1024,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                         hasattr(self.simulator, 'robot_root_states') and
                         hasattr(self.simulator, 'draw_line')):
                     
-                    current_pos = self.simulator.robot_root_states[env_id, :3]
+                    # current_pos = self.simulator.robot_root_states[env_id, :3]
+                    current_pos = self.simulator._rigid_body_pos[env_id, self.torso_index, :]
                     
                     # 绘制连接线 (Draw connection line)
                     line_color = (1.0, 1.0, 0.0)  # 黄色 (Yellow)

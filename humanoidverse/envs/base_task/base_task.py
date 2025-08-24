@@ -233,6 +233,8 @@ class BaseTask():
         if self.config.robot.has_torso:
             self.torso_name = self.config.robot.torso_name
             self.torso_index = self.simulator.find_rigid_body_indice(self.torso_name)
+            self.base_name = self.config.robot.base_name
+            self.base_index = self.simulator.find_rigid_body_indice(self.base_name)
 
     def setup_visualize_entities(self):
         pass
