@@ -117,13 +117,17 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         """环境步进 (Environment step)"""
         
         # 更新阻抗控制 (Update impedance control)
-        self.update_impedance_control()
-        self._compute_rvc_matrix()
+        self.update_controller()
 
         # 执行父类步进 (Execute parent class step)
         result = super().step(actor_state)
 
         return result
+
+    def update_controller(self):
+        """更新控制器 (Update controller)"""
+        self.update_impedance_control()
+        self._compute_rvc_matrix()
 
     def _compute_rvc_matrix(self):
         # Initialize task stiffness and damping matrices

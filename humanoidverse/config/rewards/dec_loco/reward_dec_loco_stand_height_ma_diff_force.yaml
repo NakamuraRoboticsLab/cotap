@@ -50,7 +50,7 @@ rewards:
       # contact: 0.18 # 0.18
       # alive: 1.0 # 0.15
       # penalty_waist_dofs: -0.5
-      # penalty_upper_body_dofs_freeze: -1.0 # only for freeze upper body # -2.0
+      penalty_upper_body_dofs_freeze: -1.0 # only for freeze upper body # -2.0
       penalty_stand_still: -0.15
       penalty_stance_symmetry: 0
       # penalty_stance_contact_no_ang_vel: -0.1
@@ -66,7 +66,7 @@ rewards:
       # penalty_root_acc_lower_body: -1e-4
 
       # tracking_arm_dofs: 0.5
-      tracking_upper_body_dofs: 0.1 # 4.0 2.0
+      # tracking_upper_body_dofs: 2.0 # 4.0 2.0
       penalty_upper_body_torques: -1e-5 #-0.00001
       penalty_upper_body_dof_vel: -1.0e-3
       penalty_upper_body_dof_acc: -2.5e-7
@@ -85,8 +85,8 @@ rewards:
       # force_resistance: 0.0
       # impedance_mode_stability: 0.0
       # impedance_energy_efficiency: 0.0
-      # contact: 1.0
-      upper_ref_close: 2.0 # 3.0
+      contact: 1.0
+      # upper_ref_close: 2.0 # 3.0
 
   reward_groups:
     lower_body: [
@@ -143,11 +143,11 @@ rewards:
       # "force_resistance",
       # "impedance_mode_stability",
       # "impedance_energy_efficiency",
-      # "contact",
+      "contact",
       ]
     upper_body: [
-      "tracking_upper_body_dofs",
-      # "penalty_upper_body_dofs_freeze",
+      # "tracking_upper_body_dofs",
+      "penalty_upper_body_dofs_freeze",
       "penalty_upper_body_torques",
       "penalty_upper_body_dof_vel",
       "penalty_upper_body_dof_acc",
@@ -158,7 +158,7 @@ rewards:
       "penalty_ee_lin_acc",
       "penalty_ee_ang_acc",
       # "penalty_root_acc_upper_body",
-      "upper_ref_close",
+      # "upper_ref_close",
       ]
   
   reward_weights:
@@ -168,7 +168,7 @@ rewards:
   # fix upper body
   fix_upper_body: False
   # gait period
-  gait_period: 0.6
+  gait_period: 0.8
 
   reward_tracking_sigma:
     lin_vel: 0.25
