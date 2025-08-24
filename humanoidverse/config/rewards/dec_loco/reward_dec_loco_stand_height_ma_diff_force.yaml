@@ -19,8 +19,8 @@ rewards:
       # tracking_arm_dofs: 0.5
       penalty_lin_vel_z: -2.0
       penalty_ang_vel_xy: -0.5 # -0.5
-      penalty_orientation: -2.0 # -1.0
-      penalty_torso_orientation: -2.0 # -1.0
+      penalty_orientation: -5.0 # -1.0
+      penalty_torso_orientation: -5.0 # -1.0
       penalty_lower_body_torques: -1e-5 #-0.00001
       penalty_lower_body_dof_vel: -1.0e-3
       penalty_lower_body_dof_acc: -2.5e-7
@@ -66,7 +66,7 @@ rewards:
       # penalty_root_acc_lower_body: -1e-4
 
       # tracking_arm_dofs: 0.5
-      tracking_upper_body_dofs: 1.0 # 4.0 2.0
+      tracking_upper_body_dofs: 0.1 # 4.0 2.0
       penalty_upper_body_torques: -1e-5 #-0.00001
       penalty_upper_body_dof_vel: -1.0e-3
       penalty_upper_body_dof_acc: -2.5e-7
@@ -85,8 +85,8 @@ rewards:
       # force_resistance: 0.0
       # impedance_mode_stability: 0.0
       # impedance_energy_efficiency: 0.0
-      contact: 1.0
-      upper_ref_close: 1.0 # 3.0
+      # contact: 1.0
+      upper_ref_close: 2.0 # 3.0
 
   reward_groups:
     lower_body: [
@@ -143,7 +143,7 @@ rewards:
       # "force_resistance",
       # "impedance_mode_stability",
       # "impedance_energy_efficiency",
-      "contact",
+      # "contact",
       ]
     upper_body: [
       "tracking_upper_body_dofs",
@@ -243,7 +243,7 @@ rewards:
   force_scale_max: 1.0
   force_scale_min: 0.0
 
-  upper_body_tracking_sigma_curriculum: True # False
+  upper_body_tracking_sigma_curriculum: False # False
   upper_body_tracking_sigma_initial_scale: 1.0
   upper_body_tracking_sigma_scale_up_threshold: 0.45
   upper_body_tracking_sigma_scale_down_threshold: 0.5

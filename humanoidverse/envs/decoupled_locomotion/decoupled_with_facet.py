@@ -748,7 +748,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 获取当前机器人位置 (Get current robot position)
         current_pos = self.simulator.robot_root_states[:, :3]
         # Get torso link position and velocity from simulator
-        # current_pos = self.simulator.link_states[:, self.torso_index, :3] # (num_envs, 3)
+        # rb_pos = self.simulator._rigid_body_pos  # expected shape: (num_envs, num_bodies, 3) or (num_envs*num_bodies, 3)
+        # current_pos = rb_pos[:, self.torso_index, :]
         
         # 方法1: 使用第一个代理时间步作为主要目标 (Method 1: Use first surrogate step)
         # 只考虑XY平面的误差，忽略Z方向 (Only consider XY plane error, ignore Z)
@@ -792,8 +793,9 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 not hasattr(self.lin_vel_ema, 'ema') or
                 self.lin_vel_ema.ema is None):
             return torch.zeros(self.num_envs, device=self.device)
-        
-        # current_vel = self.simulator.link_states[:, self.torso_index, 7:10]    # (num_envs, 3)
+
+        # rb_vel = self.simulator._rigid_body_vel  # expected shape: (num_envs, num_bodies, 3)
+        # current_vel = rb_vel[:, self.torso_index, :]
 
         error_l2_x = torch.square(self.commands[:, 0] - self.simulator.robot_root_states[:, 7])
         error_l2_y = torch.square(self.commands[:, 1] - self.simulator.robot_root_states[:, 8])

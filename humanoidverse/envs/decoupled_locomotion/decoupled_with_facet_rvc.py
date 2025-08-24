@@ -188,6 +188,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # Apply regularization and invert for single support environments
         regularized_comp = jnt_comp_matrix + torch.eye(self.config.robot.upper_body_actions_dim, device=self.device).unsqueeze(0) * 1e-6
         self.jnt_stiff_matrix = torch.linalg.inv(regularized_comp)
+        # self.jnt_stiff_matrix = K_jnt
 
     def _compute_upper_rvc_torques(self, actions_scaled):
         # Compute position error
