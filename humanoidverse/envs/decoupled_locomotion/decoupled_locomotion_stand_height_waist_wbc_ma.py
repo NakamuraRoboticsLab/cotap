@@ -617,7 +617,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
     
     def _reward_tracking_waist_dofs(self):
         # Penalize the difference between the waist dof pos and the reference
-        speed_sq = torch.sum(torch.square(self.commands[:, 1:3]), dim=1, keepdim=True)  # [num_envs,1]
+        speed_sq = torch.sum(torch.square(self.commands[:, 2:3]), dim=1, keepdim=True)  # [num_envs,1]
         rot_ratio = torch.exp(-speed_sq / 3)  # [num_envs,1], reduce influence at higher speeds
 
         # Use current torso joint angle instead of RPY calculation

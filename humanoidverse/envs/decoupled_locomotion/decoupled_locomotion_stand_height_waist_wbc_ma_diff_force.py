@@ -570,6 +570,13 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
                                         Point(end_point + torch.rand(3, device=self.device) * line_width),
                                         Point(color),
                                         env_id)
+            # Draw actual left/right hand positions as visible spheres
+            purple = (0.6, 0.0, 0.6)
+            # draw all extended current positions for this environment
+            # ext = self.extend_curr_pos[env_id]  # shape: (num_ext, 3)
+            ext = self.marker_coords[env_id, -2:, :]
+            self.simulator.draw_sphere(ext[0, :], 0.04, purple, env_id)  # left hand actual
+            self.simulator.draw_sphere(ext[1, :], 0.04, purple, env_id)  # right hand actual
             
             # draw the marker spheres 
             for pos_id, pos_joint in enumerate(self.marker_coords[env_id]): # idx 0 torso (duplicate with 11)
@@ -628,8 +635,6 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
                             self.viewer,
                             self.simulator.envs[env_id],
                             ref_sphere_pose)
-
-
 
     ############################ Curriculum #############################
     def _update_upper_body_tracking_sigma_curriculum(self, env_ids):
@@ -722,6 +727,14 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
         end_effector_ang_acc = torch.cat([left_ee_ang_acc.unsqueeze(1), right_ee_ang_acc.unsqueeze(1)], dim=1)
         end_effector_ang_acc_norm = torch.norm(end_effector_ang_acc, dim=2)
         return torch.sum(end_effector_ang_acc_norm, dim=1)
+
+    def _reward_tracking_hand_pos(self):
+        # Track the position of the hands
+        act_ext = self.marker_coords[:, -2:, :]  # (num_envs, 2, 3)
+        ref_ext = self.ref_body_pos_extend[:, -2:, :]  # (num_envs, 2, 3)
+        # sum squared error over both the hand axis and the xyz axis -> (num_envs,)
+        hand_pos_error = torch.sum(torch.square(act_ext - ref_ext), dim=(1, 2))
+        return torch.exp(-hand_pos_error/self.config.rewards.reward_tracking_sigma.upper_body_dofs)
 
     ######################### Observations #########################
     def _get_obs_left_ee_apply_force(self):
