@@ -470,14 +470,17 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
     ########################### FEET REWARDS ###########################
     def _reward_penalty_hip_pos(self):
         # Penalize the hip roll joints to keep them close to zero
+        speed_sq = torch.sum(torch.square(self.commands[:, 1:3]), dim=1, keepdim=True)  # [num_envs,1]
+        rot_ratio = torch.exp(-speed_sq / 2)  # [num_envs,1], reduce influence at higher speeds
+
         # Index 1: left_hip_roll, Index 4: right_hip_roll
         hips_roll_indices = [self.hips_dof_id[1], self.hips_dof_id[4]]
-        hip_roll_pos = self.simulator.dof_pos[:, hips_roll_indices]
+        hip_roll_pos = self.simulator.dof_pos[:, hips_roll_indices] * rot_ratio
         penalty_hip_pos = torch.sum(torch.square(hip_roll_pos), dim=1)
 
         # Index 2: left_hip_yaw, Index 5: right_hip_yaw
         hips_yaw_indices = [self.hips_dof_id[2], self.hips_dof_id[5]]
-        hip_yaw_pos = self.simulator.dof_pos[:, hips_yaw_indices]
+        hip_yaw_pos = self.simulator.dof_pos[:, hips_yaw_indices] * rot_ratio  # broadcasts to [num_envs,2]
         penalty_hip_pos += torch.sum(torch.square(hip_yaw_pos), dim=1)
 
         return penalty_hip_pos * (self.commands[:, 4] + (1 - self.commands[:, 4]) * self.commands[:, 8])
