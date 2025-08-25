@@ -734,7 +734,21 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
         ref_ext = self.ref_body_pos_extend[:, -2:, :]  # (num_envs, 2, 3)
         # sum squared error over both the hand axis and the xyz axis -> (num_envs,)
         hand_pos_error = torch.sum(torch.square(act_ext - ref_ext), dim=(1, 2))
-        return torch.exp(-hand_pos_error/self.config.rewards.reward_tracking_sigma.upper_body_dofs)
+
+        # Robustly handle reward sigma which may be a scalar, a python number, or
+        # a tensor shaped (num_envs, 1) or (num_envs,). Normalize it so the
+        # division yields a (num_envs,) tensor.
+        sigma = self.config.rewards.reward_tracking_sigma.upper_body_dofs
+        if torch.is_tensor(sigma):
+            sigma = sigma.to(device=self.device)
+            if sigma.numel() == 1:
+                sigma = float(sigma.item())
+            else:
+                # squeeze trailing singleton dim if present -> (num_envs,)
+                sigma = sigma.squeeze(-1)
+
+        # Now sigma is either a scalar python number or a tensor broadcastable to (num_envs,)
+        return torch.exp(-hand_pos_error / sigma)
 
     ######################### Observations #########################
     def _get_obs_left_ee_apply_force(self):

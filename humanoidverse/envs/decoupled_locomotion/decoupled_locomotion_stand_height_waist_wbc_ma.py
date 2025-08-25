@@ -154,17 +154,6 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         ref_root_rot = motion_res["root_rot"]  # [num_envs, 4] - original base quat
         self.ref_body_pos_extend[:, :motion_res["rg_pos_t"].shape[1], :] = motion_res["rg_pos_t"] # [num_envs, 3]
 
-        # # Debug prints for sphere visualization
-        # print("Motion data shape - rg_pos_t:", motion_res["rg_pos_t"].shape)
-        # print("ref_body_pos_extend shape:", self.ref_body_pos_extend.shape)
-        # if hasattr(self, 'motion_tracking_id'):
-        #     print("motion_tracking_id:", self.motion_tracking_id)
-        # if hasattr(self, 'upper_body_id'):
-        #     print("upper_body_id:", self.upper_body_id)
-        # print("Available upper body indices:", getattr(self, 'upper_body_id', 'Not defined'))
-        # print("Reference Body Position World:", ref_body_pos_world)
-        # print("Reference Body Positions (Extended):", self.ref_body_pos_extend)
-
         # Get current robot state
         current_base_pos = self.simulator.robot_root_states[:, :3]  # [num_envs, 3]
         current_base_quat = self.simulator.base_quat  # [num_envs, 4]
@@ -182,23 +171,26 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         # Get relative positions in original motion's base frame
         ref_body_pos_relative_flat = quat_rotate_inverse(
             ref_root_quat_expanded, ref_body_pos_flat)
-        ref_body_pos_relative = ref_body_pos_relative_flat.reshape(
-            self.num_envs, num_bodies, 3)
+        # ref_body_pos_relative = ref_body_pos_relative_flat.reshape(
+        #     self.num_envs, num_bodies, 3)
         
-        # Step 2: Transform to current world frame via current base
-        current_base_quat_expanded = current_base_quat.unsqueeze(1).expand(
+        # Step 2: Transform to current world frame via current torso link (use torso pose
+        # instead of the original base link). This aligns the reference motion to the
+        # robot's torso rather than the base root.
+        current_torso_quat = self.simulator._rigid_body_rot[:, self.torso_index]
+        current_torso_pos = self.simulator._rigid_body_pos[:, self.torso_index]
+
+        current_torso_quat_expanded = current_torso_quat.unsqueeze(1).expand(
             -1, num_bodies, -1).reshape(-1, 4)
-        
-        # Apply current robot's base rotation and translation to get world positions
+
+        # Apply current torso rotation and translation to get world positions
         ref_body_pos_world_current_flat = quat_rotate(
-            current_base_quat_expanded, ref_body_pos_relative_flat)
+            current_torso_quat_expanded, ref_body_pos_relative_flat)
         ref_body_pos_world_current = ref_body_pos_world_current_flat.reshape(
-            self.num_envs, num_bodies, 3) + current_base_pos.unsqueeze(1)
-        
-        # Update the reference body positions in current world frame
-        # if use the world frame, comment out
-        self.ref_body_pos_extend[:, :ref_body_pos_world_current.shape[1], :] = \
-            ref_body_pos_world_current
+            self.num_envs, num_bodies, 3) + current_torso_pos.unsqueeze(1)
+
+        # Update the reference body positions in current world frame (aligned to torso)
+        self.ref_body_pos_extend[:, :ref_body_pos_world_current.shape[1], :] = ref_body_pos_world_current
         
         # # Update the upper body joint positions from motion library
         # ref_joint_pos = motion_res["dof_pos"] # [num_envs, num_dofs]
