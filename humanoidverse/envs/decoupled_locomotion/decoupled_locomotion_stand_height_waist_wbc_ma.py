@@ -471,7 +471,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
     def _reward_penalty_hip_pos(self):
         # Penalize the hip roll joints to keep them close to zero
         speed_sq = torch.sum(torch.square(self.commands[:, 1:3]), dim=1, keepdim=True)  # [num_envs,1]
-        rot_ratio = torch.exp(-speed_sq / 2)  # [num_envs,1], reduce influence at higher speeds
+        rot_ratio = torch.exp(-speed_sq)  # [num_envs,1], reduce influence at higher speeds
 
         # Index 1: left_hip_roll, Index 4: right_hip_roll
         hips_roll_indices = [self.hips_dof_id[1], self.hips_dof_id[4]]
@@ -491,9 +491,12 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
 
     def _reward_penalty_torso_orientation(self):
         # Penalize non flat torso orientation
+        speed_sq = torch.sum(torch.square(self.commands[:, 2:3]), dim=1, keepdim=True)  # [num_envs,1]
+        rot_ratio = torch.exp(-speed_sq / 2)  # [num_envs,1], reduce influence at higher speeds
+
         torso_quat = self.simulator._rigid_body_rot[:, self.torso_index]
         projected_gravity_torso = quat_rotate_inverse(torso_quat, self.gravity_vec)
-        return torch.sum(torch.abs(projected_gravity_torso[:, :2]), dim=1)
+        return torch.sum(torch.abs(projected_gravity_torso[:, :2]), dim=1) * rot_ratio.squeeze(1)
     
     def _reward_base_height(self):
         # Penalize base height away from target
@@ -614,12 +617,15 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
     
     def _reward_tracking_waist_dofs(self):
         # Penalize the difference between the waist dof pos and the reference
+        speed_sq = torch.sum(torch.square(self.commands[:, 1:3]), dim=1, keepdim=True)  # [num_envs,1]
+        rot_ratio = torch.exp(-speed_sq / 3)  # [num_envs,1], reduce influence at higher speeds
+
         # Use current torso joint angle instead of RPY calculation
         # Get current waist/torso joint angle (assuming first waist DOF is yaw)
         current_torso_joint_angle = self.simulator.dof_pos[:, self.waist_dof_indices[0]]
 
         # Compute tracking error between current torso joint angle and command
-        waist_dofs_error = torch.square(current_torso_joint_angle - self.commands[:, 5])
+        waist_dofs_error = torch.square(current_torso_joint_angle - self.commands[:, 5]) * rot_ratio.squeeze(1)  # yaw
         
         return torch.exp(-waist_dofs_error/self.config.rewards.reward_tracking_sigma.waist_dofs)
     
