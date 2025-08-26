@@ -102,7 +102,7 @@ env:
       linear_kp_range: [2000.0, 5000.0]
       angular_kp_range: [500.0, 1000.0]
       max_acc_xy: [20.0, 15.0]
-      max_vel_xy: [1.5, 1.5]
+      max_vel_xy: [1.2, 1.2]
       force_saturate: 300.0
       virtual_mass: 5.0
       virtual_inertia: 0.1
