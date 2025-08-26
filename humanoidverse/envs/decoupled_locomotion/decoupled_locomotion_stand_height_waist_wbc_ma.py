@@ -617,7 +617,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         current_torso_joint_angle = self.simulator.dof_pos[:, self.waist_dof_indices[0]]
 
         # Compute tracking error between current torso joint angle and command
-        waist_dofs_error = torch.square(current_torso_joint_angle - self.commands[:, 5]) * rot_ratio.squeeze(1)  # yaw
+        waist_dofs_error = torch.square(current_torso_joint_angle) * rot_ratio.squeeze(1)  # yaw
         
         return torch.exp(-waist_dofs_error/self.config.rewards.reward_tracking_sigma.waist_dofs)
     
