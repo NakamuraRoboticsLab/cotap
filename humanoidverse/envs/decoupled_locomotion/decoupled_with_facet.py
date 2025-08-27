@@ -190,15 +190,15 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             self.lin_vel_ema = EMA(dummy_data, [0.0, 0.5, 0.8])
             self.ang_vel_ema = EMA(dummy_data, [0.0, 0.5, 0.8])
     
-    def step(self, actor_state):
-        """环境步进 (Environment step)"""
+    # def step(self, actor_state):
+    #     """环境步进 (Environment step)"""
 
-        self.update_controller()
+    #     self.update_controller()
 
-        # 执行父类步进 (Execute parent class step)
-        result = super().step(actor_state)
+    #     # 执行父类步进 (Execute parent class step)
+    #     result = super().step(actor_state)
 
-        return result
+    #     return result
 
     def update_controller(self):
         """更新控制器 (Update controller)"""

@@ -5,8 +5,8 @@ defaults:
 
 # Env structure
 env:
-  # _target_: humanoidverse.envs.decoupled_locomotion.decoupled_with_facet_rvc.LeggedRobotDecoupledLocomotionWithFACETRVC
-  _target_: humanoidverse.envs.decoupled_locomotion.decoupled_with_facet.LeggedRobotDecoupledLocomotionWithFACET
+  _target_: humanoidverse.envs.decoupled_locomotion.decoupled_with_facet_rvc.LeggedRobotDecoupledLocomotionWithFACETRVC
+  # _target_: humanoidverse.envs.decoupled_locomotion.decoupled_with_facet.LeggedRobotDecoupledLocomotionWithFACET
   config:
     max_episode_length_s: 50
     locomotion_obs_scales:
@@ -113,9 +113,16 @@ env:
     #   task_kp_range: [50.0, 100.0]
     #   task_kd_range: [10.0, 50.0]
 
+    # regularization:
+    #   kl_enable: True
+    #   kl_beta_init: 1.
+    #   kl_beta_final: 0.05
+    #   kl_anneal_steps: 2_000_000
+    #   kl_mask: "lower_body"
+
 # Globally accessible parameters
-# log_task_name: decoupled_locomotion_with_facet_rvc
-log_task_name: decoupled_locomotion_with_facet
+log_task_name: decoupled_locomotion_with_facet_rvc
+# log_task_name: decoupled_locomotion_with_facet
 
 eval_overrides:
   env:
