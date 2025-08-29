@@ -38,7 +38,7 @@ rewards:
       termination: -500.0 # -500.0
       penalty_feet_height: -5.0
       penalty_feet_swing_height: -20.0
-      feet_heading_alignment: -1.2 # -0.25 # -1.5
+      feet_heading_alignment: -1.5 # -0.25 # -1.5
       penalty_close_feet_xy: -15. # -10.
       # penalty_close_knees_xy: -2.
       penalty_hip_pos: -5.0 # -5.0
