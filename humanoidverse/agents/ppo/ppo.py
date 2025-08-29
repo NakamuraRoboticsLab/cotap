@@ -62,7 +62,9 @@ class PPO(BaseAlgo):
         # Env related Config
         self.num_envs: int = self.env.config.num_envs
         self.algo_obs_dim_dict = self.env.config.robot.algo_obs_dim_dict
+        self.base_obs_dim_dict = self.env.config.robot.base_obs_dim_dict
         self.algo_history_length_dict = self.env.config.obs.get('history_length', {})
+        self.base_history_length_dict = self.env.config.obs.get('history_length', {})
         self.num_act = self.env.config.robot.actions_dim
 
         # Logging related Config

@@ -74,6 +74,7 @@ class PPOMultiActorCritic(PPO):
     def _init_config(self):
         super()._init_config()
         self.algo_history_length_dict = self.env.config.obs.get('history_length', {})
+        self.base_history_length_dict = self.env.config.obs.get('history_length', {})
         # Multi-critic reward related Config
         self.rw_groups = self.env.config.rewards.reward_groups
         self.rw_weights = self.env.config.rewards.reward_weights
@@ -408,9 +409,9 @@ class PPOMultiActorCritic(PPO):
         
         critic_loss = self.value_loss_coef * value_loss
 
-        if key == 'upper_body':
+        if key == 'lower_body':
             # 计算 KL 散度
-            kl_div = self.compute_kl_divergence_upper_body(self.external_actor, policy_state_dict["actor_obs"])
+            kl_div = self.compute_kl_divergence_lower_body(self.external_actor, policy_state_dict["actor_obs"])
             kl_loss = kl_div.mean() * self.kl_coef  # self.kl_coef 可在 __init__ 里设定
             actor_loss = actor_loss + kl_loss
 
@@ -601,7 +602,7 @@ class PPOMultiActorCritic(PPO):
         )
 
         # 计算 KL 散度
-        # kl_div = self.compute_kl_divergence_upper_body(self.external_actor)
+        # kl_div = self.compute_kl_divergence_lower_body(self.external_actor)
         # print("KL:", kl_div)
 
         return actor_state
@@ -651,33 +652,91 @@ class PPOMultiActorCritic(PPO):
         kl_div = kl.sum(dim=-1)  # [num_envs]
 
         return kl_div
+    
+    def compute_kl_divergence_lower_body(self, external_actor, obs=None):
+        """
+        计算当前 lower-body policy 与给定 external_actor 的 KL 散度。
+        支持 obs 维度裁剪：将当前 obs 按 base policy 的 obs 名称和维度裁剪后输入 external_actor。
+        Args:
+            external_actor: PPOActor 实例，与 self.actors['lower_body'] 结构一致
+            obs: 用于推理的观测张量（如 actor_obs），如果为 None，则用最近一次 rollout 的观测
+        Returns:
+            kl_div: [num_envs] 张量，每个环境的 KL 散度
+        """
+        from torch.distributions import kl_divergence, Normal
+        if obs is None:
+            obs = self.storage.query_key('actor_obs')
+
+        # 1. 获取 base policy 需要的 obs 名称和维度
+        if hasattr(external_actor, 'obs_dim_dict'):
+            base_obs_dim_dict = external_actor.obs_dim_dict
+        else:
+            # fallback: 使用 self.base_obs_dim_dict
+            base_obs_dim_dict = self.base_obs_dim_dict
+
+        # base_obs_keys = list(base_obs_dim_dict.keys())
+        # print("base_obs_keys:", base_obs_keys)  # 调试：打印 obs 名称
+
+        history_len = self.base_history_length_dict.get("actor_obs", 1)
+        base_obs_dim = base_obs_dim_dict["actor_obs"]
+        # print("base_obs_dim:", base_obs_dim)
+
+        # 2. 按照 base policy 的 obs 名称裁剪当前 obs
+        # 选择前 base_obs_dim 大小作为 actor dim（假设 base obs 在存储结构中是前面的部分）
+        obs_clipped = obs[..., :base_obs_dim * history_len]
+
+        # print("obs_clipped:", obs_clipped.shape)
+        # print("obs:", obs.shape)
+
+        # 当前 policy
+        self.actors['lower_body'].eval()
+        self.actors['lower_body'].update_distribution(obs)
+        mu1 = self.actors['lower_body'].action_mean
+        std1 = self.actors['lower_body'].action_std
+        dist1 = Normal(mu1, std1)
+        # 给定 policy
+        external_actor.eval()
+        external_actor.update_distribution(obs_clipped)
+        mu2 = external_actor.action_mean
+        std2 = external_actor.action_std
+        dist2 = Normal(mu2, std2)
+
+        # 计算 KL 散度（逐元素，最后按动作维度求和）
+        kl = kl_divergence(dist1, dist2)
+        kl_div = kl.sum(dim=-1)  # [num_envs]
+
+        return kl_div
 
     def load_base_distribution(self, checkpoint_path):
         """
-        只从 checkpoint 加载 upper_body actor 的 state_dict，避免重复创建仿真环境。
+        只从 checkpoint 加载 lower_body actor 的 state_dict，避免重复创建仿真环境。
         参数：
             checkpoint_path (str): checkpoint 文件路径 (.pt)
         返回：
-            state_dict: upper_body actor 的参数字典
+            state_dict: lower_body actor 的参数字典
         """
         checkpoint = torch.load(checkpoint_path, map_location='cpu', weights_only=True)
-        upper_body_state_dict = checkpoint['actor_model_state_dict']['upper_body']
+        lower_body_state_dict = checkpoint['actor_model_state_dict']['lower_body']
 
-        return upper_body_state_dict
+        return lower_body_state_dict
     
     def create_external_actor(self, checkpoint_path):
         # 1. 加载 state_dict
-        upper_body_state_dict = self.load_base_distribution(checkpoint_path)
+        lower_body_state_dict = self.load_base_distribution(checkpoint_path)
 
         # 2. 新建 PPOActor 实例（参数需与你训练时一致）
         external_actor = PPOActor(
-            obs_dim_dict=self.algo_obs_dim_dict,
-            module_config_dict=self.config.module_dict.actor_upper_body,
-            num_actions=self.num_act_upper_body,
-            init_noise_std=self.config.init_noise_std['upper_body']
+            obs_dim_dict=self.base_obs_dim_dict,
+            module_config_dict=self.config.module_dict.actor_lower_body,
+            num_actions=self.num_act_lower_body,
+            init_noise_std=self.config.init_noise_std['lower_body']
         ).to(self.device)
 
+        # print("obs_dim_dict:", self.base_obs_dim_dict)
+        # print("algo_obs_dim_dict:", self.algo_obs_dim_dict)
+        # input()
+
         # 3. 加载权重
-        external_actor.load_state_dict(upper_body_state_dict)
+        external_actor.load_state_dict(lower_body_state_dict)
 
         return external_actor

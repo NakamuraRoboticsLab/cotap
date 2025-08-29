@@ -12,6 +12,7 @@ robot:
   # dof_offsets: ???
 
   algo_obs_dim_dict: ???
+  base_obs_dim_dict: ???
 
   key_bodies: null
   contact_bodies: null
