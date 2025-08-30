@@ -142,8 +142,8 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # torso_params = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
 
         # Repeat across all environments
-        task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
-        # task_stiffs = torch.cat([self.ee_kp.repeat(1,2)], dim=1)
+        # task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
+        task_stiffs = torch.cat([self.ee_kp.repeat(1,2)], dim=1)
 
         # stiff_torso = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
         stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)

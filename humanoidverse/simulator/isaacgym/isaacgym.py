@@ -684,8 +684,8 @@ class IsaacGym(BaseSimulator):
             # 获取机器人根状态
             robot_pos = self.robot_root_states[0, 0:3].cpu().numpy()
             # 摄像机位置和目标点
-            cam_pos = gymapi.Vec3(robot_pos[0] + 3.0, robot_pos[1] + 3.0, 3.0)
-            cam_target = gymapi.Vec3(robot_pos[0], robot_pos[1], 1.5)
+            cam_pos = gymapi.Vec3(robot_pos[0] + 3.0, robot_pos[1] + 3.0, 2.0)
+            cam_target = gymapi.Vec3(robot_pos[0], robot_pos[1], 1.2)
             self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
 
         # step graphics

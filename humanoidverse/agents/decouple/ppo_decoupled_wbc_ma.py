@@ -71,7 +71,7 @@ class PPOMultiActorCritic(PPO):
 
         self.kl_coef = 0.5  # KL散度的权重系数
         self.kl_coef_start = 0.5  # Initial KL coefficient
-        self.kl_coef_end = 0.01   # Final KL coefficient
+        self.kl_coef_end = 0.005   # Final KL coefficient
         self.kl_coef_anneal_steps = 10000  # Number of iterations to anneal over
         self.kl_coef = self.kl_coef_start  # Current KL coefficient
 
