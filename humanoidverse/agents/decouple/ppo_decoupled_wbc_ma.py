@@ -69,10 +69,9 @@ class PPOMultiActorCritic(PPO):
 
         self.external_actor = self.create_external_actor(checkpoint_path)
 
-        self.kl_coef = 0.5  # KL散度的权重系数
-        self.kl_coef_start = 0.5  # Initial KL coefficient
-        self.kl_coef_end = 0.005   # Final KL coefficient
-        self.kl_coef_anneal_steps = 10000  # Number of iterations to anneal over
+        self.kl_coef_start = self.config.regularization.kl_beta_init  # Initial KL coefficient
+        self.kl_coef_end = self.config.regularization.kl_beta_final   # Final KL coefficient
+        self.kl_coef_anneal_steps = self.config.regularization.kl_anneal_steps  # Number of iterations to anneal over
         self.kl_coef = self.kl_coef_start  # Current KL coefficient
 
     def _init_config(self):
