@@ -65,11 +65,15 @@ class PPOMultiActorCritic(PPO):
 
         humanoidverse_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         checkpoint_path = os.path.join(humanoidverse_ROOT_DIR, \
-                                       "../../logs/h1_19dof_falcon/whole_body_track", "model_12000.pt") # 预训练模型路径
+                                       "../../logs/h1_19dof_falcon/whole_body_pd", "model_20000.pt") # 预训练模型路径
 
         self.external_actor = self.create_external_actor(checkpoint_path)
 
         self.kl_coef = 0.5  # KL散度的权重系数
+        self.kl_coef_start = 0.5  # Initial KL coefficient
+        self.kl_coef_end = 0.01   # Final KL coefficient
+        self.kl_coef_anneal_steps = 10000  # Number of iterations to anneal over
+        self.kl_coef = self.kl_coef_start  # Current KL coefficient
 
     def _init_config(self):
         super()._init_config()
@@ -409,10 +413,15 @@ class PPOMultiActorCritic(PPO):
         
         critic_loss = self.value_loss_coef * value_loss
 
+        # In _compute_ppo_loss, update kl_coef using linear annealing
         if key == 'lower_body':
+            # Anneal kl_coef linearly from start to end over anneal_steps
+            progress = min(self.current_learning_iteration / self.kl_coef_anneal_steps, 1.0)
+            self.kl_coef = self.kl_coef_start - progress * (self.kl_coef_start - self.kl_coef_end)
+            
             # 计算 KL 散度
             kl_div = self.compute_kl_divergence_lower_body(self.external_actor, policy_state_dict["actor_obs"])
-            kl_loss = kl_div.mean() * self.kl_coef  # self.kl_coef 可在 __init__ 里设定
+            kl_loss = kl_div.mean() * self.kl_coef
             actor_loss = actor_loss + kl_loss
 
         return actor_loss, critic_loss, value_loss, surrogate_loss, entropy_loss, kl_mean
