@@ -33,6 +33,8 @@ def pre_process_config(config) -> None:
     # config.robot.critic_obs_dim = -1
     
     obs_dim_dict = dict()
+    obs_base_dim_dict = dict()
+    _obs_base_key_list = config.env.config.obs.obs_base_dict
     _obs_key_list = config.env.config.obs.obs_dict
     
     assert set(config.env.config.obs.noise_scales.keys()) == set(config.env.config.obs.obs_scales.keys())
@@ -41,6 +43,11 @@ def pre_process_config(config) -> None:
     each_dict_obs_dims = {k: v for d in config.env.config.obs.obs_dims for k, v in d.items()}
     config.env.config.obs.obs_dims = each_dict_obs_dims
     logger.info(f"obs_dims: {each_dict_obs_dims}")
+
+    # convert obs_base_dims to dict (fix for the error)
+    each_dict_obs_base_dims = {k: v for d in config.env.config.obs.obs_base_dims for k, v in d.items()}
+    config.env.config.obs.obs_base_dims = each_dict_obs_base_dims
+    logger.info(f"obs_base_dims: {each_dict_obs_base_dims}")
     auxiliary_obs_dims = {}
     if hasattr(config.env.config.obs, 'obs_auxiliary'):
         _aux_obs_key_list = config.env.config.obs.obs_auxiliary
@@ -64,8 +71,25 @@ def pre_process_config(config) -> None:
             else:
                 logger.error(f"{obs_key}: {key} not found in obs_dims")
                 raise ValueError(f"{obs_key}: {key} not found in obs_dims")
+    for obs_key, obs_config in _obs_base_key_list.items():
+        obs_base_dim_dict[obs_key] = 0
+        for key in obs_config:
+            if key.endswith("_raw"): key = key[:-4]
+            if key in config.env.config.obs.obs_base_dims.keys(): 
+                obs_base_dim_dict[obs_key] += config.env.config.obs.obs_base_dims[key]
+                logger.info(f"{obs_key}: {key} has dim: {config.env.config.obs.obs_base_dims[key]}")
+            elif key in auxiliary_obs_dims.keys():
+                obs_base_dim_dict[obs_key] += auxiliary_obs_dims[key]
+                logger.info(f"{obs_key}: {key} has dim: {auxiliary_obs_dims[key]}")
+            else:
+                logger.error(f"{obs_key}: {key} not found in obs_dims")
+                raise ValueError(f"{obs_key}: {key} not found in obs_dims")
+
     config.robot.algo_obs_dim_dict = obs_dim_dict
+    config.robot.base_obs_dim_dict = obs_base_dim_dict
+
     logger.info(f"algo_obs_dim_dict: {config.robot.algo_obs_dim_dict}")
+    logger.info(f"base_obs_dim_dict: {config.robot.base_obs_dim_dict}")
 
     # compute action_dim for ppo
     # for agent in config.algo.config.network_dict.keys():

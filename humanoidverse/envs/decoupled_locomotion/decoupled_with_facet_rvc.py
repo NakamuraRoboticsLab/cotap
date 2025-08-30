@@ -135,15 +135,15 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         stiff_torso = torch.zeros(self.num_envs, 6, device=self.device)
 
         # Define stiffness and damping parameters for 6D task (two hands, 3D each)
-        # stiff_params = torch.tensor([300., 300., 300., 300., 300., 300.], device=self.device) # should <= 500
+        stiff_params = torch.tensor([300., 300., 300., 300., 300., 300.], device=self.device) # should <= 500
         torso_params = torch.tensor([2000., 2000., 2000., 500., 500., 500.], device=self.device)
 
         # Create [num_envs, 6] tensor: first 3 columns lin_kp, last 3 columns ang_kp
         # torso_params = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
 
         # Repeat across all environments
-        # task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
-        task_stiffs = torch.cat([self.ee_kp.repeat(1,2)], dim=1)
+        task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
+        # task_stiffs = torch.cat([self.ee_kp.repeat(1,2)], dim=1)
 
         # stiff_torso = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
         stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
@@ -191,8 +191,9 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         jnt_comp_matrix = self._compute_jnt_compliance(J_eu, C_task, C_jnt)
         # Apply regularization and invert for single support environments
         regularized_comp = jnt_comp_matrix + torch.eye(self.config.robot.upper_body_actions_dim, device=self.device).unsqueeze(0) * 1e-6
-        self.jnt_stiff_matrix = torch.linalg.inv(regularized_comp)
-        # self.jnt_stiff_matrix = K_jnt
+        # self.jnt_stiff_matrix = torch.linalg.inv(regularized_comp)
+
+        self.jnt_stiff_matrix = K_jnt # for debug test
 
     def _compute_upper_rvc_torques(self, actions_scaled):
         # Compute position error
