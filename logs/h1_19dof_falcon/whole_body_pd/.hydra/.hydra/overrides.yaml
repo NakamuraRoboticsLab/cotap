@@ -1,0 +1,14 @@
+- +exp=decoupled_locomotion_with_facet
+- +simulator=isaacgym
+- +domain_rand=domain_rand_rl_gym
+- +rewards=dec_loco/reward_dec_loco_stand_height_ma_diff_force
+- +robot=h1/h1
+- +terrain=terrain_locomotion_plane
+- +obs=dec_loco/h1_19dof_obs_diff_force_history_wolinvel_ma
+- num_envs=4096
+- project_name=h1_19dof_falcon
+- experiment_name=h1_19dof_falcon
+- obs.add_noise=True
+- rewards.desired_base_height=0.9
+- env.config.fix_upper_body_prob=0.3
+- env.config.apply_force_pos_ratio_range=[0.5,2.0]

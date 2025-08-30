@@ -679,6 +679,15 @@ class IsaacGym(BaseSimulator):
         if self.device != 'cpu':
             self.gym.fetch_results(self.sim, True)
 
+        # 摄像机跟踪机器人（仅一个环境时）
+        if self.num_envs == 1:
+            # 获取机器人根状态
+            robot_pos = self.robot_root_states[0, 0:3].cpu().numpy()
+            # 摄像机位置和目标点
+            cam_pos = gymapi.Vec3(robot_pos[0] + 3.0, robot_pos[1] + 3.0, 3.0)
+            cam_target = gymapi.Vec3(robot_pos[0], robot_pos[1], 1.5)
+            self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
+
         # step graphics
         if self.enable_viewer_sync:
             self.gym.step_graphics(self.sim)

@@ -220,8 +220,8 @@ class LeggedRobotLocomotion(LeggedRobotBase):
         return torch.square(base_height - self.config.rewards.desired_base_height)
 
     def _reward_feet_heading_alignment(self):
-        speed_sq = torch.sum(torch.square(self.commands[:, 2:3]), dim=1, keepdim=True)  # [num_envs,1]
-        rot_ratio = torch.exp(-speed_sq)  # [num_envs,1], reduce influence at higher speeds
+        # speed_sq = torch.sum(torch.square(self.commands[:, 2:3]), dim=1, keepdim=True)  # [num_envs,1]
+        # rot_ratio = torch.exp(-speed_sq)  # [num_envs,1], reduce influence at higher speeds
 
         left_quat = self.simulator._rigid_body_rot[:, self.feet_indices[0]]
         right_quat = self.simulator._rigid_body_rot[:, self.feet_indices[1]]
@@ -235,8 +235,8 @@ class LeggedRobotLocomotion(LeggedRobotBase):
         root_forward = quat_apply(self.base_quat, self.forward_vec)
         heading_root = torch.atan2(root_forward[:, 1], root_forward[:, 0])
 
-        heading_diff_left = torch.abs(wrap_to_pi(heading_left_feet - heading_root)) * rot_ratio.squeeze(1)
-        heading_diff_right = torch.abs(wrap_to_pi(heading_right_feet - heading_root)) * rot_ratio.squeeze(1)
+        heading_diff_left = torch.abs(wrap_to_pi(heading_left_feet - heading_root))
+        heading_diff_right = torch.abs(wrap_to_pi(heading_right_feet - heading_root))
 
         return heading_diff_left + heading_diff_right
     
