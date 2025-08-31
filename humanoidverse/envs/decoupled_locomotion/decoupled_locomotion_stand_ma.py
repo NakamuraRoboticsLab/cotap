@@ -160,19 +160,19 @@ class LeggedRobotDecoupledLocomotionStance(LeggedRobotLocomotion):
             self._resample_commands(env_ids)
         forward = quat_apply(self.base_quat, self.forward_vec)
         heading = torch.atan2(forward[:, 1], forward[:, 0])
-        self.commands[:, 2] = torch.clip(
-            0.5 * wrap_to_pi(self.commands[:, 3] - heading), 
-            self.command_ranges["ang_vel_yaw"][0], 
-            self.command_ranges["ang_vel_yaw"][1]
-        )
+        # self.commands[:, 2] = torch.clip(
+        #     0.5 * wrap_to_pi(self.commands[:, 3] - heading), 
+        #     self.command_ranges["ang_vel_yaw"][0], 
+        #     self.command_ranges["ang_vel_yaw"][1]
+        # )
         print("debug tag")
         # only apply the velocity command if it is tapping command or not tapping in place
         # print("commands: ", self.commands)
         # print("tapping_in_place: ", self.tapping_in_place)
         # import pdb; pdb.set_trace()
-        self.commands[:, 0] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
-        self.commands[:, 1] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
-        self.commands[:, 2] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
+        self.commands[:, 0] *= (self.commands[:, 4])
+        self.commands[:, 1] *= (self.commands[:, 4])
+        self.commands[:, 2] *= (self.commands[:, 4])
         # print("commands: ", self.commands)
         # If fixed, no need to update the upper body motion
         if self.config.rewards.fix_upper_body:

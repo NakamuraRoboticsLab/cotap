@@ -346,9 +346,9 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         # print("commands: ", self.commands)
         # print("tapping_in_place: ", self.tapping_in_place)
         # import pdb; pdb.set_trace()
-        self.commands[:, 0] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
-        self.commands[:, 1] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
-        self.commands[:, 2] *= (self.commands[:, 4] * self.tapping_in_place[:, 0])
+        self.commands[:, 0] *= (self.commands[:, 4])
+        self.commands[:, 1] *= (self.commands[:, 4])
+        self.commands[:, 2] *= (self.commands[:, 4])
         # print("commands: ", self.commands)
         # If fixed, no need to update the upper body motion
         if self.config.rewards.fix_upper_body:
