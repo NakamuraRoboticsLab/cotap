@@ -25,6 +25,8 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         self.jnt_stiff_matrix = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, \
                                        self.config.robot.upper_body_actions_dim, device=self.device)
         
+        self.alpha_val = 0.9 # changable
+        
 
     # def _compute_rvc_torques(self, actions_scaled):
     #     # Initialize task stiffness and damping matrices
@@ -142,8 +144,8 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # torso_params = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
 
         # Repeat across all environments
-        # task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
-        task_stiffs = torch.cat([self.ee_kp.repeat(1,2)], dim=1)
+        task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
+        # task_stiffs = torch.cat([self.ee_kp.repeat(1,2)], dim=1)
 
         # stiff_torso = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
         stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
@@ -194,6 +196,11 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         self.jnt_stiff_matrix = torch.linalg.inv(regularized_comp)
         # self.jnt_stiff_matrix = K_jnt # for debug test only
 
+        # Apply ratio joint stiffness
+        alpha = torch.full((self.num_envs, 1, 1), self.alpha_val, device=self.device)
+        # self.jnt_stiff_matrix = alpha * self.jnt_stiff_matrix + (1-alpha) * K_jnt
+        self.jnt_stiff_matrix = self.log_euclidean_blend(self.jnt_stiff_matrix, K_jnt, alpha=alpha)
+
     def _compute_upper_rvc_torques(self, actions_scaled):
         # Compute position error
         delta_pos = actions_scaled + self.default_dof_pos - self.simulator.dof_pos
@@ -212,6 +219,75 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
 
         return torques
+    
+    def _symmetrize(self, K):
+        # make exactly symmetric to reduce numerical drift
+        return 0.5 * (K + K.transpose(-1, -2))
+
+    def matrix_log_spd(self, K, eps: float = 1e-6):
+        """
+        Matrix log for SPD matrices (batchable).
+        Args:
+            K: [..., n, n] SPD
+            eps: min eigenvalue clamp for stability
+        Returns:
+            log(K) with shape [..., n, n]
+        """
+        K = self._symmetrize(K)
+        evals, evecs = torch.linalg.eigh(K)  # [..., n], [..., n, n]
+        evals = torch.clamp(evals, min=eps)
+        log_evals = evals.log()
+        # reconstruct: evecs @ diag(log_evals) @ evecs^T
+
+        return (evecs * log_evals.unsqueeze(-2)) @ evecs.transpose(-1, -2)
+
+    def matrix_exp_sym(self, A):
+        """
+        Matrix exp for symmetric matrices (batchable).
+        Args:
+            A: [..., n, n] symmetric
+        Returns:
+            exp(A) with shape [..., n, n]  (SPD)
+        """
+        A = self._symmetrize(A)
+        evals, evecs = torch.linalg.eigh(A)
+        exp_evals = evals.exp()
+
+        return (evecs * exp_evals.unsqueeze(-2)) @ evecs.transpose(-1, -2)
+
+    def log_euclidean_blend(self, K_old,
+                            K_new,
+                            alpha,
+                            kmin: float = 1e-2,
+                            kmax: float = 1e6):
+        """
+        Log-Euclidean interpolation:
+            K_mix = exp( alpha * log(K_old) + (1-alpha) * log(K_new) )
+        Args:
+            K_old: [B, n, n] SPD (diag PD 可，非对角也可)
+            K_new: [B, n, n] SPD
+            alpha: [B] or [] in [0,1], 1->old, 0->new
+            kmin, kmax: spectral clamps applied to the final K_mix
+        Returns:
+            K_mix: [B, n, n] SPD
+        """
+        assert K_old.shape == K_new.shape
+        B, n, _ = K_old.shape
+        if alpha.ndim == 0:
+            alpha = alpha.expand(B)
+        alpha = alpha.view(B, 1, 1)
+
+        logK_old = self.matrix_log_spd(K_old)
+        logK_new = self.matrix_log_spd(K_new)
+        logK_mix = alpha * logK_old + (1.0 - alpha) * logK_new
+        K_mix = self.matrix_exp_sym(logK_mix)
+
+        # final spectral clamp (keeps SPD and conditions the matrix)
+        evals, evecs = torch.linalg.eigh(self._symmetrize(K_mix))
+        evals = evals.clamp(min=kmin, max=kmax)
+        K_mix = (evecs * evals.unsqueeze(-2)) @ evecs.transpose(-1, -2)
+
+        return K_mix
     
     def _compute_jnt_compliance(self, J_task, C_task, C_jnt):
         """

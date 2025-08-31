@@ -87,7 +87,7 @@ rewards:
       # impedance_mode_stability: 0.0
       # impedance_energy_efficiency: 0.0
       contact: 1.5
-      # upper_ref_close: 2.0 # 3.0
+      upper_ref_close: 1.0 # 3.0
 
   reward_groups:
     lower_body: [
@@ -160,7 +160,7 @@ rewards:
       "penalty_ee_lin_acc",
       "penalty_ee_ang_acc",
       # "penalty_root_acc_upper_body",
-      # "upper_ref_close",
+      "upper_ref_close",
       ]
   
   reward_weights:
