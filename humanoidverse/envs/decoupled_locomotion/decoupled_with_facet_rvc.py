@@ -27,8 +27,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
 
         self.stiff_torso = torch.zeros(self.num_envs, 6, 6, device=self.device)
 
-        self.alpha_val = 0.9 # changable
-        
+        self.alpha_val = self.config.rvc_params.alpha_spd # changable
 
     # def _compute_rvc_torques(self, actions_scaled):
     #     # Initialize task stiffness and damping matrices
@@ -136,11 +135,11 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
     def _compute_rvc_matrix(self):
         # Initialize task stiffness and damping matrices
         task_stiffs = torch.zeros(self.num_envs, self.task_num, device=self.device)
-        # stiff_torso = torch.zeros(self.num_envs, 6, device=self.device)
+        stiff_torso = torch.zeros(self.num_envs, 6, device=self.device)
 
         # Define stiffness and damping parameters for 6D task (two hands, 3D each)
         stiff_params = torch.tensor([300., 300., 300., 300., 300., 300.], device=self.device) # should <= 500
-        # torso_params = torch.tensor([5000., 5000., 2000., 10000., 5000., 100.], device=self.device)
+        torso_params = torch.tensor([10000., 10000., 5000., 5000., 5000., 500.], device=self.device)
 
         # Create [num_envs, 6] tensor: first 3 columns lin_kp, last 3 columns ang_kp
         # torso_params = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
@@ -150,9 +149,10 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # task_stiffs = torch.cat([self.ee_kp.repeat(1,2)], dim=1)
 
         # stiff_torso = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
-        # stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
+        stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
 
-        self._compute_torso_stiffness()
+        # # apply lower-body PD for stiffness
+        # self._compute_torso_stiffness()
 
         # Joint control gains
         self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * 50.0 # null-space stiffness, hardcoding now
@@ -189,8 +189,8 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         J_eb = J_task_upper[:, :, :6]  # Extract torso part of the task Jacobian
         J_eu = J_task_upper[:, :, 6:]  # Extract upper body part of the task Jacobian
 
-        # K_torso = torch.diag_embed(stiff_torso)  # Shape: (num_envs, 6, 6)
-        K_torso = self.stiff_torso
+        K_torso = torch.diag_embed(stiff_torso)  # Shape: (num_envs, 6, 6)
+        # K_torso = self.stiff_torso
         # print("K_torso:", K_torso)
 
         C_task -= J_eb @ torch.linalg.inv(K_torso) @ J_eb.transpose(-1, -2)  # Adjust task compliance matrix

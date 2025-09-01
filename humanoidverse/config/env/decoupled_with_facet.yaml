@@ -109,7 +109,8 @@ env:
       ee_kp_range: [100.0, 400.0]
       ee_kp_init: 300.0
 
-    # rvc_params: 
+    rvc_params: 
+      alpha_spd: 0.8
     #   task_kp_range: [50.0, 100.0]
     #   task_kd_range: [10.0, 50.0]
 
