@@ -473,6 +473,11 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.ang_kp[env_ids] = ang_kp
         self.ang_kd[env_ids] = ang_kd
 
+        ee_kp = torch.empty(len(env_ids), 3, device=self.device).uniform_(
+            *self.ee_kp_range)
+        
+        self.ee_kp[env_ids] = ee_kp
+
         # 采样目标位置 (Sample target position)
         offset = torch.zeros(len(env_ids), 3, device=self.device)
         offset[:, 0].uniform_(-1.0, 1.0)  # X方向前进 (X direction forward)
@@ -517,11 +522,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.lin_kd[env_ids] = lin_kd
         self.ang_kp[env_ids] = lin_kp
         self.ang_kd[env_ids] = lin_kd
-
-        ee_kp = torch.empty(len(env_ids), 1, device=self.device).uniform_(
-            *self.ee_kp_range)
-        
-        self.ee_kp[env_ids] = ee_kp
 
         # 采样目标速度 (Sample target velocity)
         set_linvel = torch.zeros(len(env_ids), 3, device=self.device)

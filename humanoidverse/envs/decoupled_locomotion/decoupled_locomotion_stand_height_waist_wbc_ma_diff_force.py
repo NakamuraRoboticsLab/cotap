@@ -760,3 +760,14 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
         # return the force exerted on the right ee (hand)
         return self.right_ee_apply_force
     
+    def _get_obs_ref_upper_point(self):
+        # return the reference upper body positions
+        obs = self.ref_body_pos_extend[:, -4:, :]  # (num_envs, 4, 3)
+        obs_flat = obs.reshape(obs.shape[0], -1)   # (num_envs, 12)
+        return obs_flat
+    
+    def _get_obs_curr_upper_point(self):
+        # return the current upper body positions
+        obs = self.marker_coords[:, -4:, :]  # (num_envs, 4, 3)
+        obs_flat = obs.reshape(obs.shape[0], -1)   # (num_envs, 12)
+        return obs_flat

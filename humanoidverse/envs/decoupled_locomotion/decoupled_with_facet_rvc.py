@@ -131,9 +131,9 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         """更新控制器 (Update controller)"""
         self.update_impedance_control()
         # # apply lower-body PD for stiffness
-        self._compute_torso_stiffness()
         control_type = self.config.robot.control.control_type
         if control_type=="C":
+            self._compute_torso_stiffness()
             self._compute_rvc_matrix()
 
     def _compute_rvc_matrix(self):
@@ -143,7 +143,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
 
         # Define stiffness and damping parameters for 6D task (two hands, 3D each)
         stiff_params = torch.tensor([300., 300., 300., 300., 300., 300.], device=self.device) # should <= 500
-        torso_params = torch.tensor([10000., 10000., 5000., 5000., 5000., 500.], device=self.device)
+        torso_params = torch.tensor([10000., 10000., 50000., 5000., 5000., 500.], device=self.device)
 
         # Create [num_envs, 6] tensor: first 3 columns lin_kp, last 3 columns ang_kp
         # torso_params = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
@@ -151,6 +151,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # Repeat across all environments
         task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
         # task_stiffs = torch.cat([self.ee_kp.repeat(1,2)], dim=1)
+        # print("ee_kp:", self.ee_kp)
 
         # stiff_torso = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
         stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
@@ -256,7 +257,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
             self.stiff_torso[self.double_mask] = torch.linalg.inv(C_torso[self.double_mask] + torch.eye(6, device=self.device)*1e-6)
 
         if torch.any(self.no_contact_mask):
-            torso_params = torch.tensor([5000., 5000., 2000., 10000., 5000., 100.], device=self.device)
+            torso_params = torch.tensor([5000., 5000., 10000., 5000., 5000., 500.], device=self.device)
             stiff_torso = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
             self.stiff_torso[self.no_contact_mask] = torch.diag_embed(stiff_torso[self.no_contact_mask])
 
