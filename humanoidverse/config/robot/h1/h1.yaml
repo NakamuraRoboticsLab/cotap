@@ -289,11 +289,21 @@ robot:
       #   parent_name: "torso_link"
       #   pos: [0.0, 0.0, 0.65] # need check
       #   rot: [1.0, 0.0, 0.0, 0.0] # w x y z
+      - joint_name: "left_elbow_point"
+        parent_name: "left_shoulder_yaw_link"
+        pos: [0.0185, 0.0, -0.198] # 0.0185 0 -0.198
+        rot: [1.0, 0.0, 0.0, 0.0] # w x y z
+      - joint_name: "right_elbow_point"
+        parent_name: "right_shoulder_yaw_link"
+        pos: [0.0185, 0.0, -0.198] # 0.0185 0 -0.198
+        rot: [1.0, 0.0, 0.0, 0.0] # w x y z
 
 
     motion_tracking_link:
       - "left_hand_link"
       - "right_hand_link"
+      - "left_elbow_point"  # Changed from "left_hand_link"
+      - "right_elbow_point"  # Changed from "right_hand_link"
       # - "head_link"
 
     lower_body_link:
@@ -320,6 +330,8 @@ robot:
       - "right_elbow_link"
       - "left_hand_link"
       - "right_hand_link"
+      - "left_elbow_point"  # Added
+      - "right_elbow_point"  # Added
       - "torso_link"
       # - "head_link"
 

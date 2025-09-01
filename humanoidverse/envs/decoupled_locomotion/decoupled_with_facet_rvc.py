@@ -130,7 +130,11 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
     def update_controller(self):
         """更新控制器 (Update controller)"""
         self.update_impedance_control()
-        self._compute_rvc_matrix()
+        # # apply lower-body PD for stiffness
+        self._compute_torso_stiffness()
+        control_type = self.config.robot.control.control_type
+        if control_type=="C":
+            self._compute_rvc_matrix()
 
     def _compute_rvc_matrix(self):
         # Initialize task stiffness and damping matrices
@@ -150,9 +154,6 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
 
         # stiff_torso = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
         stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
-
-        # # apply lower-body PD for stiffness
-        # self._compute_torso_stiffness()
 
         # Joint control gains
         self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * 50.0 # null-space stiffness, hardcoding now
@@ -189,8 +190,8 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         J_eb = J_task_upper[:, :, :6]  # Extract torso part of the task Jacobian
         J_eu = J_task_upper[:, :, 6:]  # Extract upper body part of the task Jacobian
 
-        K_torso = torch.diag_embed(stiff_torso)  # Shape: (num_envs, 6, 6)
-        # K_torso = self.stiff_torso
+        # K_torso = torch.diag_embed(stiff_torso)  # Shape: (num_envs, 6, 6)
+        K_torso = self.stiff_torso
         # print("K_torso:", K_torso)
 
         C_task -= J_eb @ torch.linalg.inv(K_torso) @ J_eb.transpose(-1, -2)  # Adjust task compliance matrix
@@ -233,10 +234,9 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         J_torso = self._compute_local_jacobian(J_torso_gen)  # Shape: (num_envs, 3, num_dof)
 
         # Joint space stiffness and compliance matrices
-        self.rev_p_gains = torch.ones(self.num_envs, self.num_dof, device=self.device) * 10.0 # null-space stiffness, hardcoding now
-        # need change
+        jnt_p_vec = self.p_gains.unsqueeze(0).repeat(self.num_envs, 1)
 
-        K_jnt = torch.diag_embed(self.rev_p_gains)  # Shape: (num_envs, num_dof, num_dof)
+        K_jnt = torch.diag_embed(jnt_p_vec)  # Shape: (num_envs, num_dof, num_dof)
         C_jnt = torch.linalg.inv(K_jnt + torch.eye(self.num_dof, device=self.device) * 1e-6)  # Add regularization
 
         C_torso = torch.zeros(self.num_envs, 6, 6, device=self.device)
@@ -587,3 +587,14 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
 
     def _get_obs_upper_torq(self):
         return self.upper_torques
+
+    def _get_obs_torso_stiff(self):
+        """
+        Return torso stiffness matrix as a flattened observation tensor.
+        
+        Returns:
+            torch.Tensor: Flattened torso stiffness matrix,
+                        shape (num_envs, 36) where 6*6=36
+        """
+        # Flatten the 6x6 matrix to a 1D vector per environment
+        return self.stiff_torso.view(self.num_envs, -1)  # Shape: (num_envs, 36)
