@@ -149,8 +149,8 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # torso_params = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
 
         # Repeat across all environments
-        task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
-        # task_stiffs = torch.cat([self.ee_kp.repeat(1,2)], dim=1)
+        # task_stiffs[:] = stiff_params.unsqueeze(0).repeat(self.num_envs, 1)
+        task_stiffs = torch.cat([self.ee_kp.repeat(1,2)], dim=1)
         # print("ee_kp:", self.ee_kp)
 
         # stiff_torso = torch.cat([self.lin_kp.repeat(1,3), self.ang_kp.repeat(1,3)], dim=1)
@@ -378,12 +378,13 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # Step 2: Add regularization to Jacobian if near singular
         regularization_eps = 1e-5  # Small regularization term
         if torch.any(is_near_singular):
-            # Add regularization: J_task + eps * I
-            eye = torch.eye(J_task.shape[-1], device=J_task.device).unsqueeze(0).repeat(J_task.shape[0], 1, 1)
-            J_task = J_task + regularization_eps * eye
-    
-        # Compute pseudoinverse of task Jacobian
-        J_pinv = torch.linalg.pinv(J_task)  # Shape: (num_envs, joint_dim, task_dim)
+            m = J_task.shape[-2]
+            I = torch.eye(m, dtype=J_task.dtype, device=J_task.device).expand(J_task.shape[:-2] + (m, m))
+            A = J_task @ J_task.transpose(-2, -1) + (regularization_eps**2) * I
+            Y = torch.linalg.solve(A, I)
+            J_pinv = J_task.transpose(-2, -1) @ Y
+        else:
+            J_pinv = torch.linalg.pinv(J_task)  # Shape: (num_envs, joint_dim, task_dim)
         J_pinv_T = J_pinv.transpose(-1, -2)  # Shape: (num_envs, task_dim, joint_dim)
         
         # Task-space contribution: J_t^# * C_t * (J_t^#)^T
