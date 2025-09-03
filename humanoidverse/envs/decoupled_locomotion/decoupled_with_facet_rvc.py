@@ -372,11 +372,11 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         """
         # Step 1: Check condition number to detect near-singularity
         cond_num = torch.linalg.cond(J_task)
-        singular_threshold = 1e6  # Adjustable threshold
+        singular_threshold = 20  # Adjustable threshold
         is_near_singular = cond_num > singular_threshold
         
         # Step 2: Add regularization to Jacobian if near singular
-        regularization_eps = 1e-5  # Small regularization term
+        regularization_eps = 0.05  # Small regularization term
         if torch.any(is_near_singular):
             m = J_task.shape[-2]
             I = torch.eye(m, dtype=J_task.dtype, device=J_task.device).expand(J_task.shape[:-2] + (m, m))
