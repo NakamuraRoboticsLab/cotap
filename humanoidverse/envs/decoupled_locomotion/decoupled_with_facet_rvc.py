@@ -584,7 +584,10 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         return self.ang_kp
     
     def _get_obs_ee_kp(self):
-        return self.ee_kp
+        # 归一化到 [0, 1]
+        min_kp, max_kp = self.ee_kp_range
+        ee_kp_norm = (self.ee_kp - min_kp) / (max_kp - min_kp + 1e-8)
+        return ee_kp_norm
 
     def _get_obs_upper_torq(self):
         return self.upper_torques

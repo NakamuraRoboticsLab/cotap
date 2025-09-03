@@ -25,8 +25,8 @@ obs:
       # ang_kp,
       ee_kp,
       upper_torq,
-      ref_upper_point,
-      curr_upper_point,
+      # ref_upper_point,
+      # curr_upper_point,
     ]
 
     critic_obs: [
@@ -53,8 +53,8 @@ obs:
       # ang_kp,
       ee_kp,
       upper_torq,
-      ref_upper_point,
-      curr_upper_point,
+      # ref_upper_point,
+      # curr_upper_point,
     ]
 
   obs_base_dict:
@@ -79,8 +79,8 @@ obs:
       # ang_kp,
       ee_kp,
       upper_torq,
-      ref_upper_point,
-      curr_upper_point,
+      # ref_upper_point,
+      # curr_upper_point,
     ]
 
     critic_obs: [
@@ -107,8 +107,8 @@ obs:
       # ang_kp,
       ee_kp,
       upper_torq,
-      ref_upper_point,
-      curr_upper_point,
+      # ref_upper_point,
+      # curr_upper_point,
     ]
   
   history_length:
@@ -140,8 +140,8 @@ obs:
     # ang_kp: 1.0,
     ee_kp: 1.0,
     upper_torq: 1.0,
-    ref_upper_point: 1.0,
-    curr_upper_point: 1.0,
+    # ref_upper_point: 1.0,
+    # curr_upper_point: 1.0,
   }
   
   add_noise: False
@@ -188,8 +188,8 @@ obs:
     # ang_kp: 0.0,
     ee_kp: 1.0,
     upper_torq: 1.0,
-    ref_upper_point: 1.0,
-    curr_upper_point: 1.0,
+    # ref_upper_point: 1.0,
+    # curr_upper_point: 1.0,
   }
 
   # obs_dims should use list instead of dict
@@ -218,8 +218,8 @@ obs:
     # - ang_kp: 1
     - ee_kp: 3
     - upper_torq: ${robot.upper_body_actions_dim} # upper body dofs
-    - ref_upper_point: 12
-    - curr_upper_point: 12
+    # - ref_upper_point: 12
+    # - curr_upper_point: 12
 
   obs_base_dims:
     - base_orientation: 4
@@ -245,5 +245,5 @@ obs:
     # - ang_kp: 1
     - ee_kp: 3
     - upper_torq: ${robot.upper_body_actions_dim} # upper body dofs
-    - ref_upper_point: 12
-    - curr_upper_point: 12
+    # - ref_upper_point: 12
+    # - curr_upper_point: 12
