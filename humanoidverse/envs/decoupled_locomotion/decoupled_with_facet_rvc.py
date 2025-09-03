@@ -368,14 +368,20 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
     def _compute_jnt_compliance(self, J_task, C_task, C_jnt):
         """
         Computes joint space compliance matrix using task-space compliance.
-
-        Formula: C_q = J_t^# * C_t * (J_t^#)^T + (C_jnt - J_t^# * J_t * C_jnt * J_t^T * (J_t^#)^T)
-        where:
-        - J_t^# is the pseudoinverse of the task Jacobian
-        - C_t is the task-space compliance matrix
-        - C_jnt is the joint-space compliance matrix
-        - I is the identity matrix
+        Avoids Jacobian singularity by adding regularization and checking condition number.
         """
+        # Step 1: Check condition number to detect near-singularity
+        cond_num = torch.linalg.cond(J_task)
+        singular_threshold = 1e6  # Adjustable threshold
+        is_near_singular = cond_num > singular_threshold
+        
+        # Step 2: Add regularization to Jacobian if near singular
+        regularization_eps = 1e-5  # Small regularization term
+        if torch.any(is_near_singular):
+            # Add regularization: J_task + eps * I
+            eye = torch.eye(J_task.shape[-1], device=J_task.device).unsqueeze(0).repeat(J_task.shape[0], 1, 1)
+            J_task = J_task + regularization_eps * eye
+    
         # Compute pseudoinverse of task Jacobian
         J_pinv = torch.linalg.pinv(J_task)  # Shape: (num_envs, joint_dim, task_dim)
         J_pinv_T = J_pinv.transpose(-1, -2)  # Shape: (num_envs, task_dim, joint_dim)
