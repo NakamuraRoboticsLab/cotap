@@ -65,7 +65,8 @@ class PPOMultiActorCritic(PPO):
 
         humanoidverse_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         checkpoint_path = os.path.join(humanoidverse_ROOT_DIR, \
-                                       "../../logs/h1_19dof_falcon/whole_body_pd_extra_obs", "model_20000.pt") # 预训练模型路径
+                                       "../../logs/h1_19dof_falcon/whole_body_pd", "model_20000.pt") # 预训练模型路径
+                                    #    "../../logs/h1_19dof_falcon/whole_body_pd_extra_obs", "model_20000.pt") # 预训练模型路径
 
         self.external_actor = self.create_external_actor(checkpoint_path)
 
@@ -207,6 +208,7 @@ class PPOMultiActorCritic(PPO):
     def _rollout_step(self, obs_dict):
         with torch.inference_mode():
             for i in range(self.num_steps_per_env):
+                self.env.current_iteration = self.current_learning_iteration
                 # Compute the actions and values
                 actions = self._multi_actor_critic_rollout_step(obs_dict)
                 actor_state = {}

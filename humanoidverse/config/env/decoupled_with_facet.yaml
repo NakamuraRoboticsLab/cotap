@@ -106,7 +106,6 @@ env:
       force_saturate: 300.0
       virtual_mass: 5.0
       virtual_inertia: 0.1
-      ee_kp_range: [100.0, 400.0]
       ee_kp_init: 300.0
 
     rvc_params: 

@@ -23,7 +23,7 @@ obs:
       # grav_upper,
       # lin_kp,
       # ang_kp,
-      ee_kp,
+      # ee_kp,
       upper_torq,
       # ref_upper_point,
       # curr_upper_point,
@@ -51,7 +51,7 @@ obs:
       # grav_upper,
       # lin_kp,
       # ang_kp,
-      ee_kp,
+      # ee_kp,
       upper_torq,
       # ref_upper_point,
       # curr_upper_point,
@@ -77,7 +77,7 @@ obs:
       # grav_upper,
       # lin_kp,
       # ang_kp,
-      ee_kp,
+      # ee_kp,
       upper_torq,
       # ref_upper_point,
       # curr_upper_point,
@@ -105,7 +105,7 @@ obs:
       # grav_upper,
       # lin_kp,
       # ang_kp,
-      ee_kp,
+      # ee_kp,
       upper_torq,
       # ref_upper_point,
       # curr_upper_point,
@@ -138,7 +138,7 @@ obs:
     # grav_upper: 1.0,
     # lin_kp: 1.0,
     # ang_kp: 1.0,
-    ee_kp: 1.0,
+    # ee_kp: 1.0,
     upper_torq: 1.0,
     # ref_upper_point: 1.0,
     # curr_upper_point: 1.0,
@@ -186,7 +186,7 @@ obs:
     # grav_upper: 0.0,
     # lin_kp: 0.0,
     # ang_kp: 0.0,
-    ee_kp: 1.0,
+    # ee_kp: 1.0,
     upper_torq: 1.0,
     # ref_upper_point: 1.0,
     # curr_upper_point: 1.0,
@@ -216,7 +216,7 @@ obs:
     # - grav_upper: ${robot.upper_body_actions_dim} # upper body dofs
     # - lin_kp: 1
     # - ang_kp: 1
-    - ee_kp: 3
+    # - ee_kp: 6
     - upper_torq: ${robot.upper_body_actions_dim} # upper body dofs
     # - ref_upper_point: 12
     # - curr_upper_point: 12
@@ -243,7 +243,7 @@ obs:
     # - grav_upper: ${robot.upper_body_actions_dim} # upper body dofs
     # - lin_kp: 1
     # - ang_kp: 1
-    - ee_kp: 3
+    # - ee_kp: 6
     - upper_torq: ${robot.upper_body_actions_dim} # upper body dofs
     # - ref_upper_point: 12
     # - curr_upper_point: 12

@@ -1,9 +1,5 @@
 from isaacgym.torch_utils import *
-from humanoidverse.utils.torch_utils import (
-    generate_sphere_sample_params,
-    apply_sphere_sample_to_segments,
-    sample_3d_directions,
-)
+from humanoidverse.utils.torch_utils import *
 
 import torch
 from humanoidverse.envs.decoupled_locomotion.decoupled_locomotion_stand_height_waist_wbc_ma_diff_force import LeggedRobotDecoupledLocomotionStanceHeightWBCForce
@@ -100,7 +96,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.virtual_inertia = self.config.facet_params.virtual_inertia
         self.max_acc_xy = self.config.facet_params.max_acc_xy
         self.max_vel_xy = self.config.facet_params.max_vel_xy
-        self.ee_kp_range = self.config.facet_params.ee_kp_range
         self.upper_torques = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device)
 
         # 代理目标时间步 (Surrogate target time steps)
@@ -134,8 +129,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.lin_kd = torch.ones(self.num_envs, 1, device=self.device) * self.config.facet_params.linear_kd_init
         self.ang_kp = torch.ones(self.num_envs, 1, device=self.device) * self.config.facet_params.angular_kp_init
         self.ang_kd = torch.ones(self.num_envs, 1, device=self.device) * self.config.facet_params.angular_kd_init
-
-        self.ee_kp = torch.ones(self.num_envs, 3, device=self.device) * self.config.facet_params.ee_kp_init
 
         # 目标状态 (Target states)
         self.command_setpos_w = torch.zeros(self.num_envs, 3, device=self.device)
@@ -333,7 +326,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # print("surrogate_lin_vel:", surr_vel_world_weighted[:, :3])
         # print("linear_velocity_ema:", self.lin_vel_ema.ema[:, 0])
 
-    def update_impedance_command(self):
+    # should put it in initial domain randomization? 
+    def update_impedance_command(self): 
         """更新阻抗控制指令 (Update impedance control commands)"""
         
         # 周期性采样新指令 (Periodically sample new commands)
@@ -472,11 +466,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         self.lin_kd[env_ids] = lin_kd
         self.ang_kp[env_ids] = ang_kp
         self.ang_kd[env_ids] = ang_kd
-
-        ee_kp = torch.empty(len(env_ids), 3, device=self.device).uniform_(
-            *self.ee_kp_range)
-        
-        self.ee_kp[env_ids] = ee_kp
 
         # 采样目标位置 (Sample target position)
         offset = torch.zeros(len(env_ids), 3, device=self.device)
