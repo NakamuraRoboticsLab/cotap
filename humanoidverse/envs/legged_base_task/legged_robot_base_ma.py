@@ -66,7 +66,8 @@ class LeggedRobotBase(BaseTask):
         self.base_lin_vel = quat_rotate_inverse(self.base_quat, self.simulator.robot_root_states[:, 7:10])
         self.base_ang_vel = quat_rotate_inverse(self.base_quat, self.simulator.robot_root_states[:, 10:13])
         self.projected_gravity = quat_rotate_inverse(self.base_quat, self.gravity_vec)
-        self.ee_kp = torch.ones(self.num_envs, 6, device=self.device) * self.config.facet_params.ee_kp_init
+        self.ee_kp = torch.ones(self.num_envs, 6, device=self.device)
+        self.ee_null = torch.ones(self.num_envs, 8, device=self.device)
         # joint positions offsets and PD gains
         self.default_dof_pos = torch.zeros(self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
         for i in range(self.num_dofs):
@@ -721,7 +722,12 @@ class LeggedRobotBase(BaseTask):
             ee_kp_max = self.config.domain_rand.ee_kp_range[1]
             ee_kp_range_expanded = [1 - (ee_kp_max - ee_kp_min) * progress * 0.5, 1 + (ee_kp_max - ee_kp_min) * progress * 0.5]
             self.ee_kp[env_ids] = torch_rand_float(ee_kp_range_expanded[0], ee_kp_range_expanded[1], (len(env_ids), 6), device=self.device)
-    
+
+            ee_null_min = self.config.domain_rand.ee_null_range[0]
+            ee_null_max = self.config.domain_rand.ee_null_range[1]
+            ee_null_range_expanded = [1 - (ee_null_max - ee_null_min) * progress * 0.5, 1 + (ee_null_max - ee_null_min) * progress * 0.5]
+            self.ee_null[env_ids] = torch_rand_float(ee_null_range_expanded[0], ee_null_range_expanded[1], (len(env_ids), 8), device=self.device)
+
         if self.config.domain_rand.randomize_rfi_lim:
             self._rfi_lim_scale[env_ids] = torch_rand_float(self.config.domain_rand.rfi_lim_range[0], self.config.domain_rand.rfi_lim_range[1], (len(env_ids), self.num_dofs), device=self.device)
 
