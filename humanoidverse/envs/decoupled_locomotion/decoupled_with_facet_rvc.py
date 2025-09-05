@@ -48,7 +48,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # # apply lower-body PD for stiffness
         control_type = self.config.robot.control.control_type
         if control_type=="C":
-            self._compute_torso_stiffness()
+            # self._compute_torso_stiffness()
             self._compute_rvc_matrix()
 
     def _compute_rvc_matrix(self):
@@ -105,7 +105,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         C_task = torch.linalg.inv(K_task + torch.eye(self.task_num, device=self.device) * 1e-6)  # Add regularization
 
         # Calculate block Jacobian
-        J_eb = J_task_upper[:, :, :6]  # Extract torso part of the task Jacobian
+        # J_eb = J_task_upper[:, :, :6]  # Extract torso part of the task Jacobian
         J_eu = J_task_upper[:, :, 6:]  # Extract upper body part of the task Jacobian
 
         cond_num = torch.linalg.cond(J_eu)
