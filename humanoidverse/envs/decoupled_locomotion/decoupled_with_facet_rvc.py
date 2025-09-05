@@ -24,10 +24,12 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
 
         self.jnt_stiff_matrix = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, \
                                        self.config.robot.upper_body_actions_dim, device=self.device)
+        self.jnt_visco_matrix = torch.zeros(self.num_envs, self.config.robot.upper_body_actions_dim, \
+                                       self.config.robot.upper_body_actions_dim, device=self.device)
 
         self.stiff_torso = torch.zeros(self.num_envs, 6, 6, device=self.device)
 
-        self.alpha_val = self.config.rvc_params.alpha_spd # changable
+        self.alpha_val = torch.ones(self.num_envs, device=self.device)
 
     def step(self, actor_state):
         """环境步进 (Environment step)"""
@@ -71,7 +73,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
 
         # Joint control gains
-        null_space_stiffness = 50.0 * self.ee_null
+        null_space_stiffness = 40.0 * self.ee_null
         self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * null_space_stiffness
 
         # Compute Jacobians for hand positions (only position, not orientation)
@@ -106,11 +108,22 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         J_eb = J_task_upper[:, :, :6]  # Extract torso part of the task Jacobian
         J_eu = J_task_upper[:, :, 6:]  # Extract upper body part of the task Jacobian
 
+        cond_num = torch.linalg.cond(J_eu)
+        temp = abs(cond_num - 10)
+
+        self.alpha_val = 1.0 / (1.0 + temp)
+
         # K_torso = torch.diag_embed(stiff_torso)  # Shape: (num_envs, 6, 6)
-        K_torso = self.stiff_torso
+        # K_torso = self.stiff_torso
         # print("K_torso:", K_torso)
 
-        C_task -= J_eb @ torch.linalg.inv(K_torso) @ J_eb.transpose(-1, -2)  # Adjust task compliance matrix
+        # comment to disable torso compliance adjustment
+        # C_task -= J_eb @ torch.linalg.inv(K_torso) @ J_eb.transpose(-1, -2)  # Adjust task compliance matrix
+
+        # # debug pd task stiffness
+        # C_task = J_eu @ C_jnt @ J_eu.transpose(-1, -2)
+        # K_task = torch.linalg.inv(C_task + torch.eye(self.task_num, device=self.device) * 1e-6)
+        # print("K_task:", K_task)
 
         # Solution
         jnt_comp_matrix = self._compute_jnt_compliance(J_eu, C_task, C_jnt)
@@ -120,9 +133,10 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         # self.jnt_stiff_matrix = K_jnt # for debug test only
 
         # Apply ratio joint stiffness
-        alpha = torch.full((self.num_envs, 1, 1), self.alpha_val, device=self.device)
+        alpha = self.alpha_val
         # self.jnt_stiff_matrix = alpha * self.jnt_stiff_matrix + (1-alpha) * K_jnt
         self.jnt_stiff_matrix = self.log_euclidean_blend(self.jnt_stiff_matrix, K_jnt, alpha=alpha)
+        self.jnt_visco_matrix = self.jnt_stiff_matrix * 0.15  # Damping ratio 0.15
 
     def _compute_torso_stiffness(self):
 
@@ -195,19 +209,24 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
     def _compute_upper_rvc_torques(self, actions_scaled):
         # Compute position error
         delta_pos = actions_scaled + self.default_dof_pos - self.simulator.dof_pos
+        delta_vel = - self.simulator.dof_vel
         # Compute torques using stiffness control
         torques = self._kp_scale * self.p_gains*delta_pos
+        torques +=  self._kd_scale * self.d_gains * delta_vel
         # Compute upper body position error for RVC controller
         upper_body_pos_error = delta_pos[:, self.upper_dof_indices].unsqueeze(-1)  # Shape: (num_envs, upper_body_actions_dim, 1)
         # upper_body_pos_error = (self.ref_upper_dof_pos - self.simulator.dof_pos[:, self.upper_dof_indices]).unsqueeze(-1)
-        self.upper_torques = torch.matmul(self.jnt_stiff_matrix, upper_body_pos_error).squeeze(-1) 
+        upper_body_vel_error = delta_vel[:, self.upper_dof_indices].unsqueeze(-1)  # Shape: (num_envs, upper_body_actions_dim, 1)
+
+        self.upper_torques = torch.matmul(self.jnt_stiff_matrix, upper_body_pos_error).squeeze(-1)
+        self.upper_torques += torch.matmul(self.jnt_visco_matrix, upper_body_vel_error).squeeze(-1)
         # Gravity compensation calculation
         self.grav_upper = self._gravity_upper_compensation()
         self.upper_torques += self.grav_upper
 
         torques[:, self.upper_dof_indices] = self.upper_torques
         # Add damping term
-        torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
+        # torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
 
         return torques
     
@@ -287,7 +306,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         """
         # Step 1: Check condition number to detect near-singularity
         cond_num = torch.linalg.cond(J_task)
-        singular_threshold = 20  # Adjustable threshold
+        singular_threshold = 10  # Adjustable threshold
         is_near_singular = cond_num > singular_threshold
         
         # Step 2: Add regularization to Jacobian if near singular
