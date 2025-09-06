@@ -109,9 +109,12 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         J_eu = J_task_upper[:, :, 6:]  # Extract upper body part of the task Jacobian
 
         cond_num = torch.linalg.cond(J_eu)
-        temp = abs(cond_num - 10)
+        temp = cond_num - 10
+        temp = torch.clamp(temp, min=1e-6)  # 保证 temp 始终大于 0
+        # print("Condition number:", cond_num)
 
         self.alpha_val = 1.0 / (1.0 + temp)
+        print("Alpha value:", self.alpha_val)
 
         # K_torso = torch.diag_embed(stiff_torso)  # Shape: (num_envs, 6, 6)
         # K_torso = self.stiff_torso
@@ -132,11 +135,16 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         self.jnt_stiff_matrix = torch.linalg.inv(regularized_comp)
         # self.jnt_stiff_matrix = K_jnt # for debug test only
 
+        # for ratio PD control
+        self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * 100.0 # real PD
+        K_jnt = torch.diag_embed(self.rev_p_gains)
+        
         # Apply ratio joint stiffness
         alpha = self.alpha_val
         # self.jnt_stiff_matrix = alpha * self.jnt_stiff_matrix + (1-alpha) * K_jnt
         self.jnt_stiff_matrix = self.log_euclidean_blend(self.jnt_stiff_matrix, K_jnt, alpha=alpha)
-        self.jnt_visco_matrix = self.jnt_stiff_matrix * 0.15  # Damping ratio 0.15
+
+        # self.jnt_visco_matrix = self.jnt_stiff_matrix * 0.15  # Damping ratio 0.15
 
     def _compute_torso_stiffness(self):
 
@@ -212,21 +220,21 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         delta_vel = - self.simulator.dof_vel
         # Compute torques using stiffness control
         torques = self._kp_scale * self.p_gains*delta_pos
-        torques +=  self._kd_scale * self.d_gains * delta_vel
+        # torques +=  self._kd_scale * self.d_gains * delta_vel
         # Compute upper body position error for RVC controller
         upper_body_pos_error = delta_pos[:, self.upper_dof_indices].unsqueeze(-1)  # Shape: (num_envs, upper_body_actions_dim, 1)
         # upper_body_pos_error = (self.ref_upper_dof_pos - self.simulator.dof_pos[:, self.upper_dof_indices]).unsqueeze(-1)
-        upper_body_vel_error = delta_vel[:, self.upper_dof_indices].unsqueeze(-1)  # Shape: (num_envs, upper_body_actions_dim, 1)
+        # upper_body_vel_error = delta_vel[:, self.upper_dof_indices].unsqueeze(-1)  # Shape: (num_envs, upper_body_actions_dim, 1)
 
         self.upper_torques = torch.matmul(self.jnt_stiff_matrix, upper_body_pos_error).squeeze(-1)
-        self.upper_torques += torch.matmul(self.jnt_visco_matrix, upper_body_vel_error).squeeze(-1)
+        # self.upper_torques += torch.matmul(self.jnt_visco_matrix, upper_body_vel_error).squeeze(-1)
         # Gravity compensation calculation
         self.grav_upper = self._gravity_upper_compensation()
         self.upper_torques += self.grav_upper
 
         torques[:, self.upper_dof_indices] = self.upper_torques
         # Add damping term
-        # torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
+        torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
 
         return torques
     
