@@ -323,7 +323,37 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
         # Apply the force to the hand links
         self.apply_force_tensor[:, self.left_hand_link_index, :] = left_hand_force
         self.apply_force_tensor[:, self.right_hand_link_index, :] = right_hand_force
-    
+
+    def _calculate_ee_forces_eval(self):
+        # Combine the x-y components with the z component
+        left_hand_force = torch.zeros((self.num_envs, 3), device=self.device)
+        right_hand_force = torch.zeros((self.num_envs, 3), device=self.device)
+
+        # 仅在仿真时间小于0.1秒时施加冲击力
+        # 假设 self.simulator.sim_time 记录当前仿真时间（单位：秒）
+        # 若没有 sim_time，可用 step 计数器乘以仿真步长
+        impact_duration = 0.1  # 秒
+        add_force_time = 5.0
+        current_time = (self.episode_length_buf) * self.dt + self.motion_start_times
+
+        # impact_mask = (current_time > add_force_time) & (current_time < add_force_time+impact_duration)
+        time_in_cycle = torch.remainder(current_time, add_force_time)
+        impact_mask = (time_in_cycle >= 0) & (time_in_cycle < impact_duration) & (current_time > impact_duration)
+
+        if torch.is_tensor(impact_mask):
+            # 多环境情况
+            right_hand_force[impact_mask, 0] = -400.0
+        elif impact_mask:
+            right_hand_force[:, 0] = -400.0
+
+        # Calculate the end effector forces for evaluation
+        self.left_ee_apply_force = left_hand_force
+        self.right_ee_apply_force = right_hand_force
+
+        # Apply the force to the hand links
+        self.apply_force_tensor[:, self.left_hand_link_index, :] = quat_rotate(self.base_quat, left_hand_force)
+        self.apply_force_tensor[:, self.right_hand_link_index, :] = quat_rotate(self.base_quat, right_hand_force)
+
     def _apply_force_in_physics_step(self):
         # Apply the force in the physics step
         self.torques = self._compute_torques(self.actions_after_delay).view(self.torques.shape)
@@ -336,6 +366,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
     def _physics_step(self):
         self.render()
         self._calculate_ee_forces()
+        # self._calculate_ee_forces_eval()
         for _ in range(self.config.simulator.config.sim.control_decimation):
             self._apply_force_in_physics_step()
             self.simulator.simulate_at_each_physics_step()
