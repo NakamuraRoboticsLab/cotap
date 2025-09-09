@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import numpy as np
 
 from humanoidverse.agents.modules.ppo_modules import PPOActor, PPOCritic
 from humanoidverse.agents.modules.data_utils import RolloutStorage
@@ -8,6 +9,7 @@ from humanoidverse.envs.base_task.base_task import BaseTask
 from humanoidverse.agents.callbacks.base_callback import RL_EvalCallback
 from humanoidverse.utils.average_meters import TensorAverageMeterDict
 from humanoidverse.agents.ppo.ppo import PPO
+from humanoidverse.utils.logger import Logger
 
 from torch.utils.tensorboard import SummaryWriter as TensorboardSummaryWriter
 import time
@@ -214,6 +216,7 @@ class PPOMultiActorCritic(PPO):
                 actor_state = {}
                 actor_state["actions"] = torch.cat([actions[key] for key in self.keys], dim=1)
                 obs_dict, rewards, dones, infos = self.env.step(actor_state)
+                self.infos = infos
 
                 for obs_key in obs_dict.keys():
                     obs_dict[obs_key] = obs_dict[obs_key].to(self.device)
@@ -590,11 +593,45 @@ class PPOMultiActorCritic(PPO):
         init_actions = torch.zeros(self.env.num_envs, self.num_act_lower_body + self.num_act_upper_body, device=self.device)
         actor_state.update({"obs": obs_dict, "actions": init_actions})
         actor_state = self._pre_eval_env_step(actor_state)
+
+        logger = Logger(self.env.dt)
+        robot_index = 0 # which robot is used for logging
+        start_state_log = 200 # step to start plotting states
+        stop_state_log = 500 # number of steps before plotting states
+
         while True:
             actor_state["step"] = step
             actor_state = self._pre_eval_env_step(actor_state)
             actor_state = self.env_step(actor_state)
             actor_state = self._post_eval_env_step(actor_state)
+
+            upper_body_pos = self.env.simulator.dof_pos[:, self.env.upper_dof_indices]
+            upper_body_dofs_error =  torch.sum(torch.square(upper_body_pos - self.env.ref_upper_dof_pos), dim=1)
+            upper_body_dofs_tracking_reward =  torch.exp(-upper_body_dofs_error/(self.env.upper_body_tracking_sigma.squeeze(-1)))
+
+            if step < stop_state_log and step >= start_state_log:
+                logger.log_states(
+                    {
+                        # 'dof_pos_target': actions[robot_index, joint_index].item() * self.env.simulator.cfg.control.action_scale + self.env.simulator.default_dof_pos[robot_index, joint_index].item(),
+                        # 'dof_pos_target': self.env.simulator.actions[robot_index, joint_index].item() * self.env.simulator.cfg.control.action_scale + self.env.simulator.default_dof_pos[robot_index, joint_index].item(),
+                        'dof_pos': upper_body_dofs_tracking_reward[robot_index].item(),
+                        # 'dof_vel': self.env.simulator.dof_vel[robot_index, joint_index].item(),
+                        # 'dof_torque': simulator.torques[robot_index, joint_index].item(),
+                        'base_vel_x': self.env.simulator.robot_root_states[:, 7].item(),
+                        'hand_vel_x': self.env.ref_body_pos_extend[:, -4, 0].item(),
+                        # 'base_vel_y': simulator.base_lin_vel[robot_index, 1].item(),
+                        # 'base_vel_z': simulator.base_lin_vel[robot_index, 2].item(),
+                        # 'base_vel_yaw': simulator.base_ang_vel[robot_index, 2].item(),
+                        'contact_forces_z': self.env.simulator.contact_forces[robot_index, self.env.feet_indices, 2].cpu().numpy()
+                    }
+                )
+                print("Logging states...", step)
+            elif step == start_state_log:
+                logger.state_log.clear()
+            elif step==stop_state_log:
+                logger.plot_states()
+                print("States plotted.")
+
             step += 1
         self._post_evaluate_policy()
     
