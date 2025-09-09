@@ -100,10 +100,12 @@ class Logger:
         a.legend()
         # plot hand pos x
         a = axs[0, 1]
-        if log["hand_pos_x_err"]: a.plot(time, log["hand_pos_x_err"], label='x')
-        if log["hand_pos_y_err"]: a.plot(time, log["hand_pos_y_err"], label='y')
-        a.set(xlabel='time [s]', ylabel='hand err [m]', title='Left hand error in x - y')
-        a.set_ylim([-0.4, 0.4])
+        # if log["hand_pos_x_err"]: a.plot(time, log["hand_pos_x_err"], label='x')
+        # if log["hand_pos_y_err"]: a.plot(time, log["hand_pos_y_err"], label='y')
+        if log["hand_pos_z_err"]: a.plot(time, log["hand_pos_z_err"], label='z')
+        a.set(xlabel='time [s]', ylabel='hand err [m]', title='Left hand error in x - y - z')
+        # a.set_ylim([-0.4, 0.4])
+        a.set_ylim([-0.2, 0.6])
         a.legend()
         plt.show()
 

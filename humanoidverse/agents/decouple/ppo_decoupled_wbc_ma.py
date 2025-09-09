@@ -613,23 +613,22 @@ class PPOMultiActorCritic(PPO):
             upper_body_pos = self.env.simulator.dof_pos[:, self.env.upper_dof_indices]
             upper_body_dofs_error =  torch.sum(torch.square(upper_body_pos - self.env.ref_upper_dof_pos), dim=1)
 
-            act_ext = self.env.marker_coords[:, -4, :2]  # (num_envs, 4, 2)
-            ref_ext = self.env.ref_body_pos_extend[:, -4, :2]  # (num_envs, 4, 2)
+            act_ext = self.env.marker_coords[:, -4, :3]  # (num_envs, 4, 3)
+            ref_ext = self.env.ref_body_pos_extend[:, -4, :3]  # (num_envs, 4, 3)
             hand_pos_error = ref_ext - act_ext
 
             # 获取 torso link 的四元数 (num_envs, 4)
             torso_quat = self.env.simulator._rigid_body_rot[:, self.env.torso_index, :]
 
             # 先将 hand_pos_error 从世界系平移到 torso 原点
-            # 假设 hand_pos_error 是 (num_envs, 4, 2)，需要补齐到 3 维
-            hand_pos_error_3d = torch.zeros(hand_pos_error.shape[0], hand_pos_error.shape[1], 3, device=hand_pos_error.device)
-            hand_pos_error_3d[:, :, :2] = hand_pos_error
+            # 假设 hand_pos_error 是 (num_envs, 4, 3)，不需要补齐
+            hand_pos_error_3d = hand_pos_error
 
             # 变换到 torso-link 坐标系
             hand_pos_error_torso = quat_rotate_inverse(
-                torso_quat.unsqueeze(1).expand(-1, hand_pos_error.shape[1], -1).reshape(-1, 4),
-                hand_pos_error_3d.reshape(-1, 3)
-            ).reshape(hand_pos_error.shape[0], hand_pos_error.shape[1], 3)
+                torso_quat[robot_index:1],  # shape (1, 4)
+                hand_pos_error_3d  # shape (1, 3)
+            )
 
             if step <= start_state_log:
                 base_quat = self.env.simulator.robot_root_states[:, 3:7]  # (num_envs, 4)
@@ -650,8 +649,9 @@ class PPOMultiActorCritic(PPO):
                         # 'dof_torque': simulator.torques[robot_index, joint_index].item(),
                         'base_vel_x': base_lin_vel_base_frame[robot_index, 0].item(),
                         'base_vel_target_x': self.env.commands[robot_index, 0].item(),
-                        'hand_pos_x_err': hand_pos_error_torso[robot_index, 0, 0].item(),
-                        'hand_pos_y_err': hand_pos_error_torso[robot_index, 0, 1].item(),
+                        'hand_pos_x_err': hand_pos_error_torso[0, 0].item(),
+                        'hand_pos_y_err': hand_pos_error_torso[0, 1].item(),
+                        'hand_pos_z_err': hand_pos_error_torso[0, 2].item(),
                         # 'base_vel_y': simulator.base_lin_vel[robot_index, 1].item(),
                         # 'base_vel_z': simulator.base_lin_vel[robot_index, 2].item(),
                         # 'base_vel_yaw': simulator.base_ang_vel[robot_index, 2].item(),
