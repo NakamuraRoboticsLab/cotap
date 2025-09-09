@@ -649,6 +649,7 @@ class PPOMultiActorCritic(PPO):
                         # 'dof_vel': self.env.simulator.dof_vel[robot_index, joint_index].item(),
                         # 'dof_torque': simulator.torques[robot_index, joint_index].item(),
                         'base_vel_x': base_lin_vel_base_frame[robot_index, 0].item(),
+                        'base_vel_target_x': self.env.commands[robot_index, 0].item(),
                         'hand_pos_x_err': hand_pos_error_torso[robot_index, 0, 0].item(),
                         'hand_pos_y_err': hand_pos_error_torso[robot_index, 0, 1].item(),
                         # 'base_vel_y': simulator.base_lin_vel[robot_index, 1].item(),

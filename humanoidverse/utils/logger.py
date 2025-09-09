@@ -92,9 +92,11 @@ class Logger:
         a.legend()
         # plot base vel x
         a = axs[0, 0]
-        if log["base_vel_x"]: a.plot(time, log["base_vel_x"])
+        if log["base_vel_x"]: a.plot(time, log["base_vel_x"], label='measured')
+        if log["base_vel_target_x"]: a.plot(time, log["base_vel_target_x"], label='target')
         a.set(xlabel='time [s]', ylabel='base lin vel [m/s]', title='Base velocity x')
-        a.set_ylim([-0.6, 1.3])
+        a.set_ylim([-1.0, 3.0])
+        # a.set_ylim([-0.6, 1.3])
         a.legend()
         # plot hand pos x
         a = axs[0, 1]
