@@ -60,7 +60,8 @@ class LeggedRobotDecoupledLocomotionStance(LeggedRobotLocomotion):
         # res = self._motion_lib.get_motion_state(self.motion_ids, self.motion_times, offset=self.env_origins)
         if not self.config.robot.motion.reverse_motion: self._resample_motion_times(torch.arange(self.num_envs))
         self.motion_dt = self._motion_lib._motion_dt
-        self.motion_start_idx = 0
+        # self.motion_start_idx = 0
+        self.motion_start_idx = 3 # set special motion as initial
         if self._motion_lib.standardize_motion_length and self.config.termination.terminate_when_motion_end:
             self.max_episode_length_s = self._motion_lib.standardize_motion_length_value
             self.max_episode_length = np.ceil(self.max_episode_length_s / self.dt)

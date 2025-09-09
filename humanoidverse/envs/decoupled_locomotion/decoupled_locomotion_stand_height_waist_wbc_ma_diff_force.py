@@ -332,7 +332,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
         # 仅在仿真时间小于0.1秒时施加冲击力
         # 假设 self.simulator.sim_time 记录当前仿真时间（单位：秒）
         # 若没有 sim_time，可用 step 计数器乘以仿真步长
-        impact_duration = 0.1  # 秒
+        impact_duration = 0.05 # 0.1 10 # 秒
         add_force_time = 5.0
         current_time = (self.episode_length_buf) * self.dt + self.motion_start_times
 
@@ -340,11 +340,12 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
         time_in_cycle = torch.remainder(current_time, add_force_time)
         impact_mask = (time_in_cycle >= 0) & (time_in_cycle < impact_duration) & (current_time > impact_duration)
 
+        test_force = 500 # -400.0 -30.0 # N
         if torch.is_tensor(impact_mask):
             # 多环境情况
-            right_hand_force[impact_mask, 0] = -400.0
+            left_hand_force[impact_mask, 0] = test_force
         elif impact_mask:
-            right_hand_force[:, 0] = -400.0
+            left_hand_force[:, 0] = test_force
 
         # Calculate the end effector forces for evaluation
         self.left_ee_apply_force = left_hand_force
