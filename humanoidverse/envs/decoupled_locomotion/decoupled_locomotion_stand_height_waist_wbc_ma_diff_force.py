@@ -366,8 +366,8 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
     
     def _physics_step(self):
         self.render()
-        self._calculate_ee_forces()
-        # self._calculate_ee_forces_eval()
+        # self._calculate_ee_forces()
+        self._calculate_ee_forces_eval()
         for _ in range(self.config.simulator.config.sim.control_decimation):
             self._apply_force_in_physics_step()
             self.simulator.simulate_at_each_physics_step()
@@ -606,7 +606,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
             purple = (0.6, 0.0, 0.6)
             # draw all extended current positions for this environment
             # ext = self.extend_curr_pos[env_id]  # shape: (num_ext, 3)
-            ext = self.marker_coords[env_id, -2:, :]
+            ext = self.marker_coords[env_id, -4:, :]
             self.simulator.draw_sphere(ext[0, :], 0.04, purple, env_id)  # left hand actual
             self.simulator.draw_sphere(ext[1, :], 0.04, purple, env_id)  # right hand actual
             
@@ -655,7 +655,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
                         ref_pos = self.ref_body_pos_extend[env_id, marker_idx]
                         # print("Reference position for marker index", 22, ":", ref_pos)
                         # Draw reference motion marker as blue sphere
-                        ref_sphere_color = (0.0, 0.0, 1.0)
+                        ref_sphere_color = (0.0, 0.0, 1.0) # blue
                         ref_sphere_geom = gymutil.WireframeSphereGeometry(
                             0.06, 12, 12, None, color=ref_sphere_color)
                         ref_sphere_pose = gymapi.Transform(

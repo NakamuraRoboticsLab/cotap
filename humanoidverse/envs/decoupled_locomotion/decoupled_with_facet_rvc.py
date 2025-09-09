@@ -234,7 +234,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
 
         torques[:, self.upper_dof_indices] = self.upper_torques
         # Add damping term
-        torques = torques - self._kd_scale * self.d_gains * self.simulator.dof_vel
+        torques = torques - 1.2 * self._kd_scale * self.d_gains * self.simulator.dof_vel
 
         return torques
     

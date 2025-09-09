@@ -76,29 +76,32 @@ class Logger:
         log= self.state_log
         # plot joint targets and measured positions
         a = axs[1, 0]
-        if log["dof_pos"]: a.plot(time, log["dof_pos"], label='measured')
+        if log["dof_pos_err"]: a.plot(time, log["dof_pos_err"])
         if log["dof_pos_target"]: a.plot(time, log["dof_pos_target"], label='target')
-        a.set(xlabel='time [s]', ylabel='Position [rad]', title='DOF Position')
+        a.set(xlabel='time [s]', ylabel='Position [rad]', title='DOF Position Error')
+        a.set_ylim([-0.1, 2.5])
         a.legend()
         # plot contact forces
         a = axs[1, 1]
         if log["contact_forces_z"]:
             forces = np.array(log["contact_forces_z"])
-            for i in range(forces.shape[1]):
-                a.plot(time, forces[:, i], label=f'force {i}')
+            a.plot(time, forces[:, 0], label=f'left GRF')
+            a.plot(time, forces[:, 1], label=f'right GRF')
         a.set(xlabel='time [s]', ylabel='Forces z [N]', title='Vertical Contact forces')
+        a.set_ylim([-50.0, 1100.0])
         a.legend()
         # plot base vel x
         a = axs[0, 0]
-        if log["base_vel_x"]: a.plot(time, log["base_vel_x"], label='measured')
-        if log["command_x"]: a.plot(time, log["command_x"], label='commanded')
+        if log["base_vel_x"]: a.plot(time, log["base_vel_x"])
         a.set(xlabel='time [s]', ylabel='base lin vel [m/s]', title='Base velocity x')
+        a.set_ylim([-0.6, 1.3])
         a.legend()
-        # plot base vel y
+        # plot hand pos x
         a = axs[0, 1]
-        if log["hand_vel_x"]: a.plot(time, log["hand_vel_x"], label='measured')
-        if log["command_x"]: a.plot(time, log["command_x"], label='commanded')
-        a.set(xlabel='time [s]', ylabel='base lin vel [m/s]', title='Left hand velocity x')
+        if log["hand_pos_x_err"]: a.plot(time, log["hand_pos_x_err"], label='x')
+        if log["hand_pos_y_err"]: a.plot(time, log["hand_pos_y_err"], label='y')
+        a.set(xlabel='time [s]', ylabel='hand err [m]', title='Left hand error in x - y')
+        a.set_ylim([-0.4, 0.4])
         a.legend()
         plt.show()
 
