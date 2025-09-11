@@ -100,8 +100,8 @@ class Logger:
         # a.legend()
         # plot base vel y
         a = axs[0, 0]
-        if log["base_vel_y"]: a.plot(time, log["base_vel_y"], label='measured')
-        if log["base_vel_target_y"]: a.plot(time, log["base_vel_target_y"], label='target')
+        if log["torso_vel_x"]: a.plot(time, log["torso_vel_x"], label='measured')
+        if log["base_vel_target_x"]: a.plot(time, log["base_vel_target_x"], label='target')
         a.set(xlabel='time [s]', ylabel='base lin vel [m/s]', title='Base velocity y')
         a.set_ylim([-1.5, 1.5])
         # a.set_ylim([-0.6, 1.3])

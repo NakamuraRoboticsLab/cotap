@@ -636,6 +636,10 @@ class PPOMultiActorCritic(PPO):
             # 变换到base坐标系
             base_lin_vel_base_frame = quat_rotate_inverse(base_quat, base_lin_vel)
 
+            torso_lin_vel = self.env.simulator._rigid_body_vel[:, self.env.torso_index, :]  # (num_envs, 3)
+            torso_quat = self.env.simulator._rigid_body_rot[:, self.env.torso_index, :]  # (num_envs, 4)
+            torso_lin_vel_base = quat_rotate_inverse(torso_quat, torso_lin_vel)
+
             arm_torques = self.env.simulator.dof_forces[:, self.env.upper_dof_indices]
             arm_torques_abs = torch.abs(arm_torques)
             arm_torques_left = arm_torques_abs[:, :4]
@@ -657,8 +661,10 @@ class PPOMultiActorCritic(PPO):
                         'dof_torque_left': arm_torques_sum_left[robot_index].item(),
                         'dof_torque_right': arm_torques_sum_right[robot_index].item(),
                         'base_vel_x': base_lin_vel_base_frame[robot_index, 0].item(),
+                        'torso_vel_x': torso_lin_vel_base[robot_index, 0].item(),
                         'base_vel_target_x': self.env.commands[robot_index, 0].item(),
                         'base_vel_y': base_lin_vel_base_frame[robot_index, 1].item(),
+                        'torso_vel_y': torso_lin_vel_base[robot_index, 1].item(),
                         'base_vel_target_y': self.env.commands[robot_index, 1].item(),
                         'hand_pos_x_err': hand_pos_error_torso[0, 0].item(),
                         'hand_pos_y_err': hand_pos_error_torso[0, 1].item(),
