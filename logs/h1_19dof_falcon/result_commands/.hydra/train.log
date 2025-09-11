@@ -1,0 +1,593 @@
+2025-09-10 00:07:56.808 | INFO     | humanoidverse.utils.helpers:pre_process_config:45 - obs_dims: {'base_orientation': 4, 'base_lin_vel': 3, 'base_ang_vel': 3, 'projected_gravity': 3, 'command_lin_vel': 2, 'command_ang_vel': 1, 'command_stand': 1, 'command_waist_dofs': 3, 'command_base_height': 1, 'ref_upper_dof_pos': 8, 'dof_pos': 19, 'dof_vel': 19, 'actions': 19, 'phase_time': 1, 'sin_phase': 1, 'cos_phase': 1, 'left_ee_apply_force': 3, 'right_ee_apply_force': 3, 'upper_torq': 8}
+2025-09-10 00:07:56.811 | INFO     | humanoidverse.utils.helpers:pre_process_config:50 - obs_base_dims: {'base_orientation': 4, 'base_lin_vel': 3, 'base_ang_vel': 3, 'projected_gravity': 3, 'command_lin_vel': 2, 'command_ang_vel': 1, 'command_stand': 1, 'command_waist_dofs': 3, 'command_base_height': 1, 'ref_upper_dof_pos': 8, 'dof_pos': 19, 'dof_vel': 19, 'actions': 19, 'phase_time': 1, 'sin_phase': 1, 'cos_phase': 1, 'left_ee_apply_force': 3, 'right_ee_apply_force': 3, 'upper_torq': 8}
+2025-09-10 00:07:56.812 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: base_ang_vel has dim: 3
+2025-09-10 00:07:56.812 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: projected_gravity has dim: 3
+2025-09-10 00:07:56.813 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: command_lin_vel has dim: 2
+2025-09-10 00:07:56.813 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: command_ang_vel has dim: 1
+2025-09-10 00:07:56.814 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: command_stand has dim: 1
+2025-09-10 00:07:56.814 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: command_waist_dofs has dim: 3
+2025-09-10 00:07:56.815 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: command_base_height has dim: 1
+2025-09-10 00:07:56.815 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: ref_upper_dof_pos has dim: 8
+2025-09-10 00:07:56.816 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: dof_pos has dim: 19
+2025-09-10 00:07:56.816 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: dof_vel has dim: 19
+2025-09-10 00:07:56.817 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: actions has dim: 19
+2025-09-10 00:07:56.817 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: sin_phase has dim: 1
+2025-09-10 00:07:56.818 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: cos_phase has dim: 1
+2025-09-10 00:07:56.818 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - actor_obs: upper_torq has dim: 8
+2025-09-10 00:07:56.819 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: base_orientation has dim: 4
+2025-09-10 00:07:56.819 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: base_lin_vel has dim: 3
+2025-09-10 00:07:56.819 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: base_ang_vel has dim: 3
+2025-09-10 00:07:56.820 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: projected_gravity has dim: 3
+2025-09-10 00:07:56.821 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: command_lin_vel has dim: 2
+2025-09-10 00:07:56.822 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: command_ang_vel has dim: 1
+2025-09-10 00:07:56.822 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: command_stand has dim: 1
+2025-09-10 00:07:56.823 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: command_waist_dofs has dim: 3
+2025-09-10 00:07:56.823 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: command_base_height has dim: 1
+2025-09-10 00:07:56.823 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: ref_upper_dof_pos has dim: 8
+2025-09-10 00:07:56.824 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: dof_pos has dim: 19
+2025-09-10 00:07:56.824 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: dof_vel has dim: 19
+2025-09-10 00:07:56.825 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: actions has dim: 19
+2025-09-10 00:07:56.826 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: left_ee_apply_force has dim: 3
+2025-09-10 00:07:56.826 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: right_ee_apply_force has dim: 3
+2025-09-10 00:07:56.827 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: sin_phase has dim: 1
+2025-09-10 00:07:56.827 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: cos_phase has dim: 1
+2025-09-10 00:07:56.828 | INFO     | humanoidverse.utils.helpers:pre_process_config:67 - critic_obs: upper_torq has dim: 8
+2025-09-10 00:07:56.828 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: base_ang_vel has dim: 3
+2025-09-10 00:07:56.829 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: projected_gravity has dim: 3
+2025-09-10 00:07:56.830 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: command_lin_vel has dim: 2
+2025-09-10 00:07:56.830 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: command_ang_vel has dim: 1
+2025-09-10 00:07:56.831 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: command_stand has dim: 1
+2025-09-10 00:07:56.831 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: command_waist_dofs has dim: 3
+2025-09-10 00:07:56.832 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: command_base_height has dim: 1
+2025-09-10 00:07:56.833 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: ref_upper_dof_pos has dim: 8
+2025-09-10 00:07:56.833 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: dof_pos has dim: 19
+2025-09-10 00:07:56.834 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: dof_vel has dim: 19
+2025-09-10 00:07:56.835 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: actions has dim: 19
+2025-09-10 00:07:56.835 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: sin_phase has dim: 1
+2025-09-10 00:07:56.836 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: cos_phase has dim: 1
+2025-09-10 00:07:56.836 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - actor_obs: upper_torq has dim: 8
+2025-09-10 00:07:56.837 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: base_orientation has dim: 4
+2025-09-10 00:07:56.838 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: base_lin_vel has dim: 3
+2025-09-10 00:07:56.838 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: base_ang_vel has dim: 3
+2025-09-10 00:07:56.839 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: projected_gravity has dim: 3
+2025-09-10 00:07:56.839 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: command_lin_vel has dim: 2
+2025-09-10 00:07:56.840 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: command_ang_vel has dim: 1
+2025-09-10 00:07:56.841 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: command_stand has dim: 1
+2025-09-10 00:07:56.841 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: command_waist_dofs has dim: 3
+2025-09-10 00:07:56.842 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: command_base_height has dim: 1
+2025-09-10 00:07:56.842 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: ref_upper_dof_pos has dim: 8
+2025-09-10 00:07:56.843 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: dof_pos has dim: 19
+2025-09-10 00:07:56.843 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: dof_vel has dim: 19
+2025-09-10 00:07:56.844 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: actions has dim: 19
+2025-09-10 00:07:56.844 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: left_ee_apply_force has dim: 3
+2025-09-10 00:07:56.845 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: right_ee_apply_force has dim: 3
+2025-09-10 00:07:56.845 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: sin_phase has dim: 1
+2025-09-10 00:07:56.846 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: cos_phase has dim: 1
+2025-09-10 00:07:56.846 | INFO     | humanoidverse.utils.helpers:pre_process_config:80 - critic_obs: upper_torq has dim: 8
+2025-09-10 00:07:56.847 | INFO     | humanoidverse.utils.helpers:pre_process_config:91 - algo_obs_dim_dict: {'actor_obs': 89, 'critic_obs': 102}
+2025-09-10 00:07:56.847 | INFO     | humanoidverse.utils.helpers:pre_process_config:92 - base_obs_dim_dict: {'actor_obs': 89, 'critic_obs': 102}
+2025-09-10 00:07:56.847 | DEBUG    | humanoidverse.utils.helpers:pre_process_config:102 - PPO CONFIG
+2025-09-10 00:07:56.847 | DEBUG    | humanoidverse.utils.helpers:pre_process_config:103 - {'actor_lower_body': {'input_dim': ['actor_obs'], 'history_length': '${obs.history_length}', 'output_dim': ['robot_action_dim'], 'layer_config': {'type': 'MLP', 'hidden_dims': [512, 256, 128], 'activation': 'ELU'}}, 'actor_upper_body': {'input_dim': ['actor_obs'], 'history_length': '${obs.history_length}', 'output_dim': ['robot_action_dim'], 'layer_config': {'type': 'MLP', 'hidden_dims': [512, 256, 128], 'activation': 'ELU'}}, 'critic': {'type': 'MLP', 'input_dim': ['critic_obs'], 'history_length': '${obs.history_length}', 'output_dim': [1], 'layer_config': {'type': 'MLP', 'hidden_dims': [512, 256, 128], 'activation': 'ELU'}}}
+2025-09-10 00:08:02.627 | INFO     | humanoidverse.utils.motion_lib.torch_humanoid_batch:<module>:41 - Using Humanoid Batch
+2025-09-10 00:08:03.009 | INFO     | humanoidverse.simulator.isaacgym.isaacgym:setup:64 - Creating Sim...
+2025-09-10 00:08:03.010 | INFO     | humanoidverse.simulator.isaacgym.isaacgym:_create_ground_plane:106 - Creating plane terrain
+2025-09-10 00:08:03.010 | INFO     | humanoidverse.simulator.isaacgym.isaacgym:_create_ground_plane:113 - Created plane terrain
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 0: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 1: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 2: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 3: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 4: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 5: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 6: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 7: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 8: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 9: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 10: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 11: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 12: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 13: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 14: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 15: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 16: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.922 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 17: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.923 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 18: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.923 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 19: 0.5565927028656006 (after randomization)
+2025-09-10 00:08:04.939 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 0: 5.389999866485596 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 1: 2.24399995803833 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 2: 2.2320001125335693 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 3: 4.1519999504089355 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 4: 1.7209999561309814 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 5: 0.44600000977516174 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 6: 2.24399995803833 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 7: 2.2320001125335693 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 8: 4.1519999504089355 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 9: 1.7209999561309814 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 10: 0.44600000977516174 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 11: 17.788999557495117 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 12: 1.0329999923706055 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 13: 0.7929999232292175 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 14: 0.8389999866485596 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 15: 0.6690000295639038 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 16: 1.0329999923706055 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 17: 0.7929999232292175 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 18: 0.8389999866485596 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 19: 0.6690000295639038 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:345 - Total mass 51.43699926137924 (before randomization)
+2025-09-10 00:08:04.940 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:371 - randomizing link mass
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 0: 7.32037353515625 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 1: 2.2271809577941895 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 2: 2.163803815841675 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 3: 4.082359790802002 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 4: 1.7209999561309814 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 5: 0.44600000977516174 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 6: 2.5697624683380127 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 7: 2.083357810974121 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 8: 4.517090320587158 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 9: 1.7209999561309814 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 10: 0.44600000977516174 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 11: 17.487234115600586 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 12: 1.0329999923706055 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 13: 0.7929999232292175 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 14: 0.8389999866485596 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 15: 0.6690000295639038 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 16: 1.0329999923706055 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 17: 0.7929999232292175 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 18: 0.8389999866485596 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 19: 0.6690000295639038 (after randomization)
+2025-09-10 00:08:04.941 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:395 - Total mass 53.45316261053085 (afters randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 0: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 1: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 2: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 3: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 4: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 5: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 6: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 7: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 8: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 9: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 10: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 11: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 12: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 13: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 14: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 15: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 16: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 17: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 18: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.942 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 19: 0.7370899319648743 (after randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 0: 5.389999866485596 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 1: 2.24399995803833 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 2: 2.2320001125335693 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 3: 4.1519999504089355 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 4: 1.7209999561309814 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 5: 0.44600000977516174 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 6: 2.24399995803833 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 7: 2.2320001125335693 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 8: 4.1519999504089355 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 9: 1.7209999561309814 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 10: 0.44600000977516174 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 11: 17.788999557495117 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 12: 1.0329999923706055 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 13: 0.7929999232292175 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 14: 0.8389999866485596 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 15: 0.6690000295639038 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 16: 1.0329999923706055 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 17: 0.7929999232292175 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 18: 0.8389999866485596 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 19: 0.6690000295639038 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:345 - Total mass 51.43699926137924 (before randomization)
+2025-09-10 00:08:04.943 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:371 - randomizing link mass
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 0: 8.90379524230957 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 1: 2.555950164794922 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 2: 2.0394692420959473 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 3: 4.873532295227051 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 4: 1.7209999561309814 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 5: 0.44600000977516174 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 6: 2.163540840148926 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 7: 2.21211576461792 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 8: 4.968777656555176 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 9: 1.7209999561309814 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 10: 0.44600000977516174 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 11: 17.002094268798828 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 12: 1.0329999923706055 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 13: 0.7929999232292175 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 14: 0.8389999866485596 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 15: 0.6690000295639038 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 16: 1.0329999923706055 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 17: 0.7929999232292175 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 18: 0.8389999866485596 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 19: 0.6690000295639038 (after randomization)
+2025-09-10 00:08:04.944 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:395 - Total mass 55.7212752699852 (afters randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 0: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 1: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 2: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 3: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 4: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 5: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 6: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 7: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 8: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 9: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 10: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 11: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 12: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 13: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 14: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 15: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 16: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 17: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 18: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.945 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_shape_props:298 - Friction of shape 19: 0.44893795251846313 (after randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 0: 5.389999866485596 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 1: 2.24399995803833 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 2: 2.2320001125335693 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 3: 4.1519999504089355 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 4: 1.7209999561309814 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 5: 0.44600000977516174 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 6: 2.24399995803833 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 7: 2.2320001125335693 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 8: 4.1519999504089355 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 9: 1.7209999561309814 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 10: 0.44600000977516174 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 11: 17.788999557495117 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 12: 1.0329999923706055 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 13: 0.7929999232292175 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 14: 0.8389999866485596 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 15: 0.6690000295639038 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 16: 1.0329999923706055 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 17: 0.7929999232292175 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 18: 0.8389999866485596 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:344 - Mass of body 19: 0.6690000295639038 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:345 - Total mass 51.43699926137924 (before randomization)
+2025-09-10 00:08:04.946 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:371 - randomizing link mass
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 0: 8.133997917175293 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 1: 2.1693103313446045 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 2: 2.1078364849090576 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 3: 4.379268169403076 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 4: 1.7209999561309814 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 5: 0.44600000977516174 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 6: 2.2850146293640137 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 7: 2.0555918216705322 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 8: 4.1580939292907715 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 9: 1.7209999561309814 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 10: 0.44600000977516174 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 11: 16.069002151489258 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 12: 1.0329999923706055 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 13: 0.7929999232292175 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 14: 0.8389999866485596 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 15: 0.6690000295639038 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 16: 1.0329999923706055 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 17: 0.7929999232292175 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 18: 0.8389999866485596 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:393 - Mass of body 19: 0.6690000295639038 (after randomization)
+2025-09-10 00:08:04.947 | DEBUG    | humanoidverse.simulator.isaacgym.isaacgym:_process_rigid_body_props:395 - Total mass 52.360115230083466 (afters randomization)
+2025-09-10 00:08:10.126 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:39 - Left Hand Link: left_elbow_link, Index: 15
+2025-09-10 00:08:10.126 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:40 - Right Hand Link: right_elbow_link, Index: 19
+2025-09-10 00:08:10.264 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint left_hip_yaw_joint were defined, setting them to 200.0 and 5.0
+2025-09-10 00:08:10.265 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint left_hip_roll_joint were defined, setting them to 200.0 and 5.0
+2025-09-10 00:08:10.265 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint left_hip_pitch_joint were defined, setting them to 200.0 and 5.0
+2025-09-10 00:08:10.265 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint left_knee_joint were defined, setting them to 300.0 and 6.0
+2025-09-10 00:08:10.265 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint left_ankle_joint were defined, setting them to 40.0 and 2.0
+2025-09-10 00:08:10.265 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint right_hip_yaw_joint were defined, setting them to 200.0 and 5.0
+2025-09-10 00:08:10.266 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint right_hip_roll_joint were defined, setting them to 200.0 and 5.0
+2025-09-10 00:08:10.266 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint right_hip_pitch_joint were defined, setting them to 200.0 and 5.0
+2025-09-10 00:08:10.266 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint right_knee_joint were defined, setting them to 300.0 and 6.0
+2025-09-10 00:08:10.266 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint right_ankle_joint were defined, setting them to 40.0 and 2.0
+2025-09-10 00:08:10.266 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint torso_joint were defined, setting them to 300.0 and 6.0
+2025-09-10 00:08:10.266 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint left_shoulder_pitch_joint were defined, setting them to 100.0 and 2.0
+2025-09-10 00:08:10.267 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint left_shoulder_roll_joint were defined, setting them to 100.0 and 2.0
+2025-09-10 00:08:10.267 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint left_shoulder_yaw_joint were defined, setting them to 100.0 and 2.0
+2025-09-10 00:08:10.267 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint left_elbow_joint were defined, setting them to 100.0 and 2.0
+2025-09-10 00:08:10.267 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint right_shoulder_pitch_joint were defined, setting them to 100.0 and 2.0
+2025-09-10 00:08:10.267 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint right_shoulder_roll_joint were defined, setting them to 100.0 and 2.0
+2025-09-10 00:08:10.267 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint right_shoulder_yaw_joint were defined, setting them to 100.0 and 2.0
+2025-09-10 00:08:10.268 | DEBUG    | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_init_buffers:84 - PD gain of joint right_elbow_joint were defined, setting them to 100.0 and 2.0
+2025-09-10 00:08:10.319 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:140 - [32mYuanhang set reward on 20250405[0m
+2025-09-10 00:08:10.319 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: tracking_walk_base_height = 2.0
+2025-09-10 00:08:10.319 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: tracking_stance_base_height = 4.0
+2025-09-10 00:08:10.319 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: tracking_waist_dofs = 2.0
+2025-09-10 00:08:10.319 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_lin_vel_z = -2.0
+2025-09-10 00:08:10.319 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_ang_vel_xy = -0.5
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_orientation = -5.0
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_torso_orientation = -5.0
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_lower_body_torques = -1e-05
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_lower_body_dof_vel = -0.001
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_lower_body_dof_acc = -2.5e-07
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_lower_body_action_rate = -0.1
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_contact_no_vel = -0.5
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_feet_ori = -2.0
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: limits_lower_body_dof_pos = -5.0
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: feet_air_time = 4.0
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: base_height = -10.0
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: termination = -500.0
+2025-09-10 00:08:10.320 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_feet_height = -5.0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_feet_swing_height = -20.0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: feet_heading_alignment = -1.5
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_close_feet_xy = -15.0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_hip_pos = -5.0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_ang_vel_xy_torso = -1.0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_stance_dof = -0.001
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_stance_tap_feet = -5.0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_stance_root = -5.0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_stand_still = -0.15
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_stance_symmetry = 0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_ankle_roll = -2.0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_contact = -4.0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_negative_knee_joint = -1.0
+2025-09-10 00:08:10.321 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_diff_feet_air_time = -5.0
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: feet_max_height_for_this_air = -0.0
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_shift_in_zero_command = -1.0
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_ang_shift_in_zero_command = -1.0
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: tracking_upper_body_dofs = 4.0
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: tracking_upper_point_pos = 4.0
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_upper_body_torques = -1e-05
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_upper_body_dof_vel = -0.001
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_upper_body_dof_acc = -2.5e-07
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_upper_body_action_rate = -0.5
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: limits_upper_body_dof_pos = -5.0
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_ee_lin_acc = -0.1
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: penalty_ee_ang_acc = -0.01
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: limits_upper_body_dof_vel = -5.0
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: limits_upper_body_torque = -0.1
+2025-09-10 00:08:10.322 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: impedance_pos_tracking = 0.0
+2025-09-10 00:08:10.323 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: impedance_vel_tracking = 4.0
+2025-09-10 00:08:10.323 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: impedance_yaw_vel_tracking = 5.0
+2025-09-10 00:08:10.323 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: contact = 1.5
+2025-09-10 00:08:10.323 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:145 - Scale: upper_ref_close = 0.5
+2025-09-10 00:08:10.323 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:156 - [32mUse Reward Penalty: True[0m
+2025-09-10 00:08:10.323 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:158 - Penalty Reward Names: ['penalty_upper_body_torques', 'penalty_upper_body_dof_acc', 'penalty_upper_body_dof_vel', 'penalty_upper_body_action_rate', 'penalty_lower_body_torques', 'penalty_lower_body_dof_acc', 'penalty_lower_body_dof_vel', 'penalty_lower_body_action_rate', 'limits_upper_body_dof_pos', 'limits_upper_body_dof_vel', 'limits_upper_body_torque', 'limits_lower_body_dof_pos', 'limits_lower_body_dof_vel', 'limits_lower_body_torque']
+2025-09-10 00:08:10.323 | INFO     | humanoidverse.envs.legged_base_task.legged_robot_base_ma:_prepare_reward_function:159 - Penalty Reward Initial Scale: 0.5
+2025-09-10 00:08:10.348 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:__init__:56 - Loaded skeleton from humanoidverse/data/robots/h1/h1.xml
+2025-09-10 00:08:10.348 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:__init__:57 - Loading motion data from humanoidverse/data/motions/h1_19dof/v1/amass_phc_filtered.pkl...
+2025-09-10 00:08:19.262 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_data:103 - Loaded 8277 motions
+2025-09-10 00:08:19.536 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:285 - Loading 4096 motions...
+2025-09-10 00:08:19.537 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:286 - Sampling motion: tensor([2259, 1434, 8246, 7432, 4416], device='cuda:0'), ....
+2025-09-10 00:08:19.538 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:287 - Current motion keys: ['0-KIT_8_WalkingStraightForwards10_poses'
+ '0-BMLmovi_Subject_19_F_MoSh_Subject_19_F_14_poses'
+ '0-KIT_674_dry_head01_poses' ...
+ '0-KIT_291_push_recovery_stand_right05_poses'
+ '0-BMLmovi_Subject_84_F_MoSh_Subject_84_F_17_poses'
+ '0-KIT_424_walking_run02_poses'], ....
+2025-09-10 00:08:52.613 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:370 - Loaded 4096 motions with a total length of 81452.789s and 1257914 frames.
+2025-09-10 00:08:52.691 | INFO     | humanoidverse.envs.decoupled_locomotion.decoupled_locomotion_stand_height_waist_wbc_ma_diff_force:__init__:28 - Left Hand Link: left_elbow_link, Index: 15
+2025-09-10 00:08:52.691 | INFO     | humanoidverse.envs.decoupled_locomotion.decoupled_locomotion_stand_height_waist_wbc_ma_diff_force:__init__:29 - Right Hand Link: right_elbow_link, Index: 19
+2025-09-10 00:08:52.696 | INFO     | __main__:main:101 - Saving config file to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1
+2025-09-10 00:08:53.888 | INFO     | humanoidverse.agents.ppo.ppo:setup:97 - Setting up PPO
+2025-09-10 00:08:55.866 | INFO     | humanoidverse.agents.ppo.ppo:setup:99 - Setting up Storage
+2025-09-10 00:08:57.520 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_0.pt
+2025-09-10 00:11:34.140 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_100.pt
+2025-09-10 00:14:11.585 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_200.pt
+2025-09-10 00:16:50.349 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_300.pt
+2025-09-10 00:19:29.467 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_400.pt
+2025-09-10 00:22:08.563 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_500.pt
+2025-09-10 00:24:48.011 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_600.pt
+2025-09-10 00:27:27.546 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_700.pt
+2025-09-10 00:30:07.082 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_800.pt
+2025-09-10 00:32:46.470 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_900.pt
+2025-09-10 00:35:26.008 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_1000.pt
+2025-09-10 00:38:06.205 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_1100.pt
+2025-09-10 00:40:45.386 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_1200.pt
+2025-09-10 00:43:23.956 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_1300.pt
+2025-09-10 00:46:03.421 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_1400.pt
+2025-09-10 00:48:42.474 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_1500.pt
+2025-09-10 00:51:21.287 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_1600.pt
+2025-09-10 00:54:00.835 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_1700.pt
+2025-09-10 00:56:39.928 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_1800.pt
+2025-09-10 00:59:19.420 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_1900.pt
+2025-09-10 01:01:58.066 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_2000.pt
+2025-09-10 01:04:36.525 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_2100.pt
+2025-09-10 01:07:15.793 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_2200.pt
+2025-09-10 01:09:54.128 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_2300.pt
+2025-09-10 01:12:32.530 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_2400.pt
+2025-09-10 01:15:11.088 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_2500.pt
+2025-09-10 01:17:50.362 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_2600.pt
+2025-09-10 01:20:29.415 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_2700.pt
+2025-09-10 01:23:08.734 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_2800.pt
+2025-09-10 01:25:47.214 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_2900.pt
+2025-09-10 01:28:26.997 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_3000.pt
+2025-09-10 01:31:06.465 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_3100.pt
+2025-09-10 01:33:44.987 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_3200.pt
+2025-09-10 01:36:24.180 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_3300.pt
+2025-09-10 01:39:02.671 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_3400.pt
+2025-09-10 01:41:40.739 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_3500.pt
+2025-09-10 01:44:19.605 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_3600.pt
+2025-09-10 01:46:57.859 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_3700.pt
+2025-09-10 01:49:36.841 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_3800.pt
+2025-09-10 01:52:15.569 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_3900.pt
+2025-09-10 01:54:54.177 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_4000.pt
+2025-09-10 01:57:32.379 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_4100.pt
+2025-09-10 01:59:15.990 | INFO     | humanoidverse.envs.decoupled_locomotion.decoupled_locomotion_stand_height_waist_wbc_ma:_update_tasks_callback:359 - Resampling motion at step 100001
+2025-09-10 01:59:15.991 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:285 - Loading 4096 motions...
+2025-09-10 01:59:15.991 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:286 - Sampling motion: tensor([6668, 3480, 2018, 8131,   36], device='cuda:0'), ....
+2025-09-10 01:59:15.992 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:287 - Current motion keys: ['0-KIT_424_seesaw01_poses'
+ '0-BMLmovi_Subject_32_F_MoSh_Subject_32_F_17_poses'
+ '0-KIT_4_RightTurn07_poses' ... '0-CMU_124_124_08_poses'
+ '0-BioMotionLab_NTroje_rub109_0014_knocking2_poses'
+ '0-BMLmovi_Subject_9_F_MoSh_Subject_9_F_11_poses'], ....
+2025-09-10 01:59:48.526 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:370 - Loaded 4096 motions with a total length of 81464.797s and 1240088 frames.
+2025-09-10 02:00:43.696 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_4200.pt
+2025-09-10 02:03:22.927 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_4300.pt
+2025-09-10 02:06:01.948 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_4400.pt
+2025-09-10 02:08:41.026 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_4500.pt
+2025-09-10 02:11:19.709 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_4600.pt
+2025-09-10 02:13:58.670 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_4700.pt
+2025-09-10 02:16:38.188 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_4800.pt
+2025-09-10 02:19:17.927 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_4900.pt
+2025-09-10 02:21:57.429 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_5000.pt
+2025-09-10 02:24:35.792 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_5100.pt
+2025-09-10 02:27:14.948 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_5200.pt
+2025-09-10 02:29:53.877 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_5300.pt
+2025-09-10 02:32:32.359 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_5400.pt
+2025-09-10 02:35:11.715 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_5500.pt
+2025-09-10 02:37:50.057 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_5600.pt
+2025-09-10 02:40:28.424 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_5700.pt
+2025-09-10 02:43:07.134 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_5800.pt
+2025-09-10 02:45:45.060 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_5900.pt
+2025-09-10 02:48:23.749 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_6000.pt
+2025-09-10 02:51:02.392 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_6100.pt
+2025-09-10 02:53:41.384 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_6200.pt
+2025-09-10 02:56:20.079 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_6300.pt
+2025-09-10 02:58:58.484 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_6400.pt
+2025-09-10 03:01:37.633 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_6500.pt
+2025-09-10 03:04:15.994 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_6600.pt
+2025-09-10 03:06:54.725 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_6700.pt
+2025-09-10 03:09:33.914 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_6800.pt
+2025-09-10 03:12:12.784 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_6900.pt
+2025-09-10 03:14:51.316 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_7000.pt
+2025-09-10 03:17:30.305 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_7100.pt
+2025-09-10 03:20:08.976 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_7200.pt
+2025-09-10 03:22:47.427 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_7300.pt
+2025-09-10 03:25:25.801 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_7400.pt
+2025-09-10 03:28:04.562 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_7500.pt
+2025-09-10 03:30:42.538 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_7600.pt
+2025-09-10 03:33:21.136 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_7700.pt
+2025-09-10 03:35:58.645 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_7800.pt
+2025-09-10 03:38:37.013 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_7900.pt
+2025-09-10 03:41:15.640 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_8000.pt
+2025-09-10 03:43:54.322 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_8100.pt
+2025-09-10 03:46:32.780 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_8200.pt
+2025-09-10 03:49:11.157 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_8300.pt
+2025-09-10 03:50:02.117 | INFO     | humanoidverse.envs.decoupled_locomotion.decoupled_locomotion_stand_height_waist_wbc_ma:_update_tasks_callback:359 - Resampling motion at step 200002
+2025-09-10 03:50:02.118 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:285 - Loading 4096 motions...
+2025-09-10 03:50:02.118 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:286 - Sampling motion: tensor([8087, 7251, 4821, 2282, 1061], device='cuda:0'), ....
+2025-09-10 03:50:02.118 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:287 - Current motion keys: ['0-CMU_132_132_36_poses'
+ '0-BMLmovi_Subject_22_F_MoSh_Subject_22_F_8_poses'
+ '0-BMLmovi_Subject_82_F_MoSh_Subject_82_F_9_poses' ...
+ '0-BioMotionLab_NTroje_rub029_0013_knocking1_poses'
+ '0-Eyes_Japan_Dataset_hamada_gesture_etc-46-vomit of blood-hamada_poses'
+ '0-BioMotionLab_NTroje_rub039_0004_motorcycle_poses'], ....
+2025-09-10 03:50:34.346 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:370 - Loaded 4096 motions with a total length of 81463.117s and 1260915 frames.
+2025-09-10 03:52:21.466 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_8400.pt
+2025-09-10 03:55:00.095 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_8500.pt
+2025-09-10 03:57:39.346 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_8600.pt
+2025-09-10 04:00:17.679 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_8700.pt
+2025-09-10 04:02:56.085 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_8800.pt
+2025-09-10 04:05:34.738 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_8900.pt
+2025-09-10 04:08:13.268 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_9000.pt
+2025-09-10 04:10:51.820 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_9100.pt
+2025-09-10 04:13:30.704 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_9200.pt
+2025-09-10 04:16:09.701 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_9300.pt
+2025-09-10 04:18:48.212 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_9400.pt
+2025-09-10 04:21:26.695 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_9500.pt
+2025-09-10 04:24:05.038 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_9600.pt
+2025-09-10 04:26:44.501 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_9700.pt
+2025-09-10 04:29:22.947 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_9800.pt
+2025-09-10 04:32:01.243 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_9900.pt
+2025-09-10 04:34:39.590 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_10000.pt
+2025-09-10 04:37:18.039 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_10100.pt
+2025-09-10 04:39:56.074 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_10200.pt
+2025-09-10 04:42:34.793 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_10300.pt
+2025-09-10 04:45:14.180 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_10400.pt
+2025-09-10 04:47:52.386 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_10500.pt
+2025-09-10 04:50:31.239 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_10600.pt
+2025-09-10 04:53:09.710 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_10700.pt
+2025-09-10 04:55:49.431 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_10800.pt
+2025-09-10 04:58:29.106 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_10900.pt
+2025-09-10 05:01:08.443 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_11000.pt
+2025-09-10 05:03:47.071 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_11100.pt
+2025-09-10 05:06:25.812 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_11200.pt
+2025-09-10 05:09:04.059 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_11300.pt
+2025-09-10 05:11:42.135 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_11400.pt
+2025-09-10 05:14:21.108 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_11500.pt
+2025-09-10 05:17:00.263 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_11600.pt
+2025-09-10 05:19:38.322 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_11700.pt
+2025-09-10 05:22:17.642 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_11800.pt
+2025-09-10 05:24:56.998 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_11900.pt
+2025-09-10 05:27:36.255 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_12000.pt
+2025-09-10 05:30:15.451 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_12100.pt
+2025-09-10 05:32:54.729 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_12200.pt
+2025-09-10 05:35:33.473 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_12300.pt
+2025-09-10 05:38:12.324 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_12400.pt
+2025-09-10 05:40:49.197 | INFO     | humanoidverse.envs.decoupled_locomotion.decoupled_locomotion_stand_height_waist_wbc_ma:_update_tasks_callback:359 - Resampling motion at step 300003
+2025-09-10 05:40:49.199 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:285 - Loading 4096 motions...
+2025-09-10 05:40:49.199 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:286 - Sampling motion: tensor([ 738, 1527, 4281, 1385,  744], device='cuda:0'), ....
+2025-09-10 05:40:49.199 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:287 - Current motion keys: ['0-KIT_3_jump_up04_poses'
+ '0-BMLmovi_Subject_30_F_MoSh_Subject_30_F_5_poses'
+ '0-BMLmovi_Subject_15_F_MoSh_Subject_15_F_13_poses' ...
+ '0-BMLmovi_Subject_20_F_MoSh_Subject_20_F_3_poses'
+ '0-CMU_122_122_19_poses' '0-EKUT_265_SS1D108_poses'], ....
+2025-09-10 05:41:21.452 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:370 - Loaded 4096 motions with a total length of 81458.977s and 1257584 frames.
+2025-09-10 05:41:23.061 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_12500.pt
+2025-09-10 05:44:01.795 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_12600.pt
+2025-09-10 05:46:40.889 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_12700.pt
+2025-09-10 05:49:19.934 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_12800.pt
+2025-09-10 05:51:59.126 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_12900.pt
+2025-09-10 05:54:37.165 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_13000.pt
+2025-09-10 05:57:16.626 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_13100.pt
+2025-09-10 05:59:56.077 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_13200.pt
+2025-09-10 06:02:34.866 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_13300.pt
+2025-09-10 06:05:13.564 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_13400.pt
+2025-09-10 06:07:51.814 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_13500.pt
+2025-09-10 06:10:29.950 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_13600.pt
+2025-09-10 06:13:08.258 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_13700.pt
+2025-09-10 06:15:47.020 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_13800.pt
+2025-09-10 06:18:25.790 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_13900.pt
+2025-09-10 06:21:04.800 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_14000.pt
+2025-09-10 06:23:43.984 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_14100.pt
+2025-09-10 06:26:22.459 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_14200.pt
+2025-09-10 06:29:00.929 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_14300.pt
+2025-09-10 06:31:39.578 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_14400.pt
+2025-09-10 06:34:17.779 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_14500.pt
+2025-09-10 06:36:56.446 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_14600.pt
+2025-09-10 06:39:34.845 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_14700.pt
+2025-09-10 06:42:12.901 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_14800.pt
+2025-09-10 06:44:51.286 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_14900.pt
+2025-09-10 06:47:30.741 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_15000.pt
+2025-09-10 06:50:09.840 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_15100.pt
+2025-09-10 06:52:48.146 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_15200.pt
+2025-09-10 06:55:26.184 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_15300.pt
+2025-09-10 06:58:04.959 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_15400.pt
+2025-09-10 07:00:44.165 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_15500.pt
+2025-09-10 07:03:22.820 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_15600.pt
+2025-09-10 07:06:01.789 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_15700.pt
+2025-09-10 07:08:40.960 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_15800.pt
+2025-09-10 07:11:20.159 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_15900.pt
+2025-09-10 07:13:58.792 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_16000.pt
+2025-09-10 07:16:37.472 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_16100.pt
+2025-09-10 07:19:16.817 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_16200.pt
+2025-09-10 07:21:56.261 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_16300.pt
+2025-09-10 07:24:35.083 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_16400.pt
+2025-09-10 07:27:14.853 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_16500.pt
+2025-09-10 07:29:53.535 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_16600.pt
+2025-09-10 07:31:37.240 | INFO     | humanoidverse.envs.decoupled_locomotion.decoupled_locomotion_stand_height_waist_wbc_ma:_update_tasks_callback:359 - Resampling motion at step 400004
+2025-09-10 07:31:37.241 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:285 - Loading 4096 motions...
+2025-09-10 07:31:37.242 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:286 - Sampling motion: tensor([6039, 3091, 7418, 4051, 7698], device='cuda:0'), ....
+2025-09-10 07:31:37.242 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:287 - Current motion keys: ['0-Eyes_Japan_Dataset_hamada_pose-07-pray cross-hamada_poses'
+ '0-CMU_09_09_09_poses' '0-BMLmovi_Subject_86_F_MoSh_Subject_86_F_2_poses'
+ ... '0-BioMotionLab_NTroje_rub096_0021_catching_and_throwing_poses'
+ '0-KIT_378_push_recovery_back09_poses' '0-KIT_167_bend_right09_poses'], ....
+2025-09-10 07:32:08.732 | INFO     | humanoidverse.utils.motion_lib.motion_lib_base:load_motions:370 - Loaded 4096 motions with a total length of 81456.180s and 1215536 frames.
+2025-09-10 07:33:03.727 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_16700.pt
+2025-09-10 07:35:42.214 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_16800.pt
+2025-09-10 07:38:21.019 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_16900.pt
+2025-09-10 07:40:59.880 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_17000.pt
+2025-09-10 07:43:38.715 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_17100.pt
+2025-09-10 07:46:18.243 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_17200.pt
+2025-09-10 07:48:56.422 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_17300.pt
+2025-09-10 07:51:35.036 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_17400.pt
+2025-09-10 07:54:13.361 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_17500.pt
+2025-09-10 07:56:52.027 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_17600.pt
+2025-09-10 07:59:31.236 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_17700.pt
+2025-09-10 08:02:10.525 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_17800.pt
+2025-09-10 08:04:49.642 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_17900.pt
+2025-09-10 08:07:28.052 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_18000.pt
+2025-09-10 08:10:06.260 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_18100.pt
+2025-09-10 08:12:45.326 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_18200.pt
+2025-09-10 08:15:24.781 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_18300.pt
+2025-09-10 08:18:04.089 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_18400.pt
+2025-09-10 08:20:43.614 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_18500.pt
+2025-09-10 08:23:23.087 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_18600.pt
+2025-09-10 08:26:01.743 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_18700.pt
+2025-09-10 08:28:40.290 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_18800.pt
+2025-09-10 08:31:18.881 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_18900.pt
+2025-09-10 08:33:57.424 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_19000.pt
+2025-09-10 08:36:36.271 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_19100.pt
+2025-09-10 08:39:14.819 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_19200.pt
+2025-09-10 08:41:52.939 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_19300.pt
+2025-09-10 08:44:30.912 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_19400.pt
+2025-09-10 08:47:10.092 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_19500.pt
+2025-09-10 08:49:49.758 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_19600.pt
+2025-09-10 08:52:28.410 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_19700.pt
+2025-09-10 08:55:06.600 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_19800.pt
+2025-09-10 08:57:44.864 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_19900.pt
+2025-09-10 09:00:22.660 | INFO     | humanoidverse.agents.decouple.ppo_decoupled_wbc_ma:save:182 - Saving checkpoint to logs/h1_19dof_falcon/20250910_000751-h1_19dof_falcon-decoupled_locomotion_with_facet_rvc-h1/model_20000.pt
