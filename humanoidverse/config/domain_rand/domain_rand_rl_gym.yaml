@@ -40,6 +40,7 @@ domain_rand:
   randomize_ee_kp : True
   ee_kp_range : [0.5, 1.5] # use normalized [100.0, 400.0]
   ee_null_range : [0.6, 1.4] # use normalized [100.0, 400.0]
+  ee_alpha_range : [0.0, 1.0] # use normalized [100.0, 400.0]
 
   # control delay
   randomize_ctrl_delay : True

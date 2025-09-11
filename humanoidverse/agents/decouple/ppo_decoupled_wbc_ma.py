@@ -638,7 +638,10 @@ class PPOMultiActorCritic(PPO):
 
             arm_torques = self.env.simulator.dof_forces[:, self.env.upper_dof_indices]
             arm_torques_abs = torch.abs(arm_torques)
-            arm_torques_sum = torch.sum(arm_torques_abs, dim=1)  # shape: (num_envs,)
+            arm_torques_left = arm_torques_abs[:, :4]
+            arm_torques_right = arm_torques_abs[:, 4:]
+            arm_torques_sum_left = torch.sum(arm_torques_left, dim=1)  # shape: (num_envs,)
+            arm_torques_sum_right = torch.sum(arm_torques_right, dim=1)  # shape: (num_envs,)
             # print("current arm torques:", arm_torques_sum)
 
             if step == load_motion_log:
@@ -651,9 +654,12 @@ class PPOMultiActorCritic(PPO):
                         # 'dof_pos_target': self.env.simulator.actions[robot_index, joint_index].item() * self.env.simulator.cfg.control.action_scale + self.env.simulator.default_dof_pos[robot_index, joint_index].item(),
                         'dof_pos_err': upper_body_dofs_error[robot_index].item(),
                         # 'dof_vel': self.env.simulator.dof_vel[robot_index, joint_index].item(),
-                        'dof_torque': arm_torques_sum[robot_index].item(),
+                        'dof_torque_left': arm_torques_sum_left[robot_index].item(),
+                        'dof_torque_right': arm_torques_sum_right[robot_index].item(),
                         'base_vel_x': base_lin_vel_base_frame[robot_index, 0].item(),
                         'base_vel_target_x': self.env.commands[robot_index, 0].item(),
+                        'base_vel_y': base_lin_vel_base_frame[robot_index, 1].item(),
+                        'base_vel_target_y': self.env.commands[robot_index, 1].item(),
                         'hand_pos_x_err': hand_pos_error_torso[0, 0].item(),
                         'hand_pos_y_err': hand_pos_error_torso[0, 1].item(),
                         'hand_pos_z_err': hand_pos_error_torso[0, 2].item(),

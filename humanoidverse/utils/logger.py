@@ -90,29 +90,38 @@ class Logger:
         # a.set(xlabel='time [s]', ylabel='Forces z [N]', title='Vertical Contact forces')
         # a.set_ylim([-50.0, 1100.0])
         # a.legend()
-        # plot base vel x
+        # # plot base vel x
+        # a = axs[0, 0]
+        # if log["base_vel_x"]: a.plot(time, log["base_vel_x"], label='measured')
+        # if log["base_vel_target_x"]: a.plot(time, log["base_vel_target_x"], label='target')
+        # a.set(xlabel='time [s]', ylabel='base lin vel [m/s]', title='Base velocity x')
+        # a.set_ylim([-1.0, 3.0])
+        # # a.set_ylim([-0.6, 1.3])
+        # a.legend()
+        # plot base vel y
         a = axs[0, 0]
-        if log["base_vel_x"]: a.plot(time, log["base_vel_x"], label='measured')
-        if log["base_vel_target_x"]: a.plot(time, log["base_vel_target_x"], label='target')
-        a.set(xlabel='time [s]', ylabel='base lin vel [m/s]', title='Base velocity x')
-        a.set_ylim([-1.0, 3.0])
+        if log["base_vel_y"]: a.plot(time, log["base_vel_y"], label='measured')
+        if log["base_vel_target_y"]: a.plot(time, log["base_vel_target_y"], label='target')
+        a.set(xlabel='time [s]', ylabel='base lin vel [m/s]', title='Base velocity y')
+        a.set_ylim([-1.5, 1.5])
         # a.set_ylim([-0.6, 1.3])
         a.legend()
         # plot hand pos x
         a = axs[0, 1]
-        # if log["hand_pos_x_err"]: a.plot(time, log["hand_pos_x_err"], label='x')
-        # if log["hand_pos_y_err"]: a.plot(time, log["hand_pos_y_err"], label='y')
+        if log["hand_pos_x_err"]: a.plot(time, log["hand_pos_x_err"], label='x')
+        if log["hand_pos_y_err"]: a.plot(time, log["hand_pos_y_err"], label='y')
         if log["hand_pos_z_err"]: a.plot(time, log["hand_pos_z_err"], label='z')
         a.set(xlabel='time [s]', ylabel='hand err [m]', title='Left hand error in x - y - z')
         # a.set_ylim([-0.4, 0.4])
-        a.set_ylim([-0.2, 0.6])
+        a.set_ylim([-0.6, 0.6])
         a.legend()
         # plot arm torques
         a = axs[1, 1]
-        if log["dof_torque"]: a.plot(time, log["dof_torque"], label='measured arm torque')
-        a.set(xlabel='time [s]', ylabel='arm torque sum [Nm]', title='Sum of measured arm torque')
+        if log["dof_torque_left"]: a.plot(time, log["dof_torque_left"], label='left arm torque')
+        if log["dof_torque_right"]: a.plot(time, log["dof_torque_right"], label='right arm torque')
+        a.set(xlabel='time [s]', ylabel='arm torque sum [Nm]', title='Sum of calculated arm torque')
         # a.set_ylim([-0.4, 0.4])
-        # a.set_ylim([-0.2, 0.6])
+        a.set_ylim([0, 120])
         a.legend()
         plt.show()
 
