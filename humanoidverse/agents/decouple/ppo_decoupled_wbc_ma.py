@@ -604,6 +604,10 @@ class PPOMultiActorCritic(PPO):
 
         base_quat = torch.zeros(self.env.num_envs, 4, device=self.device)
 
+        integrated_torso_vel_error = np.zeros(self.env.num_envs)
+        integrated_hand_pos_error = np.zeros(self.env.num_envs)
+        integrated_torque = np.zeros(self.env.num_envs)
+
         while True:
             actor_state["step"] = step
             actor_state = self._pre_eval_env_step(actor_state)
@@ -613,6 +617,7 @@ class PPOMultiActorCritic(PPO):
             upper_body_pos = self.env.simulator.dof_pos[:, self.env.upper_dof_indices]
             upper_body_dofs_error =  torch.sum(torch.square(upper_body_pos - self.env.ref_upper_dof_pos), dim=1)
 
+            # only log the first hand (left hand)
             act_ext = self.env.marker_coords[:, -4, :3]  # (num_envs, 4, 3)
             ref_ext = self.env.ref_body_pos_extend[:, -4, :3]  # (num_envs, 4, 3)
             hand_pos_error = ref_ext - act_ext
@@ -626,7 +631,7 @@ class PPOMultiActorCritic(PPO):
 
             # 变换到 torso-link 坐标系
             hand_pos_error_torso = quat_rotate_inverse(
-                torso_quat[robot_index:1],  # shape (1, 4)
+                torso_quat,  # shape (1, 4)
                 hand_pos_error_3d  # shape (1, 3)
             )
 
@@ -652,6 +657,15 @@ class PPOMultiActorCritic(PPO):
                 self.env.simulator.next_task()
 
             if step < stop_state_log and step >= start_state_log:
+                torso_vel_error = np.abs(torso_lin_vel_base[:, 0].cpu().numpy() - self.env.commands[:, 0].cpu().numpy()) \
+                                + np.abs(torso_lin_vel_base[:, 1].cpu().numpy() - self.env.commands[:, 1].cpu().numpy()) 
+                integrated_torso_vel_error += torso_vel_error
+
+                hand_pos_error_np = np.linalg.norm(hand_pos_error_torso.cpu().numpy(), axis=1)  # shape: (num_envs, 4)
+                integrated_hand_pos_error += hand_pos_error_np  # only consider the first hand
+                
+                integrated_torque += (arm_torques_sum_left + arm_torques_sum_right).cpu().numpy()
+
                 logger.log_states(
                     {
                         # 'dof_pos_target': actions[robot_index, joint_index].item() * self.env.simulator.cfg.control.action_scale + self.env.simulator.default_dof_pos[robot_index, joint_index].item(),
@@ -666,9 +680,9 @@ class PPOMultiActorCritic(PPO):
                         'base_vel_y': base_lin_vel_base_frame[robot_index, 1].item(),
                         'torso_vel_y': torso_lin_vel_base[robot_index, 1].item(),
                         'base_vel_target_y': self.env.commands[robot_index, 1].item(),
-                        'hand_pos_x_err': hand_pos_error_torso[0, 0].item(),
-                        'hand_pos_y_err': hand_pos_error_torso[0, 1].item(),
-                        'hand_pos_z_err': hand_pos_error_torso[0, 2].item(),
+                        'hand_pos_x_err': hand_pos_error_torso[robot_index, 0].item(),
+                        'hand_pos_y_err': hand_pos_error_torso[robot_index, 1].item(),
+                        'hand_pos_z_err': hand_pos_error_torso[robot_index, 2].item(),
                         # 'base_vel_y': simulator.base_lin_vel[robot_index, 1].item(),
                         # 'base_vel_z': simulator.base_lin_vel[robot_index, 2].item(),
                         # 'base_vel_yaw': simulator.base_ang_vel[robot_index, 2].item(),
@@ -680,7 +694,26 @@ class PPOMultiActorCritic(PPO):
                 logger.state_log.clear()
             elif step==stop_state_log:
                 logger.plot_states()
-                print("States plotted.")
+                # integrated torso velocity error
+                integrated_torso_vel_error /= (stop_state_log - start_state_log)
+                avg_error = integrated_torso_vel_error.mean()
+                std_error = integrated_torso_vel_error.std()
+                print(f"Average integrated torso error over all envs: {avg_error:.6f}")
+                print(f"Std integrated torso error over all envs: {std_error:.6f}")
+
+                # integrated hand position error
+                integrated_hand_pos_error /= (stop_state_log - start_state_log)
+                avg_hand_error = integrated_hand_pos_error.mean()
+                std_hand_error = integrated_hand_pos_error.std()
+                print(f"Average integrated hand position error over all envs: {avg_hand_error:.6f}")
+                print(f"Std integrated hand position error over all envs: {std_hand_error:.6f}")
+
+                # integrated torque
+                integrated_torque /= (stop_state_log - start_state_log)
+                avg_torque = integrated_torque.mean()
+                std_torque = integrated_torque.std()
+                print(f"Average integrated arm torque over all envs: {avg_torque:.6f}")
+                print(f"Std integrated arm torque over all envs: {std_torque:.6f}")
 
                 # # === Log state_log to CSV ===
                 # log_path = os.path.join(self.log_dir if self.log_dir else ".", "state_log.csv")
