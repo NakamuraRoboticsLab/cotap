@@ -698,22 +698,22 @@ class PPOMultiActorCritic(PPO):
                 integrated_torso_vel_error /= (stop_state_log - start_state_log)
                 avg_error = integrated_torso_vel_error.mean()
                 std_error = integrated_torso_vel_error.std()
-                print(f"Average integrated torso error over all envs: {avg_error:.6f}")
-                print(f"Std integrated torso error over all envs: {std_error:.6f}")
+                print(f"Average integrated torso error over all envs: {avg_error:.3f}")
+                print(f"Std integrated torso error over all envs: {std_error:.3f}")
 
                 # integrated hand position error
                 integrated_hand_pos_error /= (stop_state_log - start_state_log)
                 avg_hand_error = integrated_hand_pos_error.mean()
                 std_hand_error = integrated_hand_pos_error.std()
-                print(f"Average integrated hand position error over all envs: {avg_hand_error:.6f}")
-                print(f"Std integrated hand position error over all envs: {std_hand_error:.6f}")
+                print(f"Average integrated hand position error over all envs: {avg_hand_error:.3f}")
+                print(f"Std integrated hand position error over all envs: {std_hand_error:.3f}")
 
                 # integrated torque
                 integrated_torque /= (stop_state_log - start_state_log)
                 avg_torque = integrated_torque.mean()
                 std_torque = integrated_torque.std()
-                print(f"Average integrated arm torque over all envs: {avg_torque:.6f}")
-                print(f"Std integrated arm torque over all envs: {std_torque:.6f}")
+                print(f"Average integrated arm torque over all envs: {avg_torque:.3f}")
+                print(f"Std integrated arm torque over all envs: {std_torque:.3f}")
 
                 # # === Log state_log to CSV ===
                 # log_path = os.path.join(self.log_dir if self.log_dir else ".", "state_log.csv")
