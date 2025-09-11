@@ -477,6 +477,7 @@ class IsaacGym(BaseSimulator):
 
     def apply_torques_at_dof(self, torques):
         self.gym.set_dof_actuation_force_tensor(self.sim, gymtorch.unwrap_tensor(torques))
+        self.dof_forces = torques
 
     def set_actor_root_state_tensor(self, set_env_ids, root_states):
         set_env_ids_int32 = set_env_ids.to(torch.int32)

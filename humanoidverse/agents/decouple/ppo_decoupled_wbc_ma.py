@@ -636,6 +636,11 @@ class PPOMultiActorCritic(PPO):
             # 变换到base坐标系
             base_lin_vel_base_frame = quat_rotate_inverse(base_quat, base_lin_vel)
 
+            arm_torques = self.env.simulator.dof_forces[:, self.env.upper_dof_indices]
+            arm_torques_abs = torch.abs(arm_torques)
+            arm_torques_sum = torch.sum(arm_torques_abs, dim=1)  # shape: (num_envs,)
+            # print("current arm torques:", arm_torques_sum)
+
             if step == load_motion_log:
                 self.env.simulator.next_task()
 
@@ -646,7 +651,7 @@ class PPOMultiActorCritic(PPO):
                         # 'dof_pos_target': self.env.simulator.actions[robot_index, joint_index].item() * self.env.simulator.cfg.control.action_scale + self.env.simulator.default_dof_pos[robot_index, joint_index].item(),
                         'dof_pos_err': upper_body_dofs_error[robot_index].item(),
                         # 'dof_vel': self.env.simulator.dof_vel[robot_index, joint_index].item(),
-                        # 'dof_torque': simulator.torques[robot_index, joint_index].item(),
+                        'dof_torque': arm_torques_sum[robot_index].item(),
                         'base_vel_x': base_lin_vel_base_frame[robot_index, 0].item(),
                         'base_vel_target_x': self.env.commands[robot_index, 0].item(),
                         'hand_pos_x_err': hand_pos_error_torso[0, 0].item(),

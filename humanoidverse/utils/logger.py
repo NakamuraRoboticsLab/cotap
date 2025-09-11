@@ -81,15 +81,15 @@ class Logger:
         a.set(xlabel='time [s]', ylabel='Position [rad]', title='DOF Position Error')
         a.set_ylim([-0.1, 2.5])
         a.legend()
-        # plot contact forces
-        a = axs[1, 1]
-        if log["contact_forces_z"]:
-            forces = np.array(log["contact_forces_z"])
-            a.plot(time, forces[:, 0], label=f'left GRF')
-            a.plot(time, forces[:, 1], label=f'right GRF')
-        a.set(xlabel='time [s]', ylabel='Forces z [N]', title='Vertical Contact forces')
-        a.set_ylim([-50.0, 1100.0])
-        a.legend()
+        # # plot contact forces
+        # a = axs[1, 1]
+        # if log["contact_forces_z"]:
+        #     forces = np.array(log["contact_forces_z"])
+        #     a.plot(time, forces[:, 0], label=f'left GRF')
+        #     a.plot(time, forces[:, 1], label=f'right GRF')
+        # a.set(xlabel='time [s]', ylabel='Forces z [N]', title='Vertical Contact forces')
+        # a.set_ylim([-50.0, 1100.0])
+        # a.legend()
         # plot base vel x
         a = axs[0, 0]
         if log["base_vel_x"]: a.plot(time, log["base_vel_x"], label='measured')
@@ -106,6 +106,13 @@ class Logger:
         a.set(xlabel='time [s]', ylabel='hand err [m]', title='Left hand error in x - y - z')
         # a.set_ylim([-0.4, 0.4])
         a.set_ylim([-0.2, 0.6])
+        a.legend()
+        # plot arm torques
+        a = axs[1, 1]
+        if log["dof_torque"]: a.plot(time, log["dof_torque"], label='measured arm torque')
+        a.set(xlabel='time [s]', ylabel='arm torque sum [Nm]', title='Sum of measured arm torque')
+        # a.set_ylim([-0.4, 0.4])
+        # a.set_ylim([-0.2, 0.6])
         a.legend()
         plt.show()
 
