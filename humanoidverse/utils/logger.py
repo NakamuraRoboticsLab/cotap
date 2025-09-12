@@ -123,6 +123,17 @@ class Logger:
         # a.set_ylim([-0.4, 0.4])
         a.set_ylim([0, 120])
         a.legend()
+        # plt.show()
+
+        plt.figure()
+        if log["hand_pos_z_err"]:
+            plt.plot(time, log["hand_pos_z_err"])
+        plt.xlabel('Time [s]', fontsize=16)
+        # plt.ylabel('Hand_pos_z_err [m]', fontsize=16)
+        # plt.title('Hand Position Z Error', fontsize=16)
+        plt.tick_params(axis='both', which='major', labelsize=14)
+        plt.xlim([0, 4])
+        plt.ylim([0.1, 0.5])
         plt.show()
 
     def print_rewards(self):

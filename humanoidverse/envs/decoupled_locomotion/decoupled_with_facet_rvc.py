@@ -73,7 +73,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
 
         # Joint control gains
-        null_space_stiffness = 40.0 * self.ee_null
+        null_space_stiffness = 25.0 * self.ee_null
         self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * null_space_stiffness
 
         # Compute Jacobians for hand positions (only position, not orientation)
@@ -113,7 +113,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         temp = torch.clamp(temp, min=1e-6)  # 保证 temp 始终大于 0
         # print("Condition number:", cond_num)
 
-        self.ee_alpha[:] = 1.0
+        self.ee_alpha[:] = 0.3 # 0.3 0.7
         self.alpha_val = self.ee_alpha / (1.0 + temp.unsqueeze(-1))
         # print("Alpha value:", self.alpha_val)
 

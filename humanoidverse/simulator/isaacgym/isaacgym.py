@@ -680,14 +680,35 @@ class IsaacGym(BaseSimulator):
         if self.device != 'cpu':
             self.gym.fetch_results(self.sim, True)
 
-        # # 摄像机跟踪机器人（仅一个环境时）
-        # if self.num_envs == 1:
-        #     # 获取机器人根状态
-        #     robot_pos = self.robot_root_states[0, 0:3].cpu().numpy()
-        #     # 摄像机位置和目标点
-        #     cam_pos = gymapi.Vec3(robot_pos[0] + 3.0, robot_pos[1] + 3.0, 2.0)
-        #     cam_target = gymapi.Vec3(robot_pos[0], robot_pos[1], 1.2)
-        #     self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
+        # 摄像机跟踪机器人（仅一个环境时）
+        if self.num_envs == 1:
+            # 获取机器人根状态
+            robot_pos = self.robot_root_states[0, 0:3].cpu().numpy()
+            robot_quat = self.robot_root_states[0, 3:7].cpu().numpy()  # [x, y, z, w]
+            
+            # 将四元数转换为旋转矩阵，获取机器人朝向
+            import scipy.spatial.transform as transform
+            rotation = transform.Rotation.from_quat(robot_quat)
+            
+            # 计算机器人前方45度角的方向（相对于机器人朝向旋转45度）
+            import numpy as np
+            angle_offset = np.pi / 4  # 45度
+            front_right_dir = rotation.apply([
+                np.cos(angle_offset), 
+                np.sin(angle_offset), 
+                0
+            ])
+            
+            # 摄像机在机器人前方45度角、更远的距离
+            cam_distance = 5.0  # 增加距离到5米
+            cam_height = 1.0    # 降低高度到1米
+            cam_pos = gymapi.Vec3(
+                robot_pos[0] + front_right_dir[0] * cam_distance,
+                robot_pos[1] + front_right_dir[1] * cam_distance,
+                robot_pos[2] + cam_height
+            )
+            cam_target = gymapi.Vec3(robot_pos[0], robot_pos[1], robot_pos[2] + 1.2)
+            self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
 
         # step graphics
         if self.enable_viewer_sync:
