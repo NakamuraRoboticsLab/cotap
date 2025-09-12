@@ -642,8 +642,10 @@ class PPOMultiActorCritic(PPO):
             base_lin_vel_base_frame = quat_rotate_inverse(base_quat, base_lin_vel)
 
             torso_lin_vel = self.env.simulator._rigid_body_vel[:, self.env.torso_index, :]  # (num_envs, 3)
+            torso_ang_vel = self.env.simulator._rigid_body_ang_vel[:, self.env.torso_index, :]  # (num_envs, 3)
             torso_quat = self.env.simulator._rigid_body_rot[:, self.env.torso_index, :]  # (num_envs, 4)
             torso_lin_vel_base = quat_rotate_inverse(torso_quat, torso_lin_vel)
+            torso_ang_vel_base = quat_rotate_inverse(torso_quat, torso_ang_vel)
 
             arm_torques = self.env.simulator.dof_forces[:, self.env.upper_dof_indices]
             arm_torques_abs = torch.abs(arm_torques)
@@ -658,7 +660,9 @@ class PPOMultiActorCritic(PPO):
 
             if step < stop_state_log and step >= start_state_log:
                 torso_vel_error = np.abs(torso_lin_vel_base[:, 0].cpu().numpy() - self.env.commands[:, 0].cpu().numpy()) \
-                                + np.abs(torso_lin_vel_base[:, 1].cpu().numpy() - self.env.commands[:, 1].cpu().numpy()) 
+                                + np.abs(torso_lin_vel_base[:, 1].cpu().numpy() - self.env.commands[:, 1].cpu().numpy()) \
+                                + np.abs(torso_lin_vel_base[:, 2].cpu().numpy()) \
+                                + np.abs(torso_ang_vel_base[:, 2].cpu().numpy()) # only consider x, y, z velocity and yaw angular velocity
                 integrated_torso_vel_error += torso_vel_error
 
                 hand_pos_error_np = np.linalg.norm(hand_pos_error_torso.cpu().numpy(), axis=1)  # shape: (num_envs, 4)
