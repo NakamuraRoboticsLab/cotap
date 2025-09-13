@@ -233,7 +233,7 @@ env.config.apply_force_pos_ratio_range=[0.5,2.0]
 ```bash
 python humanoidverse/eval_agent.py \
 +checkpoint=<path_to_your_ckpt>\
-+num_envs=100 \
++num_envs=4096 \
 +headless=True
 ```
 </details>

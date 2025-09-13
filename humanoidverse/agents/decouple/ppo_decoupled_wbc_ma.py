@@ -607,6 +607,7 @@ class PPOMultiActorCritic(PPO):
         integrated_torso_vel_error = np.zeros(self.env.num_envs)
         integrated_hand_pos_error = np.zeros(self.env.num_envs)
         integrated_torque = np.zeros(self.env.num_envs)
+        integrated_upper_body_error = np.zeros(self.env.num_envs)
 
         while True:
             actor_state["step"] = step
@@ -670,6 +671,8 @@ class PPOMultiActorCritic(PPO):
                 
                 integrated_torque += (arm_torques_sum_left + arm_torques_sum_right).cpu().numpy()
 
+                integrated_upper_body_error += upper_body_dofs_error.cpu().numpy() 
+
                 logger.log_states(
                     {
                         # 'dof_pos_target': actions[robot_index, joint_index].item() * self.env.simulator.cfg.control.action_scale + self.env.simulator.default_dof_pos[robot_index, joint_index].item(),
@@ -718,6 +721,13 @@ class PPOMultiActorCritic(PPO):
                 std_torque = integrated_torque.std()
                 print(f"Average integrated arm torque over all envs: {avg_torque:.3f}")
                 print(f"Std integrated arm torque over all envs: {std_torque:.3f}")
+
+                # integrated upper error
+                integrated_upper_body_error /= (stop_state_log - start_state_log)
+                avg_upper_error = integrated_upper_body_error.mean()
+                std_upper_error = integrated_upper_body_error.std()
+                print(f"Average integrated upper body error over all envs: {avg_upper_error:.3f}")
+                print(f"Std integrated upper body error over all envs: {std_upper_error:.3f}")
 
                 # # === Log state_log to CSV ===
                 # log_path = os.path.join(self.log_dir if self.log_dir else ".", "state_log.csv")
