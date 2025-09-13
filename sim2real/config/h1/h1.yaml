@@ -1,0 +1,216 @@
+ROBOT_TYPE: 'h1'  # 必须是"h1"（与SDK消息类型匹配）
+ROBOT_SCENE: "../humanoidverse/data/robots/h1/h1.xml"  # Sim2Sim 使用的 Mujoco 场景
+ASSET_ROOT: "../humanoidverse/data/robots/h1"  # 资产根目录
+ASSET_FILE: "../humanoidverse/data/robots/h1/h1.urdf"  # 资产文件
+
+# 训练好的策略模型（如无，可先留空或指向占位路径）
+model_path: "models/comp/model_20000.onnx"
+
+SDK_TYPE: "unitree"   # "unitree" 或 "booster"
+MOTOR_TYPE: "serial"  # 电机链路: "serial"/"parallel"
+
+## 通信/仿真
+DOMAIN_ID: 0
+INTERFACE: "lo"   # 本机 Sim2Sim 用回环口；真机请改为实际网卡名
+
+FREE_BASE: False  
+
+PRINT_SCENE_INFORMATION: True
+ENABLE_ELASTIC_BAND: True
+BAND_ATTACHED_LINK: "torso_link"
+# 弹力绳参数：开启即有拉力（length < 机器人锚点与point的距离）
+ELASTIC_BAND:
+  enable: True
+  stiffness: 200    # 拉力刚度
+  damping: 100      # 阻尼
+  point: [0.0, 0.0, 3.0]  # 天花板锚点
+  length: 0.2       # 初始绳长（越小越紧）
+
+SIMULATE_DT: 0.005   # 200Hz；卡顿可调大到 0.01（100Hz）
+VIEWER_DT: 0.02
+USE_SENSOR: False
+
+USE_JOYSTICK: 0   # 不用手柄
+JOYSTICK_TYPE: "xbox"
+JOYSTICK_DEVICE: 0
+
+VISUALIZE_PIN: False
+VISUALIZE_FORCES: False
+
+residual_upper_body_action: False
+use_upper_body_controller: False
+
+GAIT_PERIOD: 0.8
+DESIRED_BASE_HEIGHT: 0.9
+
+# 关节-电机映射 H1 19DoF：一一对应 need check
+MOTOR2JOINT: [0, 1, 2, 3, 4,
+              5, 6, 7, 8, 9,
+              10, 11, 12, 13, 14,
+              15, 16, 17, 18]
+
+JOINT2MOTOR: [0, 1, 2, 3, 4,
+              5, 6, 7, 8, 9,
+              10, 11, 12, 13, 14,
+              15, 16, 17, 18]
+
+# Unitree 通信协议常量 # need check
+UNITREE_LEGGED_CONST:
+  HIGHLEVEL: 0xEE
+  LOWLEVEL: 0xFF
+  TRIGERLEVEL: 0xF0
+  PosStopF: 2146000000.0
+  VelStopF: 16000.0
+  MODE_MACHINE: 5
+  MODE_PR: 0
+
+# PD 增益（按 H1 19DoF 关节顺序）
+JOINT_KP: [
+  200, 200, 200, 300, 40,
+  200, 200, 200, 300, 40,
+  300,
+  100, 100, 100, 100,
+  100, 100, 100, 100
+]
+
+JOINT_KD: [
+  5, 5, 5, 6, 2,
+  5, 5, 5, 6, 2,
+  6,
+  2, 2, 2, 2,
+  2, 2, 2, 2
+]
+
+MOTOR_KP: [
+  200, 200, 200, 300, 40,
+  200, 200, 200, 300, 40,
+  300,
+  100, 100, 100, 100,
+  100, 100, 100, 100
+]
+
+MOTOR_KD: [
+  5, 5, 5, 6, 2,
+  5, 5, 5, 6, 2,
+  6,
+  2, 2, 2, 2,
+  2, 2, 2, 2
+]
+
+# 关节名（与 humanoidverse/config/robot/h1/h1.yaml 一致）
+dof_names: [
+  'left_hip_yaw_joint', 'left_hip_roll_joint', 'left_hip_pitch_joint', 'left_knee_joint', 'left_ankle_joint',
+  'right_hip_yaw_joint', 'right_hip_roll_joint', 'right_hip_pitch_joint', 'right_knee_joint', 'right_ankle_joint',
+  'torso_joint',
+  'left_shoulder_pitch_joint', 'left_shoulder_roll_joint', 'left_shoulder_yaw_joint', 'left_elbow_joint',
+  'right_shoulder_pitch_joint', 'right_shoulder_roll_joint', 'right_shoulder_yaw_joint', 'right_elbow_joint'
+]
+
+dof_names_upper_body: [
+  'left_shoulder_pitch_joint', 'left_shoulder_roll_joint', 'left_shoulder_yaw_joint', 'left_elbow_joint',
+  'right_shoulder_pitch_joint', 'right_shoulder_roll_joint', 'right_shoulder_yaw_joint', 'right_elbow_joint'
+]
+
+dof_names_lower_body: [
+  'left_hip_yaw_joint', 'left_hip_roll_joint', 'left_hip_pitch_joint', 'left_knee_joint', 'left_ankle_joint',
+  'right_hip_yaw_joint', 'right_hip_roll_joint', 'right_hip_pitch_joint', 'right_knee_joint', 'right_ankle_joint',
+  'torso_joint'
+]
+
+left_hand_link_name: "left_elbow_link"
+right_hand_link_name: "right_elbow_link"
+
+# 可选：弱电机索引（H1 可留空）
+WeakMotorJointIndex: {10, 11, 12, 13, 14, 15, 16, 17, 18, 19}
+
+NUM_MOTORS: 19
+NUM_JOINTS: 19
+NUM_UPPER_BODY_JOINTS: 8
+
+# 默认关节角（参照 humanoidverse H1 默认姿态，未列出的上肢/躯干置0）
+DEFAULT_DOF_ANGLES: [
+  0.0,   # left_hip_yaw
+  0.0,   # left_hip_roll
+  -0.4,  # left_hip_pitch
+  0.8,   # left_knee
+  -0.4,  # left_ankle
+  0.0,   # right_hip_yaw
+  0.0,   # right_hip_roll
+  -0.4,  # right_hip_pitch
+  0.8,   # right_knee
+  -0.4,  # right_ankle
+  0.0,   # torso
+  0.0, 0.0, 0.0, 0.0,  # left arm
+  0.0, 0.0, 0.0, 0.0   # right arm
+]
+
+DEFAULT_MOTOR_ANGLES: [
+  0.0, 0.0, -0.4, 0.8, -0.4,
+  0.0, 0.0, -0.4, 0.8, -0.4,
+  0.0,
+  0.0, 0.0, 0.0, 0.0,
+  0.0, 0.0, 0.0, 0.0
+]
+
+# 关节限制（拷贝自 humanoidverse/config/robot/h1/h1.yaml）
+motor_pos_lower_limit_list: [-0.43, -0.43, -1.57, -0.26, -0.87, -0.43, -0.43, -1.57, -0.26, -0.87, -2.35, -2.87, -0.34, -1.3, -1.25, -2.87, -3.11, -4.45, -1.25]
+motor_pos_upper_limit_list: [0.43, 0.43, 1.57, 2.05, 0.52, 0.43, 0.43, 1.57, 2.05, 0.52, 2.35, 2.87, 3.11, 4.45, 2.61, 2.87, 0.34, 1.3, 2.61]
+motor_vel_limit_list:       [23.0, 23.0, 23.0, 14.0, 9.0, 23.0, 23.0, 23.0, 14.0, 9.0, 23.0, 9.0, 9.0, 20.0, 20.0, 9.0, 9.0, 20.0, 20.0]
+motor_effort_limit_list:    [200.0, 200.0, 200.0, 300.0, 40.0, 200.0, 200.0, 200.0, 300.0, 40.0, 200.0, 40.0, 40.0, 18.0, 18.0, 40.0, 40.0, 18.0, 18.0]
+
+# 观测配置（需与 ONNX 模型输入一致）
+obs_dict: {
+  actor_obs: [
+    base_ang_vel,
+    projected_gravity,
+    command_lin_vel,
+    command_ang_vel,
+    command_stand,
+    command_waist_dofs,
+    command_base_height,
+    ref_upper_dof_pos,
+    dof_pos,
+    dof_vel,
+    actions,
+    sin_phase,
+    cos_phase,
+    upper_torq,
+  ],
+}
+
+history_length_dict: { actor_obs: 5 }
+
+obs_dims: {
+  base_ang_vel: 3,
+  projected_gravity: 3,
+  command_lin_vel: 2,
+  command_ang_vel: 1,
+  command_stand: 1,
+  command_waist_dofs: 3,
+  command_base_height: 1,
+  ref_upper_dof_pos: 8,    # 上肢8DoF
+  dof_pos: 19,
+  dof_vel: 19,
+  actions: 19,
+  sin_phase: 1,
+  cos_phase: 1,
+  upper_torq: 8,           # 上肢8DoF
+}
+
+obs_scales: {
+  base_ang_vel: 0.25,
+  projected_gravity: 1.0,
+  command_lin_vel: 1.0,
+  command_ang_vel: 1.0,
+  command_stand: 1.0,
+  command_waist_dofs: 1.0,
+  command_base_height: 2.0,
+  ref_upper_dof_pos: 1.0,
+  dof_pos: 1.0,
+  dof_vel: 0.05,
+  history: 1.0,
+  actions: 1.0,
+  sin_phase: 1.0,
+  cos_phase: 1.0,
+  upper_torq: 1.0,
+}

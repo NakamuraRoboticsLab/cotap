@@ -102,12 +102,22 @@ python sim_env/base_sim.py \
 --config=config/g1/g1_29dof.yaml
 ```
 
+```bash
+python sim_env/base_sim.py \
+--config=config/h1/h1.yaml
+```
+
 ### 2. Launch the Policy
 
 ```bash
 python rl_policy/dec_loco/dec_loco.py \
 --config=config/g1/g1_29dof.yaml \
 --model_path=models/dec_loco/g1_29dof.onnx 
+```
+
+```bash
+python rl_policy/loco_manip/loco_manip.py \
+--config=config/h1/h1.yaml 
 ```
 
 https://github.com/user-attachments/assets/dc2d8821-6361-49a8-93cd-fb443bd63c39

@@ -264,6 +264,15 @@ class BasePolicy:
         current_obs_buffer_dict["base_ang_vel"] = robot_state_data[:, 7 + self.num_dofs + 3 : 7 + self.num_dofs + 6]
         current_obs_buffer_dict["dof_pos"] = robot_state_data[:, 7 : 7 + self.num_dofs] - self.default_dof_angles
         current_obs_buffer_dict["dof_vel"] = robot_state_data[:, 7 + self.num_dofs + 6 : 7 + self.num_dofs + 6 + self.num_dofs]
+
+        # 正确提取上半身关节力矩
+        tau_est_start = 7 + self.num_dofs + 6  # tau_est 的起始位置
+        joint_torque_start = tau_est_start + 6  # 跳过 base 的 6 个力矩分量
+        # 提取所有关节力矩
+        all_joint_torques = robot_state_data[:, joint_torque_start : joint_torque_start + self.num_dofs]
+        # 只取上半身关节的力矩
+        current_obs_buffer_dict["upper_torq"] = all_joint_torques[:, self.upper_dof_indices]
+        
         # Calculate projected gravity
         v = np.array([[0, 0, -1]])
         current_obs_buffer_dict["projected_gravity"] = quat_rotate_inverse_numpy(

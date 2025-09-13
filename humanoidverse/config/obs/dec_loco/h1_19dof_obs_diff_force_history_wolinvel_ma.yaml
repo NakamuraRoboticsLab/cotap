@@ -17,16 +17,9 @@ obs:
       dof_pos,
       dof_vel,
       actions,
-      # phase_time,
       sin_phase,
       cos_phase,
-      # grav_upper,
-      # lin_kp,
-      # ang_kp,
-      # ee_kp,
       upper_torq,
-      # ref_upper_point,
-      # curr_upper_point,
     ]
 
     critic_obs: [
