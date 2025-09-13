@@ -183,6 +183,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
             dummy_data = torch.zeros(self.num_envs, 3, device=self.device)
             self.lin_vel_ema = EMA(dummy_data, [0.0, 0.5, 0.8])
             self.ang_vel_ema = EMA(dummy_data, [0.0, 0.5, 0.8])
+
+        self.commands_x = torch.empty(self.num_envs, device=self.device).uniform_(-2, 2)
+        self.commands_y = torch.empty(self.num_envs, device=self.device).uniform_(-2, 2)
+        
     
     # def step(self, actor_state):
     #     """环境步进 (Environment step)"""
@@ -200,7 +204,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
     def update_impedance_control(self):
         """更新阻抗控制 (Update impedance control)"""
-        
+
         # 更新控制指令 (Update control commands)
         self.update_impedance_command()
 
@@ -273,7 +277,12 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # surr_vel_world_first = surr_vel_world[:, 0]
         surr_vel_world_weighted = torch.sum(surr_vel_world * weights.view(1, -1, 1), dim=1)  # (num_envs, 3)
         # self.commands[:, :2] = self.surr_vel_base[:, :2]  # 更新命令速度 (Update command velocity)
-        self.commands[:, :2] = surr_vel_world_weighted[:, :2]
+        # self.commands[:, :2] = surr_vel_world_weighted[:, :2]
+        # self.commands[:, 0] = 1.0
+        # self.commands[:, 1] = 0.0
+        # self.commands[:, 0] = self.commands_x
+        # self.commands[:, 1] = self.commands_y
+        # self.commands[:, 4] = 0 # 1 - walking mode
 
         # 更新代理偏航角目标 (Update surrogate yaw target)
         # 从参考轨迹中提取指定时间步的偏航角 (Extract yaw angles at specified time steps)
@@ -297,7 +306,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         
         # 更新命令偏航角速度 (Update command yaw velocity)
         # self.commands[:, 2:3] = self.surr_yaw_vel_base
-        self.commands[:, 2:3] = surr_yaw_vel_world_weighted
+        # self.commands[:, 2:3] = surr_yaw_vel_world_weighted
 
         # 更新EMA滤波器 (Update EMA filters)
         # 使用世界坐标系的速度 (Use world frame velocities)
@@ -346,10 +355,10 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
                 probs, num_samples=len(sample_ids), replacement=True)
 
             # 分配不同模式 (Assign different modes)
-            self.sample_command_world(sample_ids[mode == 0])
-            self.sample_command_setvel(sample_ids[mode == 1])
-            self.sample_command_compliant(sample_ids[mode == 2])
-            self.sample_command_large(sample_ids[mode == 3])
+            # self.sample_command_world(sample_ids[mode == 0])
+            # self.sample_command_setvel(sample_ids[mode == 1])
+            # self.sample_command_compliant(sample_ids[mode == 2])
+            # self.sample_command_large(sample_ids[mode == 3])
             # print("sample_ids:", sample_ids)
 
             # # Set target pos and rot as to reference root position
@@ -582,138 +591,6 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
         self.impedance_command_mode[env_ids] = self.CMD_LARGE_FORCE
         
-    # ================================================================
-    # 信息和调试方法 (Information and Debug Methods)
-    # ================================================================
-
-    # def get_impedance_info(self) -> Dict:
-    #     """
-    #     获取阻抗控制信息 (Get impedance control information)
-        
-    #     Returns:
-    #         包含控制器状态信息的字典 (Dictionary containing controller state info)
-    #     """
-    #     info = {
-    #         'impedance_mode': self.impedance_command_mode.float().mean().item(),
-    #         'lin_kp_mean': self.lin_kp.mean().item(),
-    #         'lin_kd_mean': self.lin_kd.mean().item(),
-    #         'ang_kp_mean': self.ang_kp.mean().item(),
-    #         'ang_kd_mean': self.ang_kd.mean().item(),
-    #         'force_magnitude': self.force_ext_w.norm(dim=-1).mean().item(),
-    #         'virtual_mass': self.virtual_mass_tensor.mean().item(),
-    #     }
-
-    #     # # 添加力干扰信息 (Add force disturbance information)
-    #     # info.update(self.constant_force.get_info())
-    #     # info.update(self.impulse_force.get_info())
-    #     # info.update(self.spring_force.get_info())
-
-    #     # 添加参考轨迹信息 (Add reference trajectory information)
-    #     if hasattr(self, 'ref_lin_vel_w') and hasattr(self, 'ref_pos_w'):
-    #         info['ref_vel_magnitude'] = self.ref_lin_vel_w[:, 0, :].norm(
-    #             dim=-1).mean().item()
-    #         if hasattr(self, 'root_states') and self.root_states is not None:
-    #             pos_error = (self.ref_pos_w[:, 0, :] - 
-    #                          self.root_states[:, :3]).norm(dim=-1)
-    #             info['pos_error_magnitude'] = pos_error.mean().item()
-
-    #     return info
-
-    # def log_impedance_stats(self):
-    #     """记录阻抗控制统计信息 (Log impedance control statistics)"""
-    #     info = self.get_impedance_info()
-    #     logger.info(f"阻抗控制统计 (Impedance control stats): {info}")
-
-    # def get_reward_components(self) -> Dict[str, torch.Tensor]:
-    #     """
-    #     获取所有奖励组件 (Get all reward components)
-        
-    #     Returns:
-    #         包含各个奖励组件的字典 (Dictionary containing reward components)
-    #     """
-    #     rewards = {}
-        
-    #     # 获取所有奖励函数 (Get all reward functions)
-    #     rewards['pos_tracking'] = self.impedance_pos_tracking()
-    #     rewards['vel_tracking'] = self.impedance_vel_tracking()
-    #     rewards['force_resistance'] = self.force_resistance()
-    #     rewards['mode_stability'] = self.impedance_mode_stability()
-    #     rewards['energy_efficiency'] = self.impedance_energy_efficiency()
-        
-    #     return rewards
-
-    # def set_impedance_mode(self, env_ids: torch.Tensor, mode: int):
-    #     """
-    #     手动设置阻抗控制模式 (Manually set impedance control mode)
-        
-    #     Args:
-    #         env_ids: 环境ID (Environment IDs)
-    #         mode: 控制模式 (Control mode)
-    #     """
-    #     if len(env_ids) == 0:
-    #         return
-
-    #     if mode == self.CMD_COMPLIANT:
-    #         self.sample_command_compliant(env_ids)
-    #     elif mode == self.CMD_LINVEL:
-    #         self.sample_command_setvel(env_ids)
-    #     elif mode == self.CMD_POSITION:
-    #         self.sample_command_world(env_ids)
-    #     elif mode == self.CMD_LARGE_FORCE:
-    #         self.sample_command_large(env_ids)
-    #     else:
-    #         logger.warning(f"未知的阻抗控制模式: {mode}")
-
-    # def get_impedance_mode_name(self, mode: int) -> str:
-    #     """
-    #     获取阻抗控制模式名称 (Get impedance control mode name)
-        
-    #     Args:
-    #         mode: 控制模式 (Control mode)
-            
-    #     Returns:
-    #         模式名称 (Mode name)
-    #     """
-    #     mode_names = {
-    #         self.CMD_COMPLIANT: "柔顺模式 (Compliant)",
-    #         self.CMD_LINVEL: "速度跟踪 (Linear Velocity)",
-    #         self.CMD_POSITION: "位置跟踪 (Position)",
-    #         self.CMD_LARGE_FORCE: "大力干扰 (Large Force)"
-    #     }
-    #     return mode_names.get(mode, f"未知模式 (Unknown): {mode}")
-
-    # def _reset_impedance_control(self, env_ids):
-    #     """重置阻抗控制状态 (Reset impedance control states)"""
-        
-    #     # 重置到默认控制模式 (Reset to default control mode)
-    #     self.sample_command_world(env_ids)
-
-    #     # 重置力干扰 (Reset force disturbances)
-    #     self.constant_force.reset(env_ids)
-    #     self.impulse_force.reset(env_ids)
-    #     self.spring_force.reset(env_ids)
-
-    #     # 重置参考轨迹 (Reset reference trajectories)
-    #     if hasattr(self, 'root_states') and self.root_states is not None:
-    #         current_pos = self.root_states[env_ids, :3]
-    #         current_yaw = torch.atan2(
-    #             self.root_states[env_ids, 4], self.root_states[env_ids, 3])
-
-    #         self.ref_pos_w[env_ids] = current_pos.unsqueeze(1)
-    #         self.ref_lin_vel_w[env_ids] = 0.0
-    #         self.ref_yaw_w[env_ids] = current_yaw.unsqueeze(1).unsqueeze(1)
-
-    #     # 重置外力 (Reset external forces)
-    #     self.force_ext_w[env_ids] = 0.0
-    #     if hasattr(self, 'external_force_tensor'):
-    #         self.external_force_tensor[env_ids] = 0.0
-    #         self.external_torque_tensor[env_ids] = 0.0
-
-    # def _init_buffers(self):
-    #     super()._init_buffers()
-    
-    # def set_is_evaluating(self, command=None):
-    #     super().set_is_evaluating()
 
     def _compute_torques(self, actions):
         """ Compute torques from actions.
@@ -975,7 +852,8 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # 遍历所有环境 (Iterate through all environments)
         for env_id in range(self.num_envs):
             # 检查是否为位置指令模式 (Check if in position command mode)
-            if self.impedance_command_mode[env_id, 0] == self.CMD_POSITION:
+            # if self.impedance_command_mode[env_id, 0] == self.CMD_POSITION:
+            if True:
                 # 获取目标位置 (Get target position)
                 target_pos = self.command_setpos_w[env_id]
                 

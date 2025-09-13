@@ -113,8 +113,9 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         temp = torch.clamp(temp, min=1e-6)  # 保证 temp 始终大于 0
         # print("Condition number:", cond_num)
 
-        self.ee_alpha[:] = 0.3 # 0.3 0.7
+        self.ee_alpha[:] = 0.7 # 0.3 0.7
         self.alpha_val = self.ee_alpha / (1.0 + temp.unsqueeze(-1))
+        # self.alpha_val[:] = 1.0
         # print("Alpha value:", self.alpha_val)
 
         # K_torso = torch.diag_embed(stiff_torso)  # Shape: (num_envs, 6, 6)
