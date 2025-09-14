@@ -114,6 +114,11 @@ python rl_policy/dec_loco/dec_loco.py \
 --config=config/g1/g1_29dof.yaml \
 --model_path=models/dec_loco/g1_29dof.onnx 
 ```
+```bash
+python rl_policy/loco_manip/loco_manip.py \
+--config=config/g1/g1_29dof_falcon.yaml \
+--model_path=models/falcon/g1_29dof.onnx 
+```
 
 ```bash
 python rl_policy/loco_manip/loco_manip.py \
