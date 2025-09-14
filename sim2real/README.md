@@ -121,7 +121,7 @@ python rl_policy/loco_manip/loco_manip.py \
 ```
 
 ```bash
-python rl_policy/loco_manip/loco_manip.py \
+python rl_policy/comp/comp.py \
 --config=config/h1/h1.yaml 
 ```
 
