@@ -26,6 +26,7 @@ class CompPolicy(LocoManipPolicy):
         super().__init__(config, model_path, rl_rate, policy_action_scale)
 
         self.arm_ik = H1_ArmIK(robot_config=config, unit_test=False, visualization=False)
+        self.torque_log = []  # 新增：用于记录实际测量力矩
 
     def policy_action(self):
         cmd_q = np.zeros(self.num_dofs)
@@ -92,6 +93,9 @@ class CompPolicy(LocoManipPolicy):
         cmd_q = q_target[0]
         self.command_sender.send_command(cmd_q, cmd_dq, cmd_tau, q_cur) # for PD control
 
+        # 记录实际测量的上半身关节力矩
+        measured_tau = robot_state_data[0, 7 + 6 + 2*self.num_dofs + 6 : 21 + 3*self.num_dofs][self.upper_dof_indices]
+        self.torque_log.append(measured_tau.copy())
 
     #################################
     # Compliance control functions #
@@ -136,9 +140,9 @@ class CompPolicy(LocoManipPolicy):
         J_pos = J_ee_torso[:3, :]  # 只取位置部分
 
         # Define desired stiffness in Cartesian space (can be tuned)
-        kx = 300.0  # Stiffness in x direction
-        ky = 300.0  # Stiffness in y direction
-        kz = 100.0  # Stiffness in z direction
+        kx = 500.0  # Stiffness in x direction
+        ky = 500.0  # Stiffness in y direction
+        kz = 800.0  # Stiffness in z direction
         k_null = 25.0  # Null space stiffness
 
         K_task = np.diag([kx, ky, kz])
@@ -162,7 +166,7 @@ class CompPolicy(LocoManipPolicy):
 
         temp = np.maximum(cond_number - 10, 1e-6)
 
-        ee_alpha = 1 # 0.3 0.7
+        ee_alpha = 0.7 # 0.3 0.7
         alpha_val = ee_alpha / (1.0 + temp)
         print(f"cond_number: %.2f, alpha_val: %.4f" % (cond_number, alpha_val))
 
@@ -216,3 +220,6 @@ if __name__ == "__main__":
         config=config, model_path=model_path, rl_rate=50, policy_action_scale=0.25
     )
     policy.run()
+
+    torque_arr = np.array(policy.torque_log)  # shape: [steps, num_upper_dofs]
+    np.save("upper_body_measured_torque_log.npy", torque_arr)

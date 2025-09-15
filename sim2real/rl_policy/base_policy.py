@@ -278,7 +278,7 @@ class BasePolicy:
         current_obs_buffer_dict["dof_vel"] = robot_state_data[:, 7 + self.num_dofs + 6 : 7 + self.num_dofs + 6 + self.num_dofs]
 
         # 正确提取上半身关节力矩
-        tau_est_start = 7 + self.num_dofs + 6  # tau_est 的起始位置
+        tau_est_start = 7 + 2 * self.num_dofs + 6  # tau_est 的起始位置
         joint_torque_start = tau_est_start + 6  # 跳过 base 的 6 个力矩分量
         # 提取所有关节力矩
         all_joint_torques = robot_state_data[:, joint_torque_start : joint_torque_start + self.num_dofs]
