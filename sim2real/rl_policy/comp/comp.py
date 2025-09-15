@@ -29,22 +29,6 @@ class CompPolicy(LocoManipPolicy):
         # Get states
         robot_state_data = self.state_processor.robot_state_data
         # self.robot_state_data_shm[0] = robot_state_data
-        # Apply upper body controller
-        if self.upper_body_controller:
-            # Control upper qpos and tau
-            upper_body_qpos, _ = self.upper_body_controller.get_q_tau(
-                self.waypoints_left[0],
-                self.waypoints_right[0],
-                self.EE_efrc_L,
-                self.EE_efrc_R,
-            )
-            arm_reduced_joint_indices = [0, 1, 2, 3, 7, 8, 9, 10]
-            for i, idx in enumerate(arm_reduced_joint_indices):
-                self.ref_upper_dof_pos[0, idx] = upper_body_qpos[i]
-            # Zero out wrist joints
-            wrist_joint_indices = [19, 20, 21, 26, 27, 28]
-            for idx in wrist_joint_indices:
-                self.ref_upper_dof_pos[0, idx - 15] = 0.0
 
         # Get policy action
         scaled_policy_action = self.rl_inference(robot_state_data)
@@ -63,16 +47,34 @@ class CompPolicy(LocoManipPolicy):
         if self.motor_pos_lower_limit_list and self.motor_pos_upper_limit_list:
             q_target[0] = np.clip(q_target[0], self.motor_pos_lower_limit_list, self.motor_pos_upper_limit_list)
 
+        # # Send command
+        # cmd_q = q_target[0]
+        # self.command_sender.send_command(cmd_q, cmd_dq, cmd_tau, robot_state_data[0, 7 : 7 + self.num_dofs]) # for PD control
+
+        # === PD control for tau ===
+        # 当前关节位置和速度
+        q_cur = robot_state_data[0, 7 : 7 + self.num_dofs]
+        # dq_cur = robot_state_data[0, 13 + self.num_dofs : 13 + 2 * self.num_dofs]
+        # PD参数（可根据实际机器人调整）
+        kp = np.ones(self.num_dofs) * 100.0
+        # kd = np.ones(self.num_dofs) * 2.0
+        # 计算力矩
+        calc_tau = kp * (q_target[0] - q_cur)
+        # calc_tau -= kd * dq_cur
+        cmd_tau[self.upper_dof_indices] = calc_tau[self.upper_dof_indices]
+
+
         # Send command
         cmd_q = q_target[0]
-        self.command_sender.send_command(cmd_q, cmd_dq, cmd_tau, robot_state_data[0, 7 : 7 + self.num_dofs])
+        self.command_sender.send_command(cmd_q, cmd_dq, cmd_tau, q_cur) # for PD control
 
 
     #################################
     # Compliance control functions #
     #################################
 
-    
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Robot")
@@ -88,7 +90,7 @@ if __name__ == "__main__":
     if not model_path:
         raise ValueError("model_path must be provided either via --model_path argument or in config file")
 
-    policy = LocoManipPolicy(
+    policy = CompPolicy(
         config=config, model_path=model_path, rl_rate=50, policy_action_scale=0.25
     )
     policy.run()
