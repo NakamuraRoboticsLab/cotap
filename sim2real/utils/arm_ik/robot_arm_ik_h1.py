@@ -35,7 +35,6 @@ class H1_ArmIK:
             reference_configuration=np.zeros(self.model.nq),
         )
         self.reduced_model = self.reduced_robot.model
-        self.reduced_data = self.reduced_model.createData()
 
         # 检查 joint 是否存在
         left_joint_name = "left_elbow_joint"
@@ -61,6 +60,12 @@ class H1_ArmIK:
                 )
             else:
                 print(f"Frame {ee_name} already exists!")
+
+        for i, f in enumerate(self.reduced_model.frames):
+            if f.name == "left_elbow_ee":
+                print(f"Frame {f.name}: parent={f.parent}, type={f.type}, placement={f.placement}")
+
+        self.reduced_data = self.reduced_model.createData()
 
         # === Casadi Symbolic Model (仅用于后续扩展) ===
         self.cmodel = pin.casadi.Model(self.reduced_model)

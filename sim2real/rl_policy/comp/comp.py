@@ -1,16 +1,19 @@
 import os
 import sys
 import time
+from xml.parsers.expat import model
 
 import numpy as np
 import argparse
 import yaml
+from scipy.linalg import logm, expm, eigh
 
 sys.path.append("../")
 sys.path.append("./rl_policy")
 
 import pinocchio as pin
 from sim2real.rl_policy.loco_manip.loco_manip import LocoManipPolicy
+from pinocchio import casadi as cpin
 
 from termcolor import colored
 from sim2real.utils.arm_ik.robot_arm_ik_h1 import H1_ArmIK
@@ -62,8 +65,7 @@ class CompPolicy(LocoManipPolicy):
         # kd = np.ones(q_cur.shape) * 2.0
 
         # calculate stiffness matrix
-        mat_stiff = np.diag(kp)
-        mat_stiff = self._compute_rvc_matrix(q_cur)
+        mat_stiff = self._compute_rvc_matrix(q_cur, kp)
 
         # 计算力矩
         q_target_up = q_target[0][self.upper_dof_indices]
@@ -95,7 +97,7 @@ class CompPolicy(LocoManipPolicy):
     # Compliance control functions #
     #################################
 
-    def _compute_rvc_matrix(self, q_cur):
+    def _compute_rvc_matrix(self, q_cur, kp):
 
         """Compute the RVC stiffness matrix based on the current robot state."""
         # 使用 H1_ArmIK 的 reduced_model 和 reduced_data
@@ -103,34 +105,40 @@ class CompPolicy(LocoManipPolicy):
         model = self.arm_ik.reduced_model
         data = self.arm_ik.reduced_data
 
-        # 更新当前关节位置
-        pin.forwardKinematics(model, data, q_cur)
-        pin.updateFramePlacements(model, data)
-
         # 获取 torso link 和末端 frame 的 id
         torso_frame_name = "torso_link"  # 请替换为你模型实际的 torso link 名称
         ee_frame_name = "left_elbow_ee"  # 请替换为实际末端 frame 名称
         torso_frame_id = model.getFrameId(torso_frame_name)
         ee_frame_id = model.getFrameId(ee_frame_name)
 
+        # 更新当前关节位置
+        pin.forwardKinematics(model, data, q_cur)
+        pin.updateFramePlacements(model, data)
+
+        # 获取末端在世界系下的 SE3
+        oMf = self.arm_ik.reduced_data.oMf[ee_frame_id]  # 注意用 self.reduced_data
+        p_W = oMf.translation   # R^3，世界系坐标
+        # print("left_elbow_ee:", p_W) 
+
         # 获取 torso link 在世界系下的 SE3
         torso_SE3 = data.oMf[torso_frame_id]
-        R_world_torso = torso_SE3.rotation.T  # 世界到torso的旋转
+        # R_world_torso = torso_SE3.rotation.T  # 世界到torso的旋转
+        # print("R_world_torso:", R_world_torso)
 
         # 计算末端在世界系下的雅可比
         J_ee_world = pin.computeFrameJacobian(model, data, q_cur, ee_frame_id, pin.ReferenceFrame.WORLD)  # (6, nq)
 
         # 将雅可比从世界系变换到 torso link 系
         J_ee_torso = np.zeros_like(J_ee_world)
-        J_ee_torso[:3, :] = R_world_torso @ J_ee_world[:3, :]
-        J_ee_torso[3:, :] = R_world_torso @ J_ee_world[3:, :]
+        J_ee_torso[:3, :] = J_ee_world[:3, :]
+        J_ee_torso[3:, :] = J_ee_world[3:, :]
 
         J_pos = J_ee_torso[:3, :]  # 只取位置部分
 
         # Define desired stiffness in Cartesian space (can be tuned)
         kx = 300.0  # Stiffness in x direction
         ky = 300.0  # Stiffness in y direction
-        kz = 300.0  # Stiffness in z direction
+        kz = 100.0  # Stiffness in z direction
         k_null = 25.0  # Null space stiffness
 
         K_task = np.diag([kx, ky, kz])
@@ -148,8 +156,47 @@ class CompPolicy(LocoManipPolicy):
 
         stiffness_matrix = np.linalg.pinv(comp_matrix + np.eye(model.nq) * 1e-6)
 
+        # condition number check
+        mat_pd = np.eye(model.nq) * kp
+        cond_number = np.linalg.cond(J_pos)
+
+        temp = np.maximum(cond_number - 10, 1e-6)
+
+        ee_alpha = 1 # 0.3 0.7
+        alpha_val = ee_alpha / (1.0 + temp)
+        print(f"cond_number: %.2f, alpha_val: %.4f" % (cond_number, alpha_val))
+
+
+        # stiffness_matrix = self.log_euclidean_blend(stiffness_matrix, mat_pd, alpha=alpha_val)
+
         return stiffness_matrix
 
+    def log_euclidean_blend(self, K_old, K_new, alpha, kmin: float = 1e-2, kmax: float = 1e6):
+        """
+        Log-Euclidean interpolation (numpy version):
+            K_mix = exp( alpha * log(K_old) + (1-alpha) * log(K_new) )
+        Args:
+            K_old: [n, n] SPD
+            K_new: [n, n] SPD
+            alpha: float in [0,1], 1->old, 0->new
+            kmin, kmax: spectral clamps applied to the final K_mix
+        Returns:
+            K_mix: [n, n] SPD
+        """
+        assert K_old.shape == K_new.shape
+        n = K_old.shape[0]
+        # 计算对数
+        logK_old = logm(K_old)
+        logK_new = logm(K_new)
+        logK_mix = alpha * logK_old + (1.0 - alpha) * logK_new
+        K_mix = expm(logK_mix)
+
+        # final spectral clamp (保证正定性和条件数)
+        evals, evecs = eigh((K_mix + K_mix.T) / 2)
+        evals = np.clip(evals, kmin, kmax)
+        K_mix = (evecs * evals) @ evecs.T
+
+        return K_mix
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Robot")
