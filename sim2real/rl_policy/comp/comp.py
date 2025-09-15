@@ -13,7 +13,7 @@ import pinocchio as pin
 from sim2real.rl_policy.loco_manip.loco_manip import LocoManipPolicy
 
 from termcolor import colored
-from sim2real.utils.arm_ik.robot_arm_ik_g1_23dof import G1_29_ArmIK_NoWrists
+from sim2real.utils.arm_ik.robot_arm_ik_h1 import H1_ArmIK
 
 
 class CompPolicy(LocoManipPolicy):
@@ -21,6 +21,8 @@ class CompPolicy(LocoManipPolicy):
         self, config, model_path, rl_rate=50, policy_action_scale=0.25
     ):
         super().__init__(config, model_path, rl_rate, policy_action_scale)
+
+        self.arm_ik = H1_ArmIK(robot_config=config, unit_test=False, visualization=False)
 
     def policy_action(self):
         cmd_q = np.zeros(self.num_dofs)
@@ -52,17 +54,26 @@ class CompPolicy(LocoManipPolicy):
         # self.command_sender.send_command(cmd_q, cmd_dq, cmd_tau, robot_state_data[0, 7 : 7 + self.num_dofs]) # for PD control
 
         # === PD control for tau ===
-        # 当前关节位置和速度
-        q_cur = robot_state_data[0, 7 : 7 + self.num_dofs]
+        # 当前upper_body关节位置和速度
+        q_cur = robot_state_data[0, 7 : 7 + self.num_dofs][self.upper_dof_indices]
         # dq_cur = robot_state_data[0, 13 + self.num_dofs : 13 + 2 * self.num_dofs]
         # PD参数（可根据实际机器人调整）
-        kp = np.ones(self.num_dofs) * 100.0
-        # kd = np.ones(self.num_dofs) * 2.0
-        # 计算力矩
-        calc_tau = kp * (q_target[0] - q_cur)
-        # calc_tau -= kd * dq_cur
-        cmd_tau[self.upper_dof_indices] = calc_tau[self.upper_dof_indices]
+        kp = np.ones(q_cur.shape) * 100.0
+        # kd = np.ones(q_cur.shape) * 2.0
 
+        # calculate stiffness matrix
+        mat_stiff = np.diag(kp)
+        mat_stiff = self._compute_rvc_matrix(q_cur)
+
+        # 计算力矩
+        q_target_up = q_target[0][self.upper_dof_indices]
+        # calc_tau = kp * (q_target_up - q_cur)
+        calc_tau = mat_stiff @ (q_target_up - q_cur)
+        # grav compensation
+        
+
+        # calc_tau -= kd * dq_cur
+        cmd_tau[self.upper_dof_indices] = calc_tau
 
         # Send command
         cmd_q = q_target[0]
@@ -73,7 +84,60 @@ class CompPolicy(LocoManipPolicy):
     # Compliance control functions #
     #################################
 
+    def _compute_rvc_matrix(self, q_cur):
 
+        """Compute the RVC stiffness matrix based on the current robot state."""
+        # 使用 H1_ArmIK 的 reduced_model 和 reduced_data
+        # 假设 self.arm_ik 已在 __init__ 初始化为 H1_ArmIK 实例
+        model = self.arm_ik.reduced_model
+        data = self.arm_ik.reduced_data
+
+        # 更新当前关节位置
+        pin.forwardKinematics(model, data, q_cur)
+        pin.updateFramePlacements(model, data)
+
+        # 获取 torso link 和末端 frame 的 id
+        torso_frame_name = "torso_link"  # 请替换为你模型实际的 torso link 名称
+        ee_frame_name = "left_elbow_link"  # 请替换为实际末端 frame 名称
+        torso_frame_id = model.getFrameId(torso_frame_name)
+        ee_frame_id = model.getFrameId(ee_frame_name)
+
+        # 获取 torso link 在世界系下的 SE3
+        torso_SE3 = data.oMf[torso_frame_id]
+        R_world_torso = torso_SE3.rotation.T  # 世界到torso的旋转
+
+        # 计算末端在世界系下的雅可比
+        J_ee_world = pin.computeFrameJacobian(model, data, q_cur, ee_frame_id, pin.ReferenceFrame.WORLD)  # (6, nq)
+
+        # 将雅可比从世界系变换到 torso link 系
+        J_ee_torso = np.zeros_like(J_ee_world)
+        J_ee_torso[:3, :] = R_world_torso @ J_ee_world[:3, :]
+        J_ee_torso[3:, :] = R_world_torso @ J_ee_world[3:, :]
+
+        J_pos = J_ee_torso[:3, :]  # 只取位置部分
+
+        # Define desired stiffness in Cartesian space (can be tuned)
+        kx = 300.0  # Stiffness in x direction
+        ky = 300.0  # Stiffness in y direction
+        kz = 300.0  # Stiffness in z direction
+        k_null = 25.0  # Null space stiffness
+
+        K_task = np.diag([kx, ky, kz])
+        C_task = np.linalg.pinv(K_task)  # Damping for critical damping
+
+        # Compute the RVC stiffness matrix in joint space
+        J_transpose = J_pos.T
+        J_inv_transpose = np.linalg.pinv(J_transpose)
+
+        comp_matrix = np.linalg.pinv(J_pos) @ C_task @ J_inv_transpose  # (nq, nq)
+        # null-space stiffness
+        c_null = 1 / k_null
+        c_null_mat = np.eye(model.nq) * c_null
+        comp_matrix += c_null_mat - np.linalg.pinv(J_pos) @ J_pos @ c_null_mat @ J_transpose @ J_inv_transpose
+
+        stiffness_matrix = np.linalg.pinv(comp_matrix + np.eye(model.nq) * 1e-6)
+
+        return stiffness_matrix
 
 
 if __name__ == "__main__":
