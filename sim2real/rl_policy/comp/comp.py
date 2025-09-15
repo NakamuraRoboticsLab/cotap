@@ -69,8 +69,17 @@ class CompPolicy(LocoManipPolicy):
         q_target_up = q_target[0][self.upper_dof_indices]
         # calc_tau = kp * (q_target_up - q_cur)
         calc_tau = mat_stiff @ (q_target_up - q_cur)
-        # grav compensation
-        
+
+        # 上半身重力补偿
+        # 只用上半身关节，速度和加速度都为0
+        grav_tau_full = pin.rnea(
+            self.arm_ik.reduced_model,
+            self.arm_ik.reduced_data,
+            q_cur,
+            np.zeros_like(q_cur),
+            np.zeros_like(q_cur)
+        )
+        calc_tau += grav_tau_full
 
         # calc_tau -= kd * dq_cur
         cmd_tau[self.upper_dof_indices] = calc_tau
