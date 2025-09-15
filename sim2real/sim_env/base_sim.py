@@ -23,6 +23,12 @@ from sim2real.utils.sdk2py_bridge import ElasticBand, create_sdk2py_bridge
 class BaseSimulator:
     def __init__(self, config):
         self.config = config
+
+        self.force_body_names = ["left_elbow_link", "right_elbow_link"]  # 你要施加力的 link 名
+        self.force_body_id = [None] * len(self.force_body_names)  # 初始化
+        self.force_enabled = False  # 新增
+        self.force_start_time = 10.0  # 10秒后施加力
+
         self.init_config()
         self.init_scene()
         self.init_factory()
@@ -68,6 +74,8 @@ class BaseSimulator:
 
         base_body_name = self.config.get("BASE_BODY_NAME", "pelvis")
         self.base_id = self.mj_model.body(base_body_name).id
+
+        self.force_body_ids = [self.mj_model.body(name).id for name in self.force_body_names]
 
         # Enable the elastic band
         if self.config["ENABLE_ELASTIC_BAND"]:
@@ -117,6 +125,18 @@ class BaseSimulator:
                 self.mj_data.xfrc_applied[self.band_attached_link, :3] = self.elastic_band.Advance(
                     self.mj_data.qpos[:3], self.mj_data.qvel[:3]
                 )
+        # 只在仿真时间大于5秒后施加力
+        if self.mj_data.time >= self.force_start_time:
+            for body_id in self.force_body_ids:
+                r = np.array([0.25, 0.0, 0.0])  # 偏移向量，可为每个 link 单独设置
+                F = np.array([0.0, 0.0, -30.0])  # 施加的力，可为每个 link 单独设置
+                torque = np.cross(r, F)
+                wrench = np.concatenate([F, torque])
+                self.mj_data.xfrc_applied[body_id, :] = wrench
+        else:
+            for body_id in self.force_body_ids:
+                self.mj_data.xfrc_applied[body_id, :] = np.zeros(6)
+
         self.compute_torques()
         if self.robot_bridge.free_base:
             self.mj_data.ctrl = np.concatenate((np.zeros(6), self.torques))
