@@ -55,7 +55,7 @@ class CompPolicy(LocoManipPolicy):
 
         # === PD control for tau ===
         # 当前upper_body关节位置和速度
-        q_cur = robot_state_data[0, 7 : 7 + self.num_dofs][self.upper_dof_indices]
+        q_cur = robot_state_data[0, 7 : 7 + self.num_dofs][self.upper_dof_indices] # 
         # dq_cur = robot_state_data[0, 13 + self.num_dofs : 13 + 2 * self.num_dofs]
         # PD参数（可根据实际机器人调整）
         kp = np.ones(q_cur.shape) * 100.0
@@ -67,7 +67,7 @@ class CompPolicy(LocoManipPolicy):
 
         # 计算力矩
         q_target_up = q_target[0][self.upper_dof_indices]
-        # calc_tau = kp * (q_target_up - q_cur)
+        calc_tau_pd = kp * (q_target_up - q_cur)
         calc_tau = mat_stiff @ (q_target_up - q_cur)
 
         # 上半身重力补偿
@@ -82,7 +82,9 @@ class CompPolicy(LocoManipPolicy):
         calc_tau += grav_tau_full
 
         # calc_tau -= kd * dq_cur
-        cmd_tau[self.upper_dof_indices] = calc_tau
+        # cmd_tau[self.upper_dof_indices] = calc_tau
+        cmd_tau[self.left_arm_dof_indices] = calc_tau[:4] # 只对左臂关节分配力矩
+        cmd_tau[self.right_arm_dof_indices] = calc_tau_pd[4:] # 只对右臂关节分配力矩
 
         # Send command
         cmd_q = q_target[0]
@@ -107,7 +109,7 @@ class CompPolicy(LocoManipPolicy):
 
         # 获取 torso link 和末端 frame 的 id
         torso_frame_name = "torso_link"  # 请替换为你模型实际的 torso link 名称
-        ee_frame_name = "left_elbow_link"  # 请替换为实际末端 frame 名称
+        ee_frame_name = "left_elbow_ee"  # 请替换为实际末端 frame 名称
         torso_frame_id = model.getFrameId(torso_frame_name)
         ee_frame_id = model.getFrameId(ee_frame_name)
 

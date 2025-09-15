@@ -66,6 +66,8 @@ class BasePolicy:
         self.dof_names = self.config.get("dof_names", None)
         self.upper_dof_names = self.config.get("dof_names_upper_body", None)
         self.lower_dof_names = self.config.get("dof_names_lower_body", None)
+        self.left_arm_dof_names = self.config.get("dof_names_left_arm", None)
+        self.right_arm_dof_names = self.config.get("dof_names_right_arm", None)
         
         # These are used by derived classes, so keep them
         if self.upper_dof_names:
@@ -77,6 +79,16 @@ class BasePolicy:
             self.lower_dof_indices = [self.dof_names.index(dof) for dof in self.lower_dof_names]
         else:
             self.lower_dof_indices = []
+
+        if self.left_arm_dof_names:
+            self.left_arm_dof_indices = [self.dof_names.index(dof) for dof in self.left_arm_dof_names] 
+        else:
+            self.left_arm_dof_indices = []
+
+        if self.right_arm_dof_names:
+            self.right_arm_dof_indices = [self.dof_names.index(dof) for dof in self.right_arm_dof_names] 
+        else:
+            self.right_arm_dof_indices = []
     
     def _init_sdk_components(self):
         """Initialize SDK components based on robot type."""
