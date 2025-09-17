@@ -659,7 +659,7 @@ class PPOMultiActorCritic(PPO):
             if step == load_motion_log:
                 self.env.simulator.next_task()
 
-            if step < stop_state_log and step >= start_state_log:
+            if step < stop_state_log and step > start_state_log:
                 torso_vel_error = np.abs(torso_lin_vel_base[:, 0].cpu().numpy() - self.env.commands[:, 0].cpu().numpy()) \
                                 + np.abs(torso_lin_vel_base[:, 1].cpu().numpy() - self.env.commands[:, 1].cpu().numpy()) \
                                 + np.abs(torso_lin_vel_base[:, 2].cpu().numpy()) \
@@ -699,7 +699,7 @@ class PPOMultiActorCritic(PPO):
                 print("Logging states...", step)
             elif step == start_state_log:
                 logger.state_log.clear()
-            elif step==stop_state_log:
+            elif step == stop_state_log:
                 logger.plot_states()
                 # integrated torso velocity error
                 integrated_torso_vel_error /= (stop_state_log - start_state_log)

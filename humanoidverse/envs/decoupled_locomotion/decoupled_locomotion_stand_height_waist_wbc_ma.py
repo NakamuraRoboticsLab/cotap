@@ -206,7 +206,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         self.ref_root_pos[:, 2] = current_base_pos[:, 2]
         self.ref_root_rot = ref_root_rot
 
-        # print("debug tag")
+        # print("use default upper body pos")
         # self.ref_upper_dof_pos[:] = self.default_dof_pos[:, self.upper_dof_indices]
 
     def _resample_commands(self, env_ids):
