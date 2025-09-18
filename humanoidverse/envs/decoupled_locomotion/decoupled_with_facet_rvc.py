@@ -57,7 +57,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         stiff_torso = torch.zeros(self.num_envs, 6, device=self.device)
 
         # Define stiffness and damping parameters for 6D task (two hands, 3D each)
-        stiff_params = torch.tensor([300., 300., 300., 300., 300., 300.], device=self.device) # should <= 500
+        stiff_params = torch.tensor([100., 100., 300., 100., 100., 300.], device=self.device) # should <= 500
         torso_params = torch.tensor([10000., 10000., 50000., 5000., 5000., 500.], device=self.device)
 
         # Create [num_envs, 6] tensor: first 3 columns lin_kp, last 3 columns ang_kp

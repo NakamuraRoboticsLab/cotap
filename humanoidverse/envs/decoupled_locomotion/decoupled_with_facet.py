@@ -282,7 +282,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
         # self.commands[:, 1] = 0.0
         # self.commands[:, 0] = self.commands_x
         # self.commands[:, 1] = self.commands_y
-        # self.commands[:, 4] = 0 # 1 - walking mode
+        # self.commands[:, 4] = 1 # 1 - walking mode
 
         # 更新代理偏航角目标 (Update surrogate yaw target)
         # 从参考轨迹中提取指定时间步的偏航角 (Extract yaw angles at specified time steps)
