@@ -57,6 +57,12 @@ conda activate fcreal
 ```
 conda install pinocchio=3.2.0 -c conda-forge
 ```
+```
+conda install imageio
+```
+```
+conda install -c conda-forge imageio-ffmpeg
+```
 ## Install unitree_sdk2_python for Unitree G1 deployment
 ```
 git clone https://github.com/unitreerobotics/unitree_sdk2_python.git
