@@ -104,7 +104,7 @@ Here, we fix the upper body target joint angles to the default, and the policy o
 ### 1. Start Mujoco Env (ONLY for Sim2Sim)
 
 ```bash
-python sim_env/base_sim.py \
+HEADLESS=0 python sim_env/base_sim.py \
 --config=config/g1/g1_29dof.yaml
 ```
 
