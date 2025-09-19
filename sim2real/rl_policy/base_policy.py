@@ -138,7 +138,7 @@ class BasePolicy:
         self.init_count = 0
         self.get_ready_state = False
         self.desired_base_height = self.config.get("DESIRED_BASE_HEIGHT", 0.78)
-        self.gait_period = self.config.get("GAIT_PERIOD", 0.5)
+        self.gait_period = self.config.get("GAIT_PERIOD", 0.8)
         
         # Initialize command arrays
         self.lin_vel_command = np.array([[0.0, 0.0]])

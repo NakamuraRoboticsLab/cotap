@@ -36,6 +36,13 @@ class CompPolicy(LocoManipPolicy):
         robot_state_data = self.state_processor.robot_state_data
         # self.robot_state_data_shm[0] = robot_state_data
 
+        # # Manually set shoulder joints
+        # shoulder_joint_indices = [11, 15]
+        # for idx in shoulder_joint_indices:
+        #     self.ref_upper_dof_pos[0, idx - 11] = 0.5
+
+        # print("ref upper body pos:", self.ref_upper_dof_pos)
+
         # Get policy action
         scaled_policy_action = self.rl_inference(robot_state_data)
         if self.get_ready_state:
@@ -61,6 +68,9 @@ class CompPolicy(LocoManipPolicy):
         # 当前upper_body关节位置和速度
         q_cur = robot_state_data[0, 7 : 7 + self.num_dofs][self.upper_dof_indices] # 
         # dq_cur = robot_state_data[0, 13 + self.num_dofs : 13 + 2 * self.num_dofs]
+        # print("target upper body pos:", q_target[0][self.upper_dof_indices])
+        # print("current upper body pos:", q_cur)
+
         # PD参数（可根据实际机器人调整）
         kp = np.ones(q_cur.shape) * 100.0
         # kd = np.ones(q_cur.shape) * 2.0
@@ -140,9 +150,9 @@ class CompPolicy(LocoManipPolicy):
         J_pos = J_ee_torso[:3, :]  # 只取位置部分
 
         # Define desired stiffness in Cartesian space (can be tuned)
-        kx = 500.0  # Stiffness in x direction
-        ky = 500.0  # Stiffness in y direction
-        kz = 800.0  # Stiffness in z direction
+        kx = 200.0  # Stiffness in x direction
+        ky = 100.0  # Stiffness in y direction
+        kz = 100.0  # Stiffness in z direction
         k_null = 25.0  # Null space stiffness
 
         K_task = np.diag([kx, ky, kz])
@@ -166,10 +176,9 @@ class CompPolicy(LocoManipPolicy):
 
         temp = np.maximum(cond_number - 10, 1e-6)
 
-        ee_alpha = 0.7 # 0.3 0.7
+        ee_alpha = 1 # 0.3 0.7
         alpha_val = ee_alpha / (1.0 + temp)
         print(f"cond_number: %.2f, alpha_val: %.4f" % (cond_number, alpha_val))
-
 
         # stiffness_matrix = self.log_euclidean_blend(stiffness_matrix, mat_pd, alpha=alpha_val)
 

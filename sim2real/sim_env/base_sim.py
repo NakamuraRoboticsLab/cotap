@@ -175,7 +175,8 @@ class BaseSimulator:
         #         # 2秒周期的正弦力
         #         F_amp = 30.0
         #         period = 4.0
-        #         F = np.array([0.0, 0.0, -F_amp * np.sin(2 * np.pi * self.mj_data.time / period)])
+        #         force = -F_amp * np.sin(2 * np.pi * self.mj_data.time / period)
+        #         F = np.array([0.0, 0.0, force])
         #         torque = np.cross(r, F)
         #         wrench = np.concatenate([F, torque])
         #         self.mj_data.xfrc_applied[body_id, :] = wrench

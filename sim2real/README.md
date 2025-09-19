@@ -109,7 +109,7 @@ python sim_env/base_sim.py \
 ```
 
 ```bash
-python sim_env/base_sim.py \
+HEADLESS=0 python sim_env/base_sim.py \
 --config=config/h1/h1.yaml
 ```
 
