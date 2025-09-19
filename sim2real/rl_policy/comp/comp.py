@@ -97,7 +97,7 @@ class CompPolicy(LocoManipPolicy):
         # calc_tau -= kd * dq_cur
         # cmd_tau[self.upper_dof_indices] = calc_tau
         cmd_tau[self.left_arm_dof_indices] = calc_tau[:4] # 只对左臂关节分配力矩
-        cmd_tau[self.right_arm_dof_indices] = calc_tau_pd[4:] # 只对右臂关节分配力矩
+        cmd_tau[self.right_arm_dof_indices] = calc_tau[4:] # 只对右臂关节分配力矩 # calc_tau_pd[4:]
 
         # Send command
         cmd_q = q_target[0]
@@ -120,34 +120,27 @@ class CompPolicy(LocoManipPolicy):
         data = self.arm_ik.reduced_data
 
         # 获取 torso link 和末端 frame 的 id
-        torso_frame_name = "torso_link"  # 请替换为你模型实际的 torso link 名称
-        ee_frame_name = "left_elbow_ee"  # 请替换为实际末端 frame 名称
-        torso_frame_id = model.getFrameId(torso_frame_name)
-        ee_frame_id = model.getFrameId(ee_frame_name)
+        # torso_frame_name = "torso_link"  # 请替换为你模型实际的 torso link 名称
+        left_ee_frame_name = "left_hand_sphere"   # 请替换为实际左手末端 frame 名称 # left_elbow_ee
+        right_ee_frame_name = "right_hand_sphere" # 请替换为实际右手末端 frame 名称 # right_elbow_ee
+
+        left_ee_frame_id = model.getFrameId(left_ee_frame_name)
+        right_ee_frame_id = model.getFrameId(right_ee_frame_name)
 
         # 更新当前关节位置
         pin.forwardKinematics(model, data, q_cur)
         pin.updateFramePlacements(model, data)
 
-        # 获取末端在世界系下的 SE3
-        oMf = self.arm_ik.reduced_data.oMf[ee_frame_id]  # 注意用 self.reduced_data
-        p_W = oMf.translation   # R^3，世界系坐标
-        # print("left_elbow_ee:", p_W) 
+        # 计算左手和右手末端在世界系下的雅可比
+        J_left_world = pin.computeFrameJacobian(model, data, q_cur, left_ee_frame_id, pin.ReferenceFrame.WORLD)  # (6, nq)
+        J_right_world = pin.computeFrameJacobian(model, data, q_cur, right_ee_frame_id, pin.ReferenceFrame.WORLD)  # (6, nq)
 
-        # 获取 torso link 在世界系下的 SE3
-        torso_SE3 = data.oMf[torso_frame_id]
-        # R_world_torso = torso_SE3.rotation.T  # 世界到torso的旋转
-        # print("R_world_torso:", R_world_torso)
+        # 只取位置部分 (前3行)
+        J_left_pos = J_left_world[:3, :]
+        J_right_pos = J_right_world[:3, :]
 
-        # 计算末端在世界系下的雅可比
-        J_ee_world = pin.computeFrameJacobian(model, data, q_cur, ee_frame_id, pin.ReferenceFrame.WORLD)  # (6, nq)
-
-        # 将雅可比从世界系变换到 torso link 系
-        J_ee_torso = np.zeros_like(J_ee_world)
-        J_ee_torso[:3, :] = J_ee_world[:3, :]
-        J_ee_torso[3:, :] = J_ee_world[3:, :]
-
-        J_pos = J_ee_torso[:3, :]  # 只取位置部分
+        # 合并雅可比 (6, nq)
+        J_hands_pos = np.vstack([J_left_pos, J_right_pos])
 
         # Define desired stiffness in Cartesian space (can be tuned)
         kx = 200.0  # Stiffness in x direction
@@ -155,26 +148,26 @@ class CompPolicy(LocoManipPolicy):
         kz = 100.0  # Stiffness in z direction
         k_null = 25.0  # Null space stiffness
 
-        K_task = np.diag([kx, ky, kz])
+        K_task = np.diag([kx, ky, kz, kx, ky, kz])
         C_task = np.linalg.pinv(K_task)  # Damping for critical damping
 
         # Compute the RVC stiffness matrix in joint space
-        J_transpose = J_pos.T
+        J_transpose = J_hands_pos.T
         J_inv_transpose = np.linalg.pinv(J_transpose)
 
-        comp_matrix = np.linalg.pinv(J_pos) @ C_task @ J_inv_transpose  # (nq, nq)
+        comp_matrix = np.linalg.pinv(J_hands_pos) @ C_task @ J_inv_transpose  # (nq, nq)
         # null-space stiffness
         c_null = 1 / k_null
         c_null_mat = np.eye(model.nq) * c_null
-        comp_matrix += c_null_mat - np.linalg.pinv(J_pos) @ J_pos @ c_null_mat @ J_transpose @ J_inv_transpose
+        comp_matrix += c_null_mat - np.linalg.pinv(J_hands_pos) @ J_hands_pos @ c_null_mat @ J_transpose @ J_inv_transpose
 
         stiffness_matrix = np.linalg.pinv(comp_matrix + np.eye(model.nq) * 1e-6)
 
         # condition number check
         mat_pd = np.eye(model.nq) * kp
-        cond_number = np.linalg.cond(J_pos)
+        cond_number = np.linalg.cond(J_hands_pos)
 
-        temp = np.maximum(cond_number - 10, 1e-6)
+        temp = np.maximum(cond_number - 30, 1e-6)
 
         ee_alpha = 1 # 0.3 0.7
         alpha_val = ee_alpha / (1.0 + temp)
