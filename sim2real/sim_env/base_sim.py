@@ -60,6 +60,8 @@ class BaseSimulator:
         self.record_video = False  # 控制是否录制
         self.video_stop = False
         self.video_path = "record_video.mp4"
+        self.record_start_time = 15.0  # 10秒后开始录制
+        self.record_end_time = 30.0    # 20秒后结束录制
 
         self.sim_thread = Thread(target=self.simulation_thread, name="sim_thread", daemon=True)
 
@@ -152,7 +154,7 @@ class BaseSimulator:
     def _ensure_renderer(self):
         """Create renderer in this (simulation) thread."""
         if self.renderer is None:
-            self.renderer = mujoco.Renderer(self.mj_model, height=1080, width=1920)
+            self.renderer = mujoco.Renderer(self.mj_model, height=480, width=640)
         if self.video_writer is None:
             # stream writer to avoid huge RAM usage
             self.video_writer = imageio.get_writer(self.video_path, fps=int(1 / self.sim_dt))
@@ -189,7 +191,7 @@ class BaseSimulator:
         mujoco.mj_step(self.mj_model, self.mj_data)
 
         # 仿真时间大于15秒且小于等于20秒时录制视频
-        self.record_video = (15.0 <= self.mj_data.time <= 30.0)
+        self.record_video = (self.record_start_time <= self.mj_data.time <= self.record_end_time)
 
         # print("Available cameras:", [mujoco.mj_id2name(self.mj_model, mujoco.mjtObj.mjOBJ_CAMERA, i) 
         #                     for i in range(self.mj_model.ncam)])
@@ -234,7 +236,7 @@ class BaseSimulator:
 
             self.rate.sleep()
             # 仿真结束后写视频
-            if (self.mj_data.time >= 20.0) and (self.video_writer is not None):
+            if (self.mj_data.time >= self.record_end_time) and (self.video_writer is not None):
                 self.video_writer.close()
                 self.logger.info(f"Video saved to {self.video_path}")
                 self.video_writer = None

@@ -1,8 +1,5 @@
 <mujoco model="h1_description">
   <compiler angle="radian" meshdir="meshes/" autolimits="true" />
-  <visual>
-    <global offwidth="1920" offheight="1080"/>
-  </visual>
   <default>
     <default class="h1">
       <geom type="mesh"/>
