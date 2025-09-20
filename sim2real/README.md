@@ -57,6 +57,12 @@ conda activate fcreal
 ```
 conda install pinocchio=3.2.0 -c conda-forge
 ```
+```
+conda install imageio
+```
+```
+conda install -c conda-forge imageio-ffmpeg
+```
 ## Install unitree_sdk2_python for Unitree G1 deployment
 ```
 git clone https://github.com/unitreerobotics/unitree_sdk2_python.git
@@ -98,8 +104,13 @@ Here, we fix the upper body target joint angles to the default, and the policy o
 ### 1. Start Mujoco Env (ONLY for Sim2Sim)
 
 ```bash
-python sim_env/base_sim.py \
+HEADLESS=0 python sim_env/base_sim.py \
 --config=config/g1/g1_29dof.yaml
+```
+
+```bash
+HEADLESS=0 python sim_env/base_sim.py \
+--config=config/h1/h1.yaml
 ```
 
 ### 2. Launch the Policy
@@ -108,6 +119,16 @@ python sim_env/base_sim.py \
 python rl_policy/dec_loco/dec_loco.py \
 --config=config/g1/g1_29dof.yaml \
 --model_path=models/dec_loco/g1_29dof.onnx 
+```
+```bash
+python rl_policy/loco_manip/loco_manip.py \
+--config=config/g1/g1_29dof_falcon.yaml \
+--model_path=models/falcon/g1_29dof.onnx 
+```
+
+```bash
+python rl_policy/comp/comp.py \
+--config=config/h1/h1.yaml 
 ```
 
 https://github.com/user-attachments/assets/dc2d8821-6361-49a8-93cd-fb443bd63c39
