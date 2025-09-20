@@ -57,7 +57,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         stiff_torso = torch.zeros(self.num_envs, 6, device=self.device)
 
         # Define stiffness and damping parameters for 6D task (two hands, 3D each)
-        stiff_params = torch.tensor([100., 100., 300., 100., 100., 300.], device=self.device) # should <= 500
+        stiff_params = torch.tensor([300., 300., 300., 300., 300., 300.], device=self.device) # should <= 500
         torso_params = torch.tensor([10000., 10000., 50000., 5000., 5000., 500.], device=self.device)
 
         # Create [num_envs, 6] tensor: first 3 columns lin_kp, last 3 columns ang_kp
@@ -73,7 +73,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         stiff_torso[:] = torso_params.unsqueeze(0).repeat(self.num_envs, 1)
 
         # Joint control gains
-        null_space_stiffness = 25.0 * self.ee_null
+        null_space_stiffness = 30.0 * self.ee_null # 25 for use
         self.rev_p_gains = torch.ones(self.num_envs, self.config.robot.upper_body_actions_dim, device=self.device) * null_space_stiffness
 
         # Compute Jacobians for hand positions (only position, not orientation)
@@ -113,7 +113,7 @@ class LeggedRobotDecoupledLocomotionWithFACETRVC(LeggedRobotDecoupledLocomotionW
         temp = torch.clamp(temp, min=1e-6)  # 保证 temp 始终大于 0
         # print("Condition number:", cond_num)
 
-        self.ee_alpha[:] = 0.7 # 0.3 0.7
+        self.ee_alpha[:] = 1.0 # 0.3 0.7
         self.alpha_val = self.ee_alpha / (1.0 + temp.unsqueeze(-1))
         # self.alpha_val[:] = 1.0
         # print("Alpha value:", self.alpha_val)
