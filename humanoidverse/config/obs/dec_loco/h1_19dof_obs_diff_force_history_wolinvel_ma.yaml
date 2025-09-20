@@ -17,7 +17,6 @@ obs:
       dof_pos,
       dof_vel,
       actions,
-      # phase_time,
       sin_phase,
       cos_phase,
       # grav_upper,
