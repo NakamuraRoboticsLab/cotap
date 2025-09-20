@@ -24,7 +24,7 @@ obs:
       # lin_kp,
       # ang_kp,
       # ee_kp,
-      upper_torq,
+      # upper_torq,
       # ref_upper_point,
       # curr_upper_point,
     ]
@@ -78,7 +78,7 @@ obs:
       # lin_kp,
       # ang_kp,
       # ee_kp,
-      upper_torq,
+      # upper_torq,
       # ref_upper_point,
       # curr_upper_point,
     ]
