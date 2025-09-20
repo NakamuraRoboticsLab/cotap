@@ -69,7 +69,8 @@ class PPOMultiActorCritic(PPO):
 
         humanoidverse_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         checkpoint_path = os.path.join(humanoidverse_ROOT_DIR, \
-                                       "../../logs/h1_19dof_falcon/whole_body_pd", "model_20000.pt") # 预训练模型路径
+                                       "../../logs/h1_19dof_falcon/new_whole_pd", "model_20000.pt") # 预训练模型路径
+                                    #    "../../logs/h1_19dof_falcon/whole_body_pd", "model_20000.pt") # 预训练模型路径
                                     #    "../../logs/h1_19dof_falcon/whole_body_pd_extra_obs", "model_20000.pt") # 预训练模型路径
 
         self.external_actor = self.create_external_actor(checkpoint_path)
