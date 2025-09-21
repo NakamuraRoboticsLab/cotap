@@ -195,7 +195,7 @@ class LeggedRobotDecoupledLocomotionWithFACET(LeggedRobotDecoupledLocomotionStan
 
     #     # 执行父类步进 (Execute parent class step)
     #     result = super().step(actor_state)
-    #     print("upper_torques:", self.upper_torques)
+    #     # print("upper_torques:", self.upper_torques)
     #     return result
 
     def update_controller(self):

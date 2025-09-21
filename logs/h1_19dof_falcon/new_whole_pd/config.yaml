@@ -95,7 +95,7 @@ algo:
           - 128
           activation: ELU
 env:
-  _target_: humanoidverse.envs.decoupled_locomotion.decoupled_with_facet_rvc.LeggedRobotDecoupledLocomotionWithFACETRVC
+  _target_: humanoidverse.envs.decoupled_locomotion.decoupled_with_facet.LeggedRobotDecoupledLocomotionWithFACET
   _recursive_: false
   config:
     experiment_name: ${experiment_name}
@@ -1049,7 +1049,6 @@ rewards:
     feet_heading_alignment: -1.5
     penalty_close_feet_xy: -15.0
     penalty_hip_pos: -5.0
-    penalty_ang_vel_xy_torso: -1.0
     penalty_stance_dof: -0.001
     penalty_stance_tap_feet: -5.0
     penalty_stance_root: -5.0
@@ -1073,11 +1072,10 @@ rewards:
     penalty_ee_ang_acc: -0.01
     limits_upper_body_dof_vel: -5.0
     limits_upper_body_torque: -0.1
-    impedance_pos_tracking: 0.0
     impedance_vel_tracking: 4.0
     impedance_yaw_vel_tracking: 5.0
     contact: 1.5
-    upper_ref_close: 0.5
+    upper_ref_close: 0.0
   reward_groups:
     lower_body:
     - tracking_waist_dofs
@@ -1102,7 +1100,6 @@ rewards:
     - feet_heading_alignment
     - penalty_close_feet_xy
     - penalty_hip_pos
-    - penalty_ang_vel_xy_torso
     - penalty_stance_dof
     - penalty_stance_tap_feet
     - penalty_stance_root
@@ -1115,7 +1112,6 @@ rewards:
     - feet_max_height_for_this_air
     - penalty_shift_in_zero_command
     - penalty_ang_shift_in_zero_command
-    - impedance_pos_tracking
     - impedance_vel_tracking
     - impedance_yaw_vel_tracking
     - contact
