@@ -25,6 +25,8 @@ class IsaacGym(BaseSimulator):
         self.auto_record_duration = 5 # 8  # seconds, set as needed
         self.sim_step_count = 0
         self.auto_record_trigger_time = 9  # seconds, set your desired start time
+        self.robot_pos = None
+        self.robot_quat = None
         
         # temporary settings for user recording
         if config.save_rendering_dir is not None:
@@ -592,14 +594,14 @@ class IsaacGym(BaseSimulator):
         #     self.viewer, gymapi.KEY_RIGHT, "force_right_up"
         # )
 
-        sim_params = self.sim_params
-        if sim_params.up_axis == gymapi.UP_AXIS_Z:
-            cam_pos = gymapi.Vec3(5.0, 5.0, 3.0)
-            cam_target = gymapi.Vec3(0.0, 0.0, 3.0)
-        else:
-            cam_pos = gymapi.Vec3(20.0, 3.0, 25.0)
-            cam_target = gymapi.Vec3(10.0, 0.0, 15.0)
-        self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
+        # sim_params = self.sim_params
+        # if sim_params.up_axis == gymapi.UP_AXIS_Z:
+        #     cam_pos = gymapi.Vec3(5.0, 5.0, 3.0)
+        #     cam_target = gymapi.Vec3(0.0, 0.0, 3.0)
+        # else:
+        #     cam_pos = gymapi.Vec3(20.0, 3.0, 25.0)
+        #     cam_target = gymapi.Vec3(10.0, 0.0, 15.0)
+        # self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
 
         # video recording
         self.user_is_recording, self.user_recording_state_change = False, False
@@ -688,18 +690,22 @@ class IsaacGym(BaseSimulator):
         if self.device != 'cpu':
             self.gym.fetch_results(self.sim, True)
 
+        # 获取仿真时间
+        current_sim_time = self.sim_step_count * self.sim_dt
+
         # 摄像机跟踪机器人（仅一个环境时）
         if self.num_envs == 1:
             # 获取机器人根状态
-            robot_pos = self.robot_root_states[0, 0:3].cpu().numpy()
-            robot_quat = self.robot_root_states[0, 3:7].cpu().numpy()  # [x, y, z, w]
+            # robot_pos = self.robot_root_states[0, 0:3].cpu().numpy()
+            if current_sim_time < 8:
+                self.robot_pos = self.robot_root_states[0, 0:3].cpu().numpy()
+                self.robot_quat = self.robot_root_states[0, 3:7].cpu().numpy()  # [x, y, z, w]
             
             # 将四元数转换为旋转矩阵，获取机器人朝向
             import scipy.spatial.transform as transform
-            rotation = transform.Rotation.from_quat(robot_quat)
-            
+            rotation = transform.Rotation.from_quat(self.robot_quat)
+
             # 计算机器人前方45度角的方向（相对于机器人朝向旋转45度）
-            import numpy as np
             angle_offset = np.pi / 4  # 45度
             front_right_dir = rotation.apply([
                 np.cos(angle_offset), 
@@ -711,11 +717,11 @@ class IsaacGym(BaseSimulator):
             cam_distance = 5.0  # 增加距离到5米
             cam_height = 1.0    # 降低高度到1米
             cam_pos = gymapi.Vec3(
-                robot_pos[0] + front_right_dir[0] * cam_distance,
-                robot_pos[1] + front_right_dir[1] * cam_distance,
-                robot_pos[2] + cam_height
+                self.robot_pos[0] + front_right_dir[0] * cam_distance,
+                self.robot_pos[1] + front_right_dir[1] * cam_distance,
+                0.7 + cam_height
             )
-            cam_target = gymapi.Vec3(robot_pos[0], robot_pos[1], robot_pos[2] + 1.2)
+            cam_target = gymapi.Vec3(self.robot_pos[0], self.robot_pos[1], self.robot_pos[2] + 1.2)
             self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
 
         # step graphics
@@ -726,9 +732,6 @@ class IsaacGym(BaseSimulator):
                 self.gym.sync_frame_time(self.sim)
         else:
             self.gym.poll_viewer_events(self.viewer)
-
-        # 获取仿真时间
-        current_sim_time = self.sim_step_count * self.sim_dt
 
         # 自动录制逻辑：在指定时间开始录制
         if self.auto_record_start_time is None and current_sim_time >= self.auto_record_trigger_time:
