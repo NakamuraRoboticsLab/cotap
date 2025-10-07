@@ -1,22 +1,18 @@
-<h1 align="center"> FALCON: Learning Force-Adaptive Humanoid Loco-Manipulation </h1>
+<h1 align="center"> CoTaP: Compliant Task Pipeline and Reinforcement Learning of Its Controller with Compliance Modulation </h1>
 
 <div align="center">
 
-<!-- Robotics: Science and Systems (RSS) 2025 -->
+[[Website]](https://github.com/NakamuraRoboticsLab/cotap)
+[[Arxiv]](https://www.arxiv.org/abs/2509.25443)
+[[Video]](https://drive.google.com/file/d/1Ge08DPEVZRw04pIZNqqBSJQaBJkdImoH/view)
 
-[[Website]](https://lecar-lab.github.io/falcon-humanoid/)
-[[Arxiv]](https://lecar-lab.github.io/falcon-humanoid/)
-[[Video]](https://www.youtube.com/watch?v=OfsvJ5-Fyzg)
-
-<img src="assets/ip.png" style="height:100px;" />
+<img src="assets/mbzuai.svg" style="height:100px;" />
 
 
+<!-- [![IsaacGym](https://img.shields.io/badge/IsaacGym-Preview4-b.svg)](https://developer.nvidia.com/isaac-gym) [![Linux platform](https://img.shields.io/badge/Platform-linux--64-orange.svg)](https://ubuntu.com/blog/tag/22-04-lts) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]() -->
 
 
-[![IsaacGym](https://img.shields.io/badge/IsaacGym-Preview4-b.svg)](https://developer.nvidia.com/isaac-gym) [![Linux platform](https://img.shields.io/badge/Platform-linux--64-orange.svg)](https://ubuntu.com/blog/tag/22-04-lts) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
-
-
-<img src="assets/hero_static.gif" width="100%"/>
+<!-- <img src="assets/hero_static.gif" width="100%"/> -->
 
 </div>
 
@@ -24,13 +20,13 @@
 - [x] Release training code
 - [x] Release sim2sim code
 - [x] Release sim2real code
-- [ ] Compatible with IsaacSim
-- [ ] Compatible with Genesis
 
 
 # Installation
 
 ## IsaacGym Conda Env
+
+This project is mainly based on FALCON project: https://github.com/LeCAR-Lab/FALCON/
 
 Create mamba/conda environment, in the following we use conda for example, but you can use mamba as well.
 
@@ -76,8 +72,8 @@ For libpython error:
 ### Install FALCON
 
 ```bash
-git clone https://github.com/LeCAR-Lab/FALCON.git
-cd FALCON
+git clone https://github.com/NakamuraRoboticsLab/cotap.git
+cd cotap
 
 pip install -e .
 pip install -e isaac_utils
@@ -86,12 +82,12 @@ pip install -e isaac_utils
 # Motion Retargetting
 Please refer to [PHC](https://github.com/ZhengyiLuo/PHC).
 
-# FALCON Training
-## Unitree G1_29DoF
-<details>
+# CoTaP Training
+## Unitree H1_19DoF
+<!-- <details> -->
 <summary>Training Command</summary>
 
-```bash
+<!-- ```bash
 python humanoidverse/train_agent.py \
 +exp=decoupled_locomotion_stand_height_waist_wbc_diff_force_ma_ppo_ma_env \
 +simulator=isaacgym \
@@ -109,49 +105,57 @@ env.config.fix_upper_body_prob=0.3 \
 robot.dof_effort_limit_scale=0.9 \
 rewards.reward_initial_penalty_scale=0.1 \
 rewards.reward_penalty_degree=0.0001
-```
+``` -->
 
 ```bash
 python humanoidverse/train_agent.py \
-+exp=decoupled_locomotion_stand_height_waist_wbc_diff_force_ma_ppo_ma_env \
++exp=decoupled_locomotion_with_facet \
 +simulator=isaacgym \
 +domain_rand=domain_rand_rl_gym \
 +rewards=dec_loco/reward_dec_loco_stand_height_ma_diff_force \
-+robot=g1/g1_29dof_waist_fakehand \
++robot=h1/h1 \
 +terrain=terrain_locomotion_plane \
-+obs=dec_loco/g1_29dof_obs_diff_force_history_wolinvel_ma \
++obs=dec_loco/h1_19dof_obs_diff_force_history_wolinvel_ma \
 num_envs=4096 \
-project_name=g1_29dof_falcon \
-experiment_name=g1_29dof_falcon \
+project_name=h1_19dof_falcon \
+experiment_name=h1_19dof_falcon \
 obs.add_noise=True \
+rewards.desired_base_height=0.9 \
 env.config.fix_upper_body_prob=0.3 \
-robot.dof_effort_limit_scale=0.9 \
-rewards.reward_initial_penalty_scale=0.1 \
-rewards.reward_penalty_degree=0.0001
+env.config.apply_force_pos_ratio_range=[0.5,2.0]
 ```
 
-</details>
+<!-- </details> -->
 
-<details>
+<!-- <details> -->
 <summary>Evaluation Command</summary>
 
+1 environment simulation with graphic: 
 ```bash
 python humanoidverse/eval_agent.py \
-+checkpoint=<path_to_your_ckpt>
++checkpoint=logs/h1_19dof_falcon/result_commands/model_20000.pt
 ```
-</details>
+
+4096 environments simulation without graphic: 
+```bash
+python humanoidverse/eval_agent.py \
++checkpoint=logs/h1_19dof_falcon/result_commands/model_20000.pt\
++num_envs=4096 \
++headless=True
+```
+<!-- </details> -->
 
 
-After around `6k` iterations, in `IsaacGym`:
-<table>
+After around `20k` iterations, in `IsaacGym` get the trained results. 
+<!-- <table>
   <tr>
     <td style="text-align: center;">
       <img src="assets/g1.gif" style="width: 100%;"/>
     </td>
   </tr>
-</table>
+</table> -->
 
-## Booster T1_29DoF
+<!-- ## Booster T1_29DoF
 <details>
 <summary>Training Command</summary>
 
@@ -182,9 +186,9 @@ rewards.reward_scales.penalty_upper_body_action_rate=-0.5 \
 env.config.apply_force_pos_ratio_range=[0.5,2.0]
 ```
 
-</details>
+</details> -->
 
-## Unitree H1_19DoF
+<!-- ## Unitree H1_19DoF
 <details>
 <summary>Training Command</summary>
 
@@ -223,11 +227,11 @@ obs.add_noise=True \
 rewards.desired_base_height=0.9 \
 env.config.fix_upper_body_prob=0.3 \
 env.config.apply_force_pos_ratio_range=[0.5,2.0]
-```
+``` -->
 
-</details>
+<!-- </details> -->
 
-<details>
+<!-- <details>
 <summary>Evaluation Command</summary>
 
 ```bash
@@ -236,63 +240,52 @@ python humanoidverse/eval_agent.py \
 +num_envs=4096 \
 +headless=True
 ```
-</details>
+</details> -->
 
 
-After around `6k` iterations, in `IsaacGym`:
+<!-- After around `6k` iterations, in `IsaacGym`:
 <table>
   <tr>
     <td style="text-align: center;">
       <img src="assets/t1.gif" style="width: 100%;"/>
     </td>
   </tr>
-</table>
+</table> -->
 
-# FALCON Deploy
-We provide seamless sim2sim and sim2real deployment scripts supporting both [unitree_sdk2_python](https://github.com/unitreerobotics/unitree_sdk2_python) and [booster_robotics_sdk](https://github.com/hang0610/booster_robotics_sdk). Please refer to this [README](sim2real/README.md) for details.
+# CoTaP sim-to-sim Deploy
+We provide seamless sim2sim and sim2real deployment scripts supporting both [unitree_sdk2_python](https://github.com/unitreerobotics/unitree_sdk2_python). Please refer to this [README](sim2real/README.md) for details.
 
-<table>
+<!-- <table>
   <tr>
     <td style="text-align: center;">
       <img src="assets/deploy.png" style="width: 99%;"/>
     </td>
   </tr>
-</table>
+</table> -->
 
-# FALCON Extension
+# CoTaP Extension
 
-## Large Workspace
+<!-- ## Large Workspace
 FALCON can be easily extended to larger workspace by setting larger torso command range and base height command range. We provide the sim2sim result of Unitree G1 with larger command range as an example:
 
-https://github.com/user-attachments/assets/2d92000e-b990-45aa-a4ad-032fe0158eba
+https://github.com/user-attachments/assets/2d92000e-b990-45aa-a4ad-032fe0158eba -->
 
 
 # Citation
 If you find our work useful, please consider citing us!
 
 ```bibtex
-@article{zhang2025falcon,
-          title={FALCON: Learning Force-Adaptive Humanoid Loco-Manipulation},
-          author={Zhang, Yuanhang and Yuan, Yifu and Gurunath, Prajwal and He, Tairan and Omidshafiei, Shayegan and Agha-mohammadi, Ali-akbar and Vazquez-Chanlatte, Marcell and Pedersen, Liam and Shi, Guanya},
-          journal={arXiv preprint arXiv:2505.06776},
-          year={2025}
-        }
+@article{he2025cotap,
+  title={CoTaP: Compliant Task Pipeline and Reinforcement Learning of Its Controller with Compliance Modulation},
+  author={He, Zewen and Chen, Chenyuan and Azizov, Dilshod and Nakamura, Yoshihiko},
+  journal={arXiv preprint arXiv:2509.25443},
+  year={2025}
+}
 ```
 
-Other work also using FALCON's dual-agent framework:
-
-```bibtex
-@article{li2025softa,
-          title={Hold My Beer: Learning Gentle Humanoid Locomotion and End-Effector Stabilization Control},
-          author={Li, Yitang and Zhang, Yuanhang and Xiao, Wenli and Pan, Chaoyi and Weng, Haoyang and He, Guanqi and He, Tairan and Shi, Guanya},
-          journal={arXiv preprint arXiv:2505.24198},
-          year={2025}
-        }
-```
-
-# Acknowledgement
+<!-- # Acknowledgement
 **FALCON** is built upon [ASAP](https://github.com/LeCAR-Lab/ASAP) and [HumanoidVerse](https://github.com/LeCAR-Lab/HumanoidVerse).
 
 # License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. -->

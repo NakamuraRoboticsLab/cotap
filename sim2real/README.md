@@ -1,14 +1,14 @@
 # FALCON Deployment Guide
 
-This folder provides seamless sim2sim/sim2real deployment scripts for both Unitree G1 (H1, H1-2) and Booster T1. The key idea is to simulate the real robot's state publisher and command receiver in Mujoco:
+This folder provides seamless sim2sim/sim2real deployment scripts for both Unitree G1 (H1, H1-2). The key idea is to simulate the real robot's state publisher and command receiver in Mujoco:
 
-<table>
+<!-- <table>
   <tr>
     <td style="text-align: center;">
       <img src="../assets/deploy.png" style="width: 99%;"/>
     </td>
   </tr>
-</table>
+</table> -->
 
 ## Table of Contents
 
@@ -17,17 +17,18 @@ This folder provides seamless sim2sim/sim2real deployment scripts for both Unitr
 - [Deployment](#deployment)
   - [G1 29DoF Locomotion](#g1-29dof-locomotion)
   - [G1 29DoF FALCON](#g1-29dof-falcon)
-  - [T1 29DoF FALCON](#t1-29dof-falcon)
+  - [H1 19DoF CoTaP](#h1-19dof-cotap)
+  <!-- - [T1 29DoF FALCON](#t1-29dof-falcon) -->
 - [Sim2Real Tips](#sim2real-tips)
 
 ## Pre-Configuration
-Here, we use `config/g1/g1_29dof.yaml`. Before testing sim2sim/sim2real, check the `ROBOT_TYPE`, `SDK_TYPE`, and `INTERFACE` in the `.yaml` file:
+Here, we use `config/h1/h1.yaml`. Before testing sim2sim/sim2real, check the `ROBOT_TYPE`, `SDK_TYPE`, and `INTERFACE` in the `.yaml` file:
 ```yaml
-ROBOT_TYPE: 'g1_29dof' # Robot name, "t1_29dof", "g1_29dof"...
+ROBOT_TYPE: 'h1' # Robot name, "t1_29dof", "g1_29dof"...
 
-ROBOT_SCENE: "../humanoidverse/data/robots/g1/scene_29dof_freebase.xml" # Robot scene, for Sim2Sim
+ROBOT_SCENE: "../humanoidverse/data/robots/h1/h1.xml" # Robot scene, for Sim2Sim
 
-ASSET_ROOT: "../humanoidverse/data/robots/g1" # Robot Asset Root
+ASSET_ROOT: "../humanoidverse/data/robots/h1" # Robot Asset Root
 
 DOMAIN_ID: 0 # Domain id
 # IP Interface 
@@ -69,25 +70,7 @@ git clone https://github.com/unitreerobotics/unitree_sdk2_python.git
 cd unitree_sdk2_python
 pip install -e .
 ```
-## Install booster_robotics_sdk for Booster T1 deployment
-Note that the official [booster_robotics_sdk](https://github.com/BoosterRobotics/booster_robotics_sdk) does not provide state publisher and command receiver, so I improve the repo a bit and add them in my [forked repo](https://github.com/hang0610/booster_robotics_sdk). Also booster sdk is NOT supported on Mac OS yet.
-```bash
-git clone https://github.com/hang0610/booster_robotics_sdk
-# Install python package for building python binding locally
-pip3 install pybind11
-pip3 install pybind11-stubgen
-# Build & Install
-mkdir build
-cd build
-cmake .. -DBUILD_PYTHON_BINDING=on
-make
-sudo make install
-```
-## Install others
-```bash
-cd sim2real
-pip install -r requirements.txt
-```
+
 
 # Deployment
 > [!IMPORTANT]
@@ -108,11 +91,6 @@ HEADLESS=0 python sim_env/base_sim.py \
 --config=config/g1/g1_29dof.yaml
 ```
 
-```bash
-HEADLESS=0 python sim_env/base_sim.py \
---config=config/h1/h1.yaml
-```
-
 ### 2. Launch the Policy
 
 ```bash
@@ -120,18 +98,6 @@ python rl_policy/dec_loco/dec_loco.py \
 --config=config/g1/g1_29dof.yaml \
 --model_path=models/dec_loco/g1_29dof.onnx 
 ```
-```bash
-python rl_policy/loco_manip/loco_manip.py \
---config=config/g1/g1_29dof_falcon.yaml \
---model_path=models/falcon/g1_29dof.onnx 
-```
-
-```bash
-python rl_policy/comp/comp.py \
---config=config/h1/h1.yaml 
-```
-
-https://github.com/user-attachments/assets/dc2d8821-6361-49a8-93cd-fb443bd63c39
 
 </details>
 
@@ -170,6 +136,10 @@ Here are some **keyboard shortcuts**:
   
 </details>
 
+
+<details>
+<summary>TEST with G1_29DoF FALCON</summary>
+
 ## G1 29DoF FALCON
 
 ### 1. Start Mujoco Env (ONLY for Sim2Sim)
@@ -187,22 +157,25 @@ python rl_policy/loco_manip/loco_manip.py \
 --model_path=models/falcon/g1_29dof.onnx 
 ```
 
-https://github.com/user-attachments/assets/273b52c1-0248-40e5-b218-e078e74b322d
+</details>
 
-## T1 29DoF FALCON
+## H1 19DoF CoTaP
+  
+Here, we fix the upper body target joint angles to the default, and the policy only outputs the lower body action.
 ### 1. Start Mujoco Env (ONLY for Sim2Sim)
+
 ```bash
-python sim_env/loco_manip.py \
---config=config/t1/t1_29dof_falcon.yaml 
-```
-### 2. Luanch the Policy
-```bash
-python rl_policy/loco_manip/loco_manip.py \
---config=config/t1/t1_29dof_falcon.yaml \
---model_path=models/falcon/t1_29dof.onnx
+HEADLESS=0 python sim_env/base_sim.py \
+--config=config/h1/h1.yaml
 ```
 
-https://github.com/user-attachments/assets/e35ff90e-428b-41ea-8cac-64d9906c78e8
+### 2. Launch the Policy
+
+```bash
+python rl_policy/comp/comp.py \
+--config=config/h1/h1.yaml 
+```
+
 
 ## Sim2Real Tips
 > [!CAUTION]
@@ -231,6 +204,6 @@ I recommend you to use `unitree_sdk2` for real-time inference onboard. I have wr
 # Acknowledgement
 We thank the following open-sourced repos that we build upon:
 - [unitree_mujoco](https://github.com/unitreerobotics/unitree_mujoco)
-- [xr_teleoperate](https://github.com/unitreerobotics/xr_teleoperate)
+<!-- - [xr_teleoperate](https://github.com/unitreerobotics/xr_teleoperate) -->
 - [unitree_sdk2_python](https://github.com/unitreerobotics/unitree_sdk2_python)
-- [booster_robotics_python](https://github.com/BoosterRobotics/booster_robotics_sdk)
+<!-- - [booster_robotics_python](https://github.com/BoosterRobotics/booster_robotics_sdk) -->
