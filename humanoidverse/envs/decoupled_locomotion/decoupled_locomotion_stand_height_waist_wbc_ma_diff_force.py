@@ -367,8 +367,8 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBCForce(LeggedRobotDecoupledLoc
     
     def _physics_step(self):
         self.render()
-        self._calculate_ee_forces()
-        # self._calculate_ee_forces_eval()
+        # self._calculate_ee_forces()
+        self._calculate_ee_forces_eval()
         for _ in range(self.config.simulator.config.sim.control_decimation):
             self._apply_force_in_physics_step()
             self.simulator.simulate_at_each_physics_step()

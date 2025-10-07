@@ -207,7 +207,7 @@ class LeggedRobotDecoupledLocomotionStanceHeightWBC(LeggedRobotDecoupledLocomoti
         self.ref_root_rot = ref_root_rot
 
         # print("use default upper body pos")
-        # self.ref_upper_dof_pos[:] = self.default_dof_pos[:, self.upper_dof_indices]
+        self.ref_upper_dof_pos[:] = self.default_dof_pos[:, self.upper_dof_indices]
 
     def _resample_commands(self, env_ids):
         if self._motion_lib and not self.config.robot.motion.reverse_motion: self._resample_motion_times(env_ids)
