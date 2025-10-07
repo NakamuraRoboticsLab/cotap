@@ -24,6 +24,8 @@ from rich.panel import Panel
 from rich.live import Live
 console = Console()
 
+NO_DL_REG = False  # 是否使用深度学习正则化
+
 class PPOMultiActorCritic(PPO):
     def __init__(self,
                  env: BaseTask,
@@ -67,18 +69,20 @@ class PPOMultiActorCritic(PPO):
 
         self.mc_weight = 0.8 # TODO: hardcoded for now, can be made configurable later
 
-        humanoidverse_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        checkpoint_path = os.path.join(humanoidverse_ROOT_DIR, \
-                                       "../../logs/h1_19dof_falcon/new_whole_pd", "model_20000.pt") # 预训练模型路径
-                                    #    "../../logs/h1_19dof_falcon/whole_body_pd", "model_20000.pt") # 预训练模型路径
-                                    #    "../../logs/h1_19dof_falcon/whole_body_pd_extra_obs", "model_20000.pt") # 预训练模型路径
-
-        self.external_actor = self.create_external_actor(checkpoint_path)
+        if not NO_DL_REG:
+            humanoidverse_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            checkpoint_path = os.path.join(humanoidverse_ROOT_DIR, \
+                                        # "../../logs/h1_19dof_falcon/new_whole_pd", "model_20000.pt") # 预训练模型路径
+                                           "../../logs/h1_19dof_falcon/whole_body_pd", "model_20000.pt") # 预训练模型路径
+                                        #    "../../logs/h1_19dof_falcon/whole_body_pd_extra_obs", "model_20000.pt") # 预训练模型路径
+            self.external_actor = self.create_external_actor(checkpoint_path)
 
         self.kl_coef_start = self.env.config.regularization.kl_beta_init  # Initial KL coefficient
         self.kl_coef_end = self.env.config.regularization.kl_beta_final   # Final KL coefficient
         self.kl_coef_anneal_steps = self.env.config.regularization.kl_anneal_steps  # Number of iterations to anneal over
         self.kl_coef = self.kl_coef_start  # Current KL coefficient
+
+        self.ref_ext = None # for logging hand position error
 
     def _init_config(self):
         super()._init_config()
@@ -420,16 +424,17 @@ class PPOMultiActorCritic(PPO):
         
         critic_loss = self.value_loss_coef * value_loss
 
-        # In _compute_ppo_loss, update kl_coef using linear annealing
-        if key == 'lower_body':
-            # Anneal kl_coef linearly from start to end over anneal_steps
-            progress = min(self.current_learning_iteration / self.kl_coef_anneal_steps, 1.0)
-            self.kl_coef = self.kl_coef_start - progress * (self.kl_coef_start - self.kl_coef_end)
-            
-            # 计算 KL 散度
-            kl_div = self.compute_kl_divergence_lower_body(self.external_actor, policy_state_dict["actor_obs"])
-            kl_loss = kl_div.mean() * self.kl_coef
-            actor_loss = actor_loss + kl_loss
+        if not NO_DL_REG:
+            # In _compute_ppo_loss, update kl_coef using linear annealing
+            if key == 'lower_body':
+                # Anneal kl_coef linearly from start to end over anneal_steps
+                progress = min(self.current_learning_iteration / self.kl_coef_anneal_steps, 1.0)
+                self.kl_coef = self.kl_coef_start - progress * (self.kl_coef_start - self.kl_coef_end)
+                
+                # 计算 KL 散度
+                kl_div = self.compute_kl_divergence_lower_body(self.external_actor, policy_state_dict["actor_obs"])
+                kl_loss = kl_div.mean() * self.kl_coef
+                actor_loss = actor_loss + kl_loss
 
         return actor_loss, critic_loss, value_loss, surrogate_loss, entropy_loss, kl_mean
 
@@ -601,12 +606,13 @@ class PPOMultiActorCritic(PPO):
         robot_index = 0 # which robot is used for logging
         load_motion_log = int(1 / self.env.dt) # step to start loading motion
         start_state_log = int(9 / self.env.dt) # step to start plotting states
-        stop_state_log = int(13 / self.env.dt) # number of steps before plotting states
+        stop_state_log = int(15 / self.env.dt) # number of steps before plotting states
 
         base_quat = torch.zeros(self.env.num_envs, 4, device=self.device)
 
         integrated_torso_vel_error = np.zeros(self.env.num_envs)
         integrated_hand_pos_error = np.zeros(self.env.num_envs)
+        integrated_hand_pos_error_z = np.zeros(self.env.num_envs)
         integrated_torque = np.zeros(self.env.num_envs)
         integrated_upper_body_error = np.zeros(self.env.num_envs)
 
@@ -620,22 +626,21 @@ class PPOMultiActorCritic(PPO):
             upper_body_dofs_error =  torch.sum(torch.square(upper_body_pos - self.env.ref_upper_dof_pos), dim=1)
 
             # only log the first hand (left hand)
-            act_ext = self.env.marker_coords[:, -4, :3]  # (num_envs, 4, 3)
-            ref_ext = self.env.ref_body_pos_extend[:, -4, :3]  # (num_envs, 4, 3)
-            hand_pos_error = ref_ext - act_ext
-
             # 获取 torso link 的四元数 (num_envs, 4)
             torso_quat = self.env.simulator._rigid_body_rot[:, self.env.torso_index, :]
-
-            # 先将 hand_pos_error 从世界系平移到 torso 原点
-            # 假设 hand_pos_error 是 (num_envs, 4, 3)，不需要补齐
-            hand_pos_error_3d = hand_pos_error
-
-            # 变换到 torso-link 坐标系
-            hand_pos_error_torso = quat_rotate_inverse(
+            act_ext = self.env.marker_coords[:, -4, :3]  # (num_envs, 4, 3)
+            act_ext = quat_rotate_inverse(
                 torso_quat,  # shape (1, 4)
-                hand_pos_error_3d  # shape (1, 3)
+                act_ext  # shape (1, 3)
             )
+            # self.ref_ext = self.env.ref_body_pos_extend[:, -4, :3]
+            if step <= start_state_log:
+                self.ref_ext = self.env.marker_coords[:, -4, :3].clone()
+                self.ref_ext = quat_rotate_inverse(
+                torso_quat,  # shape (1, 4)
+                self.ref_ext  # shape (1, 3)
+            )
+            hand_pos_error_torso = self.ref_ext - act_ext
 
             if step <= start_state_log:
                 base_quat = self.env.simulator.robot_root_states[:, 3:7]  # (num_envs, 4)
@@ -669,6 +674,9 @@ class PPOMultiActorCritic(PPO):
 
                 hand_pos_error_np = np.linalg.norm(hand_pos_error_torso.cpu().numpy(), axis=1)  # shape: (num_envs, 4)
                 integrated_hand_pos_error += hand_pos_error_np  # only consider the first hand
+
+                if step > start_state_log + 4.0 / self.env.dt: # only consider the last 3 seconds
+                    integrated_hand_pos_error_z += hand_pos_error_torso[:, 2].cpu().numpy()
                 
                 integrated_torque += (arm_torques_sum_left + arm_torques_sum_right).cpu().numpy()
 
@@ -715,6 +723,12 @@ class PPOMultiActorCritic(PPO):
                 std_hand_error = integrated_hand_pos_error.std()
                 print(f"Average integrated hand position error over all envs: {avg_hand_error:.3f}")
                 print(f"Std integrated hand position error over all envs: {std_hand_error:.3f}")
+
+                integrated_hand_pos_error_z /= (stop_state_log - start_state_log - 4.0 / self.env.dt)
+                avg_hand_error_z = integrated_hand_pos_error_z.mean()
+                std_hand_error_z = integrated_hand_pos_error_z.std()
+                print(f"Average integrated hand position error Z over all envs: {avg_hand_error_z:.3f}")
+                print(f"Std integrated hand position error Z over all envs: {std_hand_error_z:.3f}")
 
                 # integrated torque
                 integrated_torque /= (stop_state_log - start_state_log)

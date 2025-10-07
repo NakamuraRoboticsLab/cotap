@@ -125,15 +125,26 @@ class Logger:
         a.legend()
         # plt.show()
 
-        plt.figure()
-        if log["hand_pos_z_err"]:
-            plt.plot(time, log["hand_pos_z_err"])
+        # plt.figure()
+        # if log["hand_pos_z_err"]:
+        #     plt.plot(time, log["hand_pos_z_err"])
+        # plt.xlabel('Time [s]', fontsize=16)
+        # # plt.ylabel('Hand_pos_z_err [m]', fontsize=16)
+        # # plt.title('Hand Position Z Error', fontsize=16)
+        # plt.tick_params(axis='both', which='major', labelsize=14)
+        # plt.xlim([0, 6])
+        # plt.ylim([-0.1, 0.2])
+        # plt.show()
+
+        plt.figure(figsize=(8, 5))
+        if log["hand_pos_x_err"]:
+            plt.plot(time, log["hand_pos_x_err"])
         plt.xlabel('Time [s]', fontsize=16)
-        # plt.ylabel('Hand_pos_z_err [m]', fontsize=16)
-        # plt.title('Hand Position Z Error', fontsize=16)
+        plt.ylabel('Hand pos error in x [m]', fontsize=16)
+        # plt.title('Hand Position X Error', fontsize=16)
         plt.tick_params(axis='both', which='major', labelsize=14)
-        plt.xlim([0, 4])
-        plt.ylim([0.1, 0.5])
+        plt.xlim([0, 5])
+        plt.ylim([-0.3, 0.3])
         plt.show()
 
     def print_rewards(self):
