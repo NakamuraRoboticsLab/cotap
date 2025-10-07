@@ -252,7 +252,7 @@ python humanoidverse/eval_agent.py \
   </tr>
 </table> -->
 
-# CoTaP sim-to-sim Deploy
+# CoTaP Sim-to-Sim Deploy
 We provide seamless sim2sim and sim2real deployment scripts supporting both [unitree_sdk2_python](https://github.com/unitreerobotics/unitree_sdk2_python). Please refer to this [README](sim2real/README.md) for details.
 
 <!-- <table>
@@ -289,3 +289,12 @@ If you find our work useful, please consider citing us!
 # License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. -->
+
+
+# Github Branch
+In this repository, the branch setting is as follows: 
+
+- main: basic CoTaP method as in paper
+- comp_facet: combined with FACET method
+- comp_sim2sim: focus on sim-to-sim in MuJoCo simulation
+- comp_sim2real: focus on sim-to-real for real robot experiment
